@@ -1,0 +1,286 @@
+/* ================================================================
+   Kool Healthy – Module 5 : Plan Nutritionnel (Front Office CSS)
+   Hérite des variables de couleur du template TFront.html
+   ================================================================ */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #F5F5F5;
+  color: #2C3E2F;
+  scroll-behavior: smooth;
+}
+
+:root {
+  --vert-kool:       #4CAF50;
+  --vert-kool-dark:  #388E3C;
+  --vert-kool-light: #E8F5E9;
+  --bleu-tech:       #29B6F6;
+  --bleu-tech-dark:  #0288D1;
+  --bleu-tech-light: #E1F5FE;
+  --blanc:           #FFFFFF;
+  --gris-clair:      #F5F5F5;
+  --gris-moyen:      #E0E0E0;
+  --gris-texte:      #616161;
+  --orange:          #FF9800;
+  --orange-light:    #FFF3E0;
+  --rouge:           #F44336;
+  --rouge-light:     #FFEBEE;
+  --ombre-legere:    0 2px 8px rgba(0,0,0,.05);
+  --ombre-moyenne:   0 4px 16px rgba(0,0,0,.08);
+  --radius:          20px;
+  --radius-sm:       12px;
+}
+
+/* ── Navbar ─────────────────────────────────────────────────── */
+.navbar {
+  background: var(--blanc);
+  padding: 1rem 5%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  box-shadow: var(--ombre-legere);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  border-bottom: 1px solid var(--gris-moyen);
+}
+.logo { display: flex; align-items: center; gap: 12px; }
+.logo i { font-size: 2rem; color: var(--vert-kool); }
+.logo h1 { font-size: 1.5rem; font-weight: 700; color: var(--vert-kool); }
+.nav-links { display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap; }
+.nav-links a { text-decoration: none; color: #4A5B4E; font-weight: 500; transition: .2s; }
+.nav-links a:hover, .nav-links a.active { color: var(--bleu-tech); }
+.btn-connect {
+  background: var(--vert-kool); color: white;
+  border: none; padding: .6rem 1.4rem;
+  border-radius: 40px; font-weight: 600; cursor: pointer;
+}
+
+/* ── Hero section ───────────────────────────────────────────── */
+.hero-plans {
+  background: linear-gradient(135deg, var(--vert-kool-light) 0%, var(--bleu-tech-light) 100%);
+  padding: 3rem 5%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2rem;
+}
+.hero-plans .hero-content { flex: 1; min-width: 240px; }
+.hero-plans h1 { font-size: 2.4rem; font-weight: 800; color: var(--vert-kool-dark); margin-bottom: 1rem; }
+.hero-plans h1 span { color: var(--bleu-tech-dark); }
+.hero-plans p { color: #4A5B4E; font-size: 1rem; margin-bottom: 1.5rem; }
+
+/* ── Boutons ────────────────────────────────────────────────── */
+.btn-primary {
+  background: var(--vert-kool); color: white;
+  padding: .75rem 1.8rem; border-radius: 50px;
+  text-decoration: none; font-weight: 600;
+  display: inline-flex; align-items: center; gap: 8px;
+  border: none; cursor: pointer; transition: .2s;
+}
+.btn-primary:hover { background: var(--vert-kool-dark); transform: translateY(-2px); }
+.btn-secondary {
+  background: transparent; border: 2px solid var(--bleu-tech);
+  color: var(--bleu-tech); padding: .75rem 1.8rem;
+  border-radius: 50px; font-weight: 600; cursor: pointer;
+  transition: .2s;
+}
+.btn-secondary:hover { background: var(--bleu-tech-light); }
+.btn-danger {
+  background: var(--rouge); color: white;
+  padding: .5rem 1.2rem; border-radius: 40px;
+  border: none; font-weight: 600; cursor: pointer; transition: .2s;
+}
+.btn-sm { padding: .45rem 1rem; font-size: .82rem; }
+
+/* ── Layout ─────────────────────────────────────────────────── */
+.section { padding: 3rem 5%; }
+.section-title { font-size: 1.8rem; font-weight: 700; color: var(--vert-kool); margin-bottom: .5rem; }
+.section-subtitle { color: var(--gris-texte); margin-bottom: 2rem; }
+
+/* ── Grille de plans ────────────────────────────────────────── */
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+.plan-card {
+  background: var(--blanc);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: var(--ombre-legere);
+  border: 1px solid var(--gris-moyen);
+  transition: transform .2s, border-color .2s;
+  position: relative;
+}
+.plan-card:hover { transform: translateY(-4px); border-color: var(--bleu-tech); }
+.plan-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+.plan-card-title { font-size: 1.1rem; font-weight: 700; color: #2C3E2F; }
+.plan-badge {
+  background: var(--vert-kool-light); color: var(--vert-kool-dark);
+  padding: .3rem .9rem; border-radius: 40px; font-size: .7rem; font-weight: 700;
+}
+.plan-calories {
+  font-size: 2rem; font-weight: 800;
+  color: var(--vert-kool); margin: .5rem 0;
+}
+.plan-calories span { font-size: .9rem; font-weight: 500; color: var(--gris-texte); }
+.plan-dates { font-size: .78rem; color: var(--gris-texte); margin-bottom: 1rem; }
+.plan-dates i { color: var(--bleu-tech); margin-right: 4px; }
+.plan-actions { display: flex; gap: .6rem; flex-wrap: wrap; }
+
+/* ── Progress bar ───────────────────────────────────────────── */
+.progress-wrap { margin: .8rem 0; }
+.progress-label { display: flex; justify-content: space-between; font-size: .78rem; color: var(--gris-texte); margin-bottom: 4px; }
+.progress-bar-bg { background: var(--gris-moyen); border-radius: 20px; height: 8px; overflow: hidden; }
+.progress-fill { background: var(--vert-kool); height: 100%; border-radius: 20px; transition: width .6s ease; }
+.progress-fill-blue { background: var(--bleu-tech); }
+.progress-fill-orange { background: var(--orange); }
+
+/* ── Formulaire ─────────────────────────────────────────────── */
+.form-card {
+  background: var(--blanc);
+  border-radius: var(--radius);
+  padding: 2rem;
+  box-shadow: var(--ombre-legere);
+  border: 1px solid var(--gris-moyen);
+  max-width: 640px;
+  margin: 0 auto;
+}
+.form-title { font-size: 1.4rem; font-weight: 700; color: var(--vert-kool); margin-bottom: 1.5rem; }
+.form-group { margin-bottom: 1.2rem; }
+.form-group label { display: block; font-weight: 600; font-size: .88rem; margin-bottom: .4rem; color: #2C3E2F; }
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: .7rem 1rem;
+  border: 1.5px solid var(--gris-moyen);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: .9rem;
+  transition: border-color .2s;
+}
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--bleu-tech);
+  box-shadow: 0 0 0 3px var(--bleu-tech-light);
+}
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+/* ── Détail plan – onglets repas ────────────────────────────── */
+.detail-header {
+  background: linear-gradient(135deg, var(--vert-kool-light), var(--bleu-tech-light));
+  border-radius: var(--radius);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  align-items: center;
+}
+.detail-stat { text-align: center; }
+.detail-stat .big { font-size: 2rem; font-weight: 800; color: var(--vert-kool); }
+.detail-stat small { color: var(--gris-texte); font-size: .78rem; }
+
+.repas-table-wrap { overflow-x: auto; }
+.repas-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .88rem;
+}
+.repas-table th {
+  text-align: left;
+  padding: 12px 8px;
+  font-size: .7rem;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  color: var(--gris-texte);
+  border-bottom: 2px solid var(--gris-moyen);
+}
+.repas-table td {
+  padding: 12px 8px;
+  border-bottom: 1px solid #F0F0F0;
+  vertical-align: middle;
+}
+.repas-table tr:hover td { background: var(--gris-clair); }
+
+/* ── Badges de statut ───────────────────────────────────────── */
+.badge {
+  display: inline-block;
+  padding: .25rem .8rem;
+  border-radius: 40px;
+  font-size: .7rem;
+  font-weight: 700;
+}
+.badge-planifie  { background: var(--bleu-tech-light);  color: var(--bleu-tech-dark); }
+.badge-consomme  { background: var(--vert-kool-light);  color: var(--vert-kool-dark); }
+.badge-annule    { background: var(--rouge-light);      color: var(--rouge); }
+.badge-type {
+  background: var(--orange-light);
+  color: var(--orange);
+  padding: .2rem .7rem;
+  border-radius: 40px;
+  font-size: .68rem;
+  font-weight: 600;
+}
+
+/* ── Alerte recommandation ──────────────────────────────────── */
+.alert {
+  padding: 1rem 1.4rem;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  font-size: .9rem;
+  display: flex;
+  gap: .75rem;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+.alert-success { background: var(--vert-kool-light); color: var(--vert-kool-dark); border-left: 4px solid var(--vert-kool); }
+.alert-warning  { background: var(--orange-light);   color: #E65100; border-left: 4px solid var(--orange); }
+
+/* ── Card panel générique ───────────────────────────────────── */
+.card-panel {
+  background: var(--blanc);
+  border-radius: var(--radius);
+  padding: 1.5rem 2rem;
+  box-shadow: var(--ombre-legere);
+  border: 1px solid var(--gris-moyen);
+  margin-bottom: 2rem;
+}
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.2rem;
+}
+.panel-title { font-size: 1.1rem; font-weight: 700; }
+
+/* ── Vide ───────────────────────────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: var(--gris-texte);
+}
+.empty-state i { font-size: 3rem; color: var(--gris-moyen); margin-bottom: 1rem; }
+
+/* ── Footer ─────────────────────────────────────────────────── */
+.footer {
+  background: #1E3A2E;
+  color: #C6E0D4;
+  padding: 2rem 5%;
+  text-align: center;
+  font-size: .85rem;
+}
+
+/* ── Responsive ──────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .hero-plans h1 { font-size: 1.8rem; }
+  .form-row { grid-template-columns: 1fr; }
+  .plans-grid { grid-template-columns: 1fr; }
+}
