@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kool Healthy | Backoffice HTML</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    :root {
+      --vert-kool: #4CAF50;
+      --vert-kool-dark: #388E3C;
+      --vert-kool-light: #E8F5E9;
+      --bleu-tech: #29B6F6;
+      --bleu-tech-dark: #0288D1;
+      --bleu-tech-light: #E1F5FE;
+      --blanc: #FFFFFF;
+      --gris-clair: #F5F5F5;
+      --gris-moyen: #E0E0E0;
+      --gris-texte: #616161;
+      --ombre-legere: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Inter", sans-serif;
+      background: var(--gris-clair);
+      color: #2C3E2F;
+    }
+
+    .app-wrapper { display: flex; min-height: 100vh; }
+
+    .sidebar {
+      width: 280px;
+      background: var(--blanc);
+      border-right: 1px solid var(--gris-moyen);
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+
+    .logo-area {
+      padding: 24px;
+      border-bottom: 1px solid var(--gris-moyen);
+      margin-bottom: 14px;
+    }
+
+    .logo-area h2 {
+      font-size: 1.6rem;
+      color: var(--vert-kool);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-area h2 i { color: var(--bleu-tech); }
+    .logo-area p { color: var(--gris-texte); font-size: 0.75rem; margin-top: 8px; }
+
+    .nav-menu { flex: 1; padding: 0 14px; }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      margin: 6px 0;
+      color: #4A5B4E;
+      cursor: pointer;
+      user-select: none;
+      font-weight: 500;
+    }
+
+    .nav-item i { width: 20px; color: var(--bleu-tech); }
+
+    .nav-item.active {
+      background: var(--vert-kool-light);
+      color: var(--vert-kool-dark);
+    }
+
+    .sidebar-footer {
+      border-top: 1px solid var(--gris-moyen);
+      padding: 16px;
+    }
+
+    .user-badge { display: flex; align-items: center; gap: 10px; }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--vert-kool), var(--bleu-tech));
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .main-content { flex: 1; overflow-x: auto; }
+
+    .top-bar {
+      background: var(--blanc);
+      border-bottom: 1px solid var(--gris-moyen);
+      padding: 18px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .page-title h1 { color: var(--vert-kool); font-size: 1.6rem; }
+    .page-title p { color: var(--gris-texte); font-size: 0.86rem; margin-top: 4px; }
+
+    .btn-outline {
+      border: 1px solid var(--bleu-tech);
+      color: var(--bleu-tech);
+      border-radius: 999px;
+      padding: 10px 16px;
+      text-decoration: none;
+      font-weight: 600;
+      background: #fff;
+    }
+
+    .dashboard-container { padding: 24px 28px; display: none; }
+    .dashboard-container.active { display: block; }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .stat-card {
+      background: var(--blanc);
+      border: 1px solid var(--gris-moyen);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: var(--ombre-legere);
+    }
+
+    .stat-title { color: var(--gris-texte); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.7px; }
+    .stat-value { color: var(--vert-kool-dark); font-size: 1.9rem; font-weight: 800; margin-top: 6px; }
+
+    .card-panel {
+      background: var(--blanc);
+      border: 1px solid var(--gris-moyen);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: var(--ombre-legere);
+      margin-bottom: 18px;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .badge-tech {
+      background: var(--bleu-tech-light);
+      color: var(--bleu-tech-dark);
+      font-size: 0.72rem;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-weight: 700;
+    }
+
+    .data-table-wrap { overflow-x: auto; border: 1px solid var(--gris-moyen); border-radius: 12px; }
+
+    .data-table {
+      width: 100%;
+      min-width: 880px;
+      border-collapse: collapse;
+      background: var(--blanc);
+    }
+
+    .data-table th,
+    .data-table td {
+      border-bottom: 1px solid var(--gris-moyen);
+      text-align: left;
+      padding: 10px;
+      font-size: 0.86rem;
+    }
+
+    .data-table th {
+      background: #f6fbf7;
+      color: #24523b;
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .crud-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .crud-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .crud-form .full { grid-column: span 2; }
+
+    .crud-form input,
+    .crud-form select,
+    .crud-form textarea {
+      width: 100%;
+      border: 1px solid var(--gris-moyen);
+      border-radius: 10px;
+      padding: 10px;
+      font: inherit;
+      background: white;
+    }
+
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .mini-btn {
+      border: 0;
+      border-radius: 999px;
+      padding: 9px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      color: white;
+      background: var(--vert-kool);
+    }
+
+    .mini-btn.secondary { background: var(--bleu-tech); }
+    .mini-btn.danger { background: #d9534f; }
+
+    .status-chip {
+      display: inline-block;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      padding: 3px 8px;
+      font-weight: 700;
+      background: #fff4e5;
+      color: #9c6800;
+    }
+
+    .status-chip.none {
+      background: #e8f5e9;
+      color: #2f7a34;
+    }
+
+    @media (max-width: 980px) {
+      .sidebar { width: 84px; }
+      .logo-area h2 span, .logo-area p, .nav-item span, .user-info { display: none; }
+      .nav-item { justify-content: center; }
+      .crud-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-wrapper">
+    <aside class="sidebar">
+      <div class="logo-area">
+        <h2><i class="fas fa-seedling"></i><span>Kool Healthy</span></h2>
+        <p>backoffice html statique</p>
+      </div>
+
+      <div class="nav-menu">
+        <div class="nav-item active" data-tab="dashboard"><i class="fas fa-chart-pie"></i><span>Dashboard</span></div>
+        <div class="nav-item" data-tab="users"><i class="fas fa-users"></i><span>Utilisateurs</span></div>
+        <div class="nav-item" data-tab="plan"><i class="fas fa-clipboard-list"></i><span>Plan</span></div>
+        <div class="nav-item" data-tab="analytics"><i class="fas fa-chart-line"></i><span>Analytics IA</span></div>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="user-badge">
+          <div class="user-avatar"><i class="fas fa-user-md"></i></div>
+          <div class="user-info">
+            <p>Admin</p>
+            <small>admin@koolhealthy.com</small>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="top-bar">
+        <div class="page-title">
+          <h1>Backoffice</h1>
+          <p>Gestion plateforme et plans nutritionnels</p>
+        </div>
+        <a class="btn-outline" href="plan-nutritionnel.html">Retour module plan</a>
+      </div>
+
+      <section id="dashboardContent" class="dashboard-container active">
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-title">Utilisateurs actifs</div><div class="stat-value" id="usersCount">12</div></div>
+          <div class="stat-card"><div class="stat-title">Plans actifs</div><div class="stat-value" id="plansCount">8</div></div>
+          <div class="stat-card"><div class="stat-title">Plans signales</div><div class="stat-value" id="flaggedCount">2</div></div>
+          <div class="stat-card"><div class="stat-title">Objectifs client</div><div class="stat-value" id="goalsCount">3</div></div>
+        </div>
+      </section>
+
+      <section id="usersContent" class="dashboard-container">
+        <div class="card-panel">
+          <div class="panel-header">
+            <h3><i class="fas fa-users"></i> Liste clients</h3>
+            <span class="badge-tech">lecture simple</span>
+          </div>
+          <div class="data-table-wrap">
+            <table class="data-table" id="clientsTable">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Client</th>
+                  <th>Objectif</th>
+                  <th>Calories cible</th>
+                  <th>Duree</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="planContent" class="dashboard-container">
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-title">Perte poids</div><div class="stat-value" id="goalLoss">0</div></div>
+          <div class="stat-card"><div class="stat-title">Maintien</div><div class="stat-value" id="goalKeep">0</div></div>
+          <div class="stat-card"><div class="stat-title">Prise muscle</div><div class="stat-value" id="goalGain">0</div></div>
+          <div class="stat-card"><div class="stat-title">Plans signales</div><div class="stat-value" id="goalFlag">0</div></div>
+        </div>
+
+        <div class="card-panel">
+          <div class="panel-header">
+            <h3><i class="fas fa-table"></i> Tableau objectifs des clients</h3>
+            <span class="badge-tech">categorie plan</span>
+          </div>
+          <div class="data-table-wrap">
+            <table class="data-table" id="plansTable">
+              <thead>
+                <tr>
+                  <th>ID plan</th>
+                  <th>Client</th>
+                  <th>Objectif</th>
+                  <th>Plan alimentaire</th>
+                  <th>Calories</th>
+                  <th>Duree</th>
+                  <th>Plans signales</th>
+                  <th>Notes</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card-panel">
+          <div class="panel-header">
+            <h3><i class="fas fa-pen"></i> Modification du plan client</h3>
+            <span class="badge-tech">edition uniquement</span>
+          </div>
+
+          <div class="crud-grid">
+            <form class="crud-form" id="planForm">
+              <select id="clientSelect" class="full"></select>
+              <textarea id="planInput" class="full" rows="3" placeholder="Contenu du plan (repas, structure hebdo, contraintes)"></textarea>
+              <input id="caloriesInput" type="number" placeholder="Calories cible">
+              <input id="dureeInput" type="number" placeholder="Duree (jours)">
+              <input id="signalesInput" type="number" placeholder="Nombre signales" value="0">
+              <textarea id="notesInput" class="full" rows="3" placeholder="Notes du nutritionniste"></textarea>
+
+              <div class="btn-row full">
+                <button class="mini-btn secondary" type="button" id="updateBtn">Modifier plan</button>
+                <button type="submit" hidden aria-hidden="true" tabindex="-1">Submit</button>
+              </div>
+            </form>
+
+            <div>
+              <p style="margin-bottom:8px; color:#52655a;">Selection rapide d'un plan existant:</p>
+              <select id="planSelect" style="width:100%; border:1px solid var(--gris-moyen); border-radius:10px; padding:10px;"></select>
+              <p style="margin-top:10px; color:#61766a; font-size:0.86rem;">Choisis un plan existant, ajuste les champs puis clique sur Modifier plan. Donnees en memoire navigateur (HTML statique).</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="analyticsContent" class="dashboard-container">
+        <div class="card-panel">
+          <div class="panel-header">
+            <h3><i class="fas fa-brain"></i> Analytics IA</h3>
+            <span class="badge-tech">mock data</span>
+          </div>
+          <p style="color:#5b6f5f;">Suggestion IA: augmenter les legumes secs pour reduire l'empreinte carbone des plans de 16%.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const tabs = {
+      dashboard: document.getElementById("dashboardContent"),
+      users: document.getElementById("usersContent"),
+      plan: document.getElementById("planContent"),
+      analytics: document.getElementById("analyticsContent")
+    };
+
+    document.querySelectorAll(".nav-item").forEach((item) => {
+      item.addEventListener("click", () => {
+        const tab = item.getAttribute("data-tab");
+        Object.keys(tabs).forEach((key) => tabs[key].classList.toggle("active", key === tab));
+        document.querySelectorAll(".nav-item").forEach((n) => n.classList.toggle("active", n === item));
+      });
+    });
+
+    const clients = [
+      { id: 1, nom: "Sophie M." },
+      { id: 2, nom: "Julien R." },
+      { id: 3, nom: "Lea B." },
+      { id: 4, nom: "Amine K." }
+    ];
+
+    let plans = [
+      { id: 101, clientId: 1, objectif: "perte-poids", planTexte: "Petit dej leger, dejeuner proteine maigre, diner legumes", calories: 1800, duree: 30, signales: 1, notes: "Reduire sucre simple" },
+      { id: 102, clientId: 2, objectif: "prise-muscle", planTexte: "3 repas riches en proteines + 2 collations", calories: 2800, duree: 45, signales: 0, notes: "Monter proteines" },
+      { id: 103, clientId: 3, objectif: "maintien", planTexte: "Plan equilibre mediterraneen", calories: 2100, duree: 21, signales: 1, notes: "Plan stable" }
+    ];
+
+    let selectedPlanId = null;
+
+    const clientsTableBody = document.querySelector("#clientsTable tbody");
+    const plansTableBody = document.querySelector("#plansTable tbody");
+    const clientSelect = document.getElementById("clientSelect");
+    const planSelect = document.getElementById("planSelect");
+
+    const planInput = document.getElementById("planInput");
+    const caloriesInput = document.getElementById("caloriesInput");
+    const dureeInput = document.getElementById("dureeInput");
+    const signalesInput = document.getElementById("signalesInput");
+    const notesInput = document.getElementById("notesInput");
+    const planForm = document.getElementById("planForm");
+
+    if (planForm) {
+      planForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+      });
+    }
+
+    function objectifLabel(value) {
+      if (value === "perte-poids") return "Perte de poids";
+      if (value === "prise-muscle") return "Prise de muscle";
+      return "Maintien";
+    }
+
+    function clientName(id) {
+      const c = clients.find((client) => client.id === Number(id));
+      return c ? c.nom : "Inconnu";
+    }
+
+    function renderSelects() {
+      clientSelect.innerHTML = clients
+        .map((c) => "<option value=\"" + c.id + "\">Client: " + c.nom + "</option>")
+        .join("");
+
+      planSelect.innerHTML =
+        "<option value=\"\">Selectionner un plan</option>" +
+        plans.map((p) => "<option value=\"" + p.id + "\">#" + p.id + " - " + clientName(p.clientId) + " (" + objectifLabel(p.objectif) + ")</option>").join("");
+    }
+
+    function renderUsersTable() {
+      clientsTableBody.innerHTML = plans
+        .map((p) => "<tr>" +
+          "<td>" + p.clientId + "</td>" +
+          "<td>" + clientName(p.clientId) + "</td>" +
+          "<td>" + objectifLabel(p.objectif) + "</td>" +
+          "<td>" + p.calories + " kcal</td>" +
+          "<td>" + p.duree + " j</td>" +
+          "</tr>")
+        .join("");
+    }
+
+    function renderPlansTable() {
+      plansTableBody.innerHTML = plans
+        .map((p) => "<tr>" +
+          "<td>#" + p.id + "</td>" +
+          "<td>" + clientName(p.clientId) + "</td>" +
+          "<td>" + objectifLabel(p.objectif) + "</td>" +
+          "<td>" + (p.planTexte || "-") + "</td>" +
+          "<td>" + p.calories + " kcal</td>" +
+          "<td>" + p.duree + " j</td>" +
+          "<td><span class=\"status-chip " + (p.signales === 0 ? "none" : "") + "\">" + p.signales + "</span></td>" +
+          "<td>" + (p.notes || "-") + "</td>" +
+          "<td><button class=\"mini-btn secondary\" type=\"button\" onclick=\"loadPlan(" + p.id + ")\">Editer</button></td>" +
+          "</tr>")
+        .join("");
+    }
+
+    function refreshStats() {
+      const loss = plans.filter((p) => p.objectif === "perte-poids").length;
+      const keep = plans.filter((p) => p.objectif === "maintien").length;
+      const gain = plans.filter((p) => p.objectif === "prise-muscle").length;
+      const flagged = plans.reduce((sum, p) => sum + Number(p.signales || 0), 0);
+
+      document.getElementById("usersCount").textContent = String(clients.length);
+      document.getElementById("plansCount").textContent = String(plans.length);
+      document.getElementById("flaggedCount").textContent = String(flagged);
+      document.getElementById("goalsCount").textContent = "3";
+
+      document.getElementById("goalLoss").textContent = String(loss);
+      document.getElementById("goalKeep").textContent = String(keep);
+      document.getElementById("goalGain").textContent = String(gain);
+      document.getElementById("goalFlag").textContent = String(flagged);
+    }
+
+    function renderAll() {
+      renderSelects();
+      renderUsersTable();
+      renderPlansTable();
+      refreshStats();
+    }
+
+    function resetForm() {
+      selectedPlanId = null;
+      document.getElementById("planForm").reset();
+      signalesInput.value = 0;
+      if (clients.length) {
+        clientSelect.value = String(clients[0].id);
+      }
+    }
+
+    window.loadPlan = function (id) {
+      const p = plans.find((plan) => plan.id === Number(id));
+      if (!p) return;
+      selectedPlanId = p.id;
+      clientSelect.value = String(p.clientId);
+      planInput.value = p.planTexte || "";
+      caloriesInput.value = String(p.calories);
+      dureeInput.value = String(p.duree);
+      signalesInput.value = String(p.signales);
+      notesInput.value = p.notes || "";
+      planSelect.value = String(p.id);
+    };
+
+    document.getElementById("updateBtn").addEventListener("click", () => {
+      if (!selectedPlanId) {
+        alert("Selectionne d'abord un plan a modifier.");
+        return;
+      }
+
+      const clientId = Number(clientSelect.value);
+      const calories = Number(caloriesInput.value);
+      const duree = Number(dureeInput.value);
+      const signales = Number(signalesInput.value);
+
+      if (!Number.isInteger(clientId) || clientId < 1) {
+        alert("Selection de client invalide.");
+        return;
+      }
+
+      if (Number.isNaN(calories) || calories < 1200 || calories > 4500) {
+        alert("Calories cible invalides (1200 a 4500).");
+        return;
+      }
+
+      if (Number.isNaN(duree) || duree < 3 || duree > 90) {
+        alert("Duree invalide (3 a 90 jours).");
+        return;
+      }
+
+      if (Number.isNaN(signales) || signales < 0) {
+        alert("Nombre de plans signales invalide.");
+        return;
+      }
+
+      const idx = plans.findIndex((p) => p.id === selectedPlanId);
+      if (idx === -1) return;
+      plans[idx] = {
+        id: selectedPlanId,
+        clientId: clientId,
+        objectif: plans[idx].objectif,
+        planTexte: planInput.value.trim(),
+        calories: calories,
+        duree: duree,
+        signales: signales,
+        notes: notesInput.value.trim()
+      };
+      renderAll();
+      resetForm();
+    });
+
+    planSelect.addEventListener("change", () => {
+      if (!planSelect.value) {
+        resetForm();
+        return;
+      }
+      window.loadPlan(Number(planSelect.value));
+    });
+
+    renderAll();
+    resetForm();
+  </script>
+</body>
+</html>
