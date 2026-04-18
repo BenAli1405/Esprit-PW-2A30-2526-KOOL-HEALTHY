@@ -391,6 +391,151 @@ function getObjectifLabel($value)
             </aside>
           </div>
         </div>
+
+        <!-- CRUD Repas Table -->
+        <div class="card-panel" style="margin-top:18px;">
+          <div class="panel-header">
+            <h3><i class="fas fa-table"></i> Gestion des Repas (CRUD)</h3>
+            <div class="btn-row">
+              <button type="button" class="mini-btn" id="btnAjouterRepas" onclick="openRepasModal('create')">
+                <i class="fas fa-plus"></i> Ajouter
+              </button>
+              <button type="button" class="mini-btn secondary" id="btnModifierRepas" onclick="openRepasModal('update')">
+                <i class="fas fa-pen"></i> Modifier
+              </button>
+              <form method="post" id="deleteRepasForm" style="display:inline;" onsubmit="return confirmDeleteRepas();">
+                <input type="hidden" name="action_type" value="repas">
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="id" id="deleteRepasId" value="">
+                <button type="submit" class="mini-btn danger" id="btnSupprimerRepas">
+                  <i class="fas fa-trash"></i> Supprimer
+                </button>
+              </form>
+            </div>
+          </div>
+          <div class="data-table-wrap">
+            <table class="data-table" id="repasTable">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Plan ID</th>
+                  <th>Nom recette</th>
+                  <th>Date</th>
+                  <th>Type repas</th>
+                  <th>Statut</th>
+                  <th>Calories</th>
+                  <th>Heure prévue</th>
+                  <th>Heure réelle</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php
+                $typeRepasLabels = [
+                  'petit_dejeuner' => 'Petit-déj',
+                  'dejeuner'       => 'Déjeuner',
+                  'diner'          => 'Dîner',
+                  'collation'      => 'Collation',
+                ];
+                $statutLabels = [
+                  'prevu'    => 'Prévu',
+                  'consomme' => 'Consommé',
+                  'annule'   => 'Annulé',
+                ];
+                if (!empty($repasList)) : foreach ($repasList as $repas) : ?>
+                <tr onclick="selectRepasRow(this, <?= (int)$repas['id'] ?>)"
+                    data-repas='<?= htmlspecialchars(json_encode($repas, JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8') ?>'>
+                  <td><?= h($repas['id']) ?></td>
+                  <td><?= h($repas['plan_id']) ?></td>
+                  <td><?= h($repas['nom_recette'] ?? '—') ?></td>
+                  <td><?= h($repas['date']) ?></td>
+                  <td><?= h($typeRepasLabels[$repas['type_repas']] ?? $repas['type_repas']) ?></td>
+                  <td><?= h($statutLabels[$repas['statut']] ?? $repas['statut']) ?></td>
+                  <td><?= h($repas['calories_consommees'] ?? '—') ?></td>
+                  <td><?= h($repas['heure_prevue'] ?? '—') ?></td>
+                  <td><?= h($repas['heure_reelle'] ?? '—') ?></td>
+                  <td><?= h(mb_strimwidth($repas['notes'] ?? '', 0, 50, '…')) ?></td>
+                </tr>
+                <?php endforeach; else: ?>
+                <tr><td colspan="10" style="text-align:center;color:#5b6f5f;padding:20px;">Aucun repas enregistré.</td></tr>
+                <?php endif; ?>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Modal Repas -->
+        <div id="repasModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:9999; align-items:center; justify-content:center;">
+          <div style="background:#fff; border-radius:18px; padding:28px; width:100%; max-width:580px; box-shadow:0 8px 40px rgba(0,0,0,0.18); position:relative; margin:auto; max-height:90vh; overflow-y:auto; top:50%; transform:translateY(-50%);">
+            <h3 style="color:var(--vert-kool-dark); margin-bottom:18px;" id="repasModalTitle"><i class="fas fa-utensils"></i> Ajouter un repas</h3>
+            <form method="post" id="repasForm" onsubmit="return validateRepasFormJS(this);">
+              <input type="hidden" name="action_type" value="repas">
+              <input type="hidden" name="action" id="repasActionInput" value="create">
+              <input type="hidden" name="id" id="repasIdInput" value="">
+
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <div>
+                  <label style="font-size:0.82rem;font-weight:600;color:#3e5d45;">Plan <span style="color:red">*</span></label>
+                  <select name="plan_id" id="r_plan_id" style="width:100%;border:1px solid var(--gris-moyen);border-radius:10px;padding:10px;font:inherit;background:white;">
+                    <option value="">-- Choisir un plan --</option>
+                    <?php foreach ($plans as $p): ?>
+                    <option value="<?= h($p['id']) ?>"><?= h($p['id']) ?> — <?= h($p['nom']) ?></option>
+                    <?php endforeach; ?>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size:0.82rem;font-weight:600;color:#3e5d45;">Nom de la recette <span style="color:red">*</span></label>
+                  <input type="text" name="nom_recette" id="r_nom_recette" placeholder="Ex: Salade quinoa" maxlength="255" style="width:100%;border:1px solid var(--gris-moyen);border-radius:10px;padding:10px;font:inherit;">
+                </div>
+                <div>
+                  <label style="font-size:0.82rem;font-weight:600;color:#3e5d45;">Date <span style="color:red">*</span></label>
+                  <input type="date" name="date" id="r_date" style="width:100%;border:1px solid var(--gris-moyen);border-radius:10px;padding:10px;font:inherit;">
+                </div>
+                <div>
+                  <label style="font-size:0.82rem;font-weight:600;color:#3e5d45;">Type de repas <span style="color:red">*</span></label>
+                  <select name="type_repas" id="r_type_repas" style="width:100%;border:1px solid var(--gris-moyen);border-radius:10px;padding:10px;font:inherit;background:white;">
+                    <option value="">-- Choisir --</option>
+                    <option value="petit_dejeuner">Petit-déjeuner</option>
+                    <option value="dejeuner">Déjeuner</option>
+                    <option value="diner">Dîner</option>
+                    <option value="collation">Collation</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size:0.82rem;font-weight:600;color:#3e5d45;">Statut <span style="color:red">*</span></label>
+                  <select name="statut" id="r_statut" style="width:100%;border:1px solid var(--gris-moyen);border-radius:10px;padding:10px;font:inherit;background:white;">
+                    <option value="prevu">Prévu</option>
+                    <option value="consomme">Consommé</option>
+                    <option value="annule">Annulé</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size:0.82rem;font-weight:600;color:#3e5d45;">Calories consommées (min 1400)</label>
+                  <input type="number" name="calories_consommees" id="r_calories" placeholder="Min 1400" min="1400" style="width:100%;border:1px solid var(--gris-moyen);border-radius:10px;padding:10px;font:inherit;">
+                </div>
+                <div>
+                  <label style="font-size:0.82rem;font-weight:600;color:#3e5d45;">Heure prévue (optionnel)</label>
+                  <input type="time" name="heure_prevue" id="r_heure_prevue" style="width:100%;border:1px solid var(--gris-moyen);border-radius:10px;padding:10px;font:inherit;">
+                </div>
+                <div>
+                  <label style="font-size:0.82rem;font-weight:600;color:#3e5d45;">Heure réelle (optionnel)</label>
+                  <input type="time" name="heure_reelle" id="r_heure_reelle" style="width:100%;border:1px solid var(--gris-moyen);border-radius:10px;padding:10px;font:inherit;">
+                </div>
+                <div style="grid-column:span 2;">
+                  <label style="font-size:0.82rem;font-weight:600;color:#3e5d45;">Notes (max 1000 caractères)</label>
+                  <textarea name="notes" id="r_notes" rows="3" maxlength="1000" placeholder="Notes optionnelles…" style="width:100%;border:1px solid var(--gris-moyen);border-radius:10px;padding:10px;font:inherit;resize:vertical;"></textarea>
+                </div>
+              </div>
+
+              <div id="repasFormErrors" style="display:none;margin-top:10px;color:#b71c1c;font-size:0.92rem;background:#fbe9e7;border:1px solid #f5c6cb;border-radius:10px;padding:10px 14px;"></div>
+
+              <div class="btn-row" style="margin-top:16px;">
+                <button type="submit" class="mini-btn" id="repasSubmitBtn">Enregistrer</button>
+                <button type="button" class="mini-btn secondary" onclick="closeRepasModal()">Annuler</button>
+              </div>
+            </form>
+          </div>
+        </div>
       </section>
 
       <section id="analyticsContent" class="dashboard-container">
@@ -627,5 +772,144 @@ function getObjectifLabel($value)
   </script>
 
   <script src="assets/form-validation.js?v=<?= time() ?>"></script>
+
+  <script>
+    /* ======= REPAS CRUD JS ======= */
+
+    let selectedRepasId = null;
+    let selectedRepasData = null;
+
+    function selectRepasRow(tr, id) {
+      document.querySelectorAll('#repasTable tbody tr').forEach(r => r.classList.remove('selected'));
+      tr.classList.add('selected');
+      selectedRepasId = id;
+      selectedRepasData = JSON.parse(tr.getAttribute('data-repas'));
+      document.getElementById('deleteRepasId').value = id;
+    }
+
+    function openRepasModal(mode) {
+      if (mode === 'update') {
+        if (!selectedRepasId) {
+          alert('Veuillez sélectionner un repas dans le tableau avant de modifier.');
+          return;
+        }
+        document.getElementById('repasModalTitle').innerHTML = '<i class="fas fa-pen"></i> Modifier le repas';
+        document.getElementById('repasActionInput').value = 'update';
+        document.getElementById('repasIdInput').value = selectedRepasData.id;
+        document.getElementById('r_plan_id').value = selectedRepasData.plan_id || '';
+        document.getElementById('r_nom_recette').value = selectedRepasData.nom_recette || '';
+        document.getElementById('r_date').value = selectedRepasData.date || '';
+        document.getElementById('r_type_repas').value = selectedRepasData.type_repas || '';
+        document.getElementById('r_statut').value = selectedRepasData.statut || 'prevu';
+        document.getElementById('r_calories').value = selectedRepasData.calories_consommees || '';
+        document.getElementById('r_heure_prevue').value = selectedRepasData.heure_prevue || '';
+        document.getElementById('r_heure_reelle').value = selectedRepasData.heure_reelle || '';
+        document.getElementById('r_notes').value = selectedRepasData.notes || '';
+      } else {
+        document.getElementById('repasModalTitle').innerHTML = '<i class="fas fa-plus"></i> Ajouter un repas';
+        document.getElementById('repasActionInput').value = 'create';
+        document.getElementById('repasIdInput').value = '';
+        document.getElementById('repasForm').reset();
+      }
+      document.getElementById('repasFormErrors').style.display = 'none';
+      document.getElementById('repasFormErrors').innerHTML = '';
+      document.getElementById('repasModal').style.display = 'flex';
+    }
+
+    function closeRepasModal() {
+      document.getElementById('repasModal').style.display = 'none';
+    }
+
+    // Fermer le modal en cliquant en dehors
+    document.getElementById('repasModal').addEventListener('click', function(e) {
+      if (e.target === this) closeRepasModal();
+    });
+
+    function confirmDeleteRepas() {
+      if (!selectedRepasId) {
+        alert('Veuillez sélectionner un repas dans le tableau avant de supprimer.');
+        return false;
+      }
+      return confirm('Voulez-vous vraiment supprimer ce repas ?');
+    }
+
+    function validateRepasFormJS(form) {
+      const errors = [];
+
+      const planId = document.getElementById('r_plan_id').value;
+      if (!planId || planId === '') {
+        errors.push('Le plan est obligatoire.');
+      }
+
+      const nomRecette = document.getElementById('r_nom_recette').value.trim();
+      if (!nomRecette) {
+        errors.push('Le nom de la recette est obligatoire.');
+      } else if (nomRecette.length > 255) {
+        errors.push('Le nom de la recette ne peut pas dépasser 255 caractères.');
+      }
+
+      const dateVal = document.getElementById('r_date').value;
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateVal || !dateRegex.test(dateVal)) {
+        errors.push('La date est obligatoire (format AAAA-MM-JJ).');
+      } else {
+        const entered = new Date(dateVal);
+        const farPast = new Date();
+        farPast.setFullYear(farPast.getFullYear() - 5);
+        if (entered < farPast) {
+          errors.push('La date ne peut pas être dans un passé trop lointain (plus de 5 ans).');
+        }
+      }
+
+      const typeRepas = document.getElementById('r_type_repas').value;
+      if (!typeRepas) {
+        errors.push('Le type de repas est obligatoire.');
+      }
+
+      const statut = document.getElementById('r_statut').value;
+      if (!statut) {
+        errors.push('Le statut est obligatoire.');
+      }
+
+      const caloriesVal = document.getElementById('r_calories').value.trim();
+      if (caloriesVal !== '') {
+        const calories = parseInt(caloriesVal, 10);
+        if (isNaN(calories) || calories < 1400) {
+          errors.push('Les calories doivent être un nombre positif (minimum 1400).');
+        }
+      }
+
+      const heurePrevue = document.getElementById('r_heure_prevue').value;
+      const heureReelle = document.getElementById('r_heure_reelle').value;
+      const timeRegex = /^(?:2[0-3]|[01][0-9]):[0-5][0-9]$/;
+
+      if (heurePrevue && !timeRegex.test(heurePrevue)) {
+        errors.push("Format d'heure prévue invalide (HH:MM).");
+      }
+      if (heureReelle && !timeRegex.test(heureReelle)) {
+        errors.push("Format d'heure réelle invalide (HH:MM).");
+      }
+      if (heurePrevue && heureReelle) {
+        if (heureReelle < heurePrevue) {
+          errors.push("L'heure réelle ne peut pas être antérieure à l'heure prévue.");
+        }
+      }
+
+      const notes = document.getElementById('r_notes').value;
+      if (notes.length > 1000) {
+        errors.push('Les notes ne peuvent pas dépasser 1000 caractères.');
+      }
+
+      const errBox = document.getElementById('repasFormErrors');
+      if (errors.length > 0) {
+        errBox.innerHTML = '<ul style="margin:0;padding-left:18px;">' +
+          errors.map(e => `<li>${e}</li>`).join('') + '</ul>';
+        errBox.style.display = 'block';
+        return false;
+      }
+      errBox.style.display = 'none';
+      return true;
+    }
+  </script>
 </body>
 </html>
