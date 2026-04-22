@@ -1,6 +1,5 @@
 /* validation.js
  * Contrôle de saisie client pour les formulaires Entraînement et Exercice.
- * Ce fichier utilise uniquement JavaScript et ne repose pas sur les attributs HTML5.
  */
 
 /* Helpers généraux */
