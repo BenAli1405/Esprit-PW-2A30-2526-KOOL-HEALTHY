@@ -1,4 +1,35 @@
-﻿<!DOCTYPE html>
+<?php
+require_once __DIR__ . '/../CONTROLLER/DefiController.php';
+require_once __DIR__ . '/../CONTROLLER/ParticipationController.php';
+
+$defiController = new DefiController();
+$participationController = new ParticipationController();
+$defis = $defiController->listeDefis();
+$classement = $participationController->classement();
+$participations = $participationController->listeParticipations();
+$utilisateurs = $participationController->listeUtilisateurs();
+$defisForParticipation = $participationController->listeDefis();
+
+$success = $_GET['success'] ?? '';
+$error = $_GET['error'] ?? '';
+$message = '';
+$messageType = 'success';
+
+if ($success === 'participation_added') {
+    $message = 'Participation ajoutée avec succès.';
+} elseif ($success === 'participation_edited') {
+    $message = 'Participation modifiée avec succès.';
+} elseif ($success === 'participation_deleted') {
+    $message = 'Participation supprimée avec succès.';
+} elseif ($error === 'duplicate_participation') {
+    $message = 'Cet utilisateur a déjà une participation en cours pour ce défi !';
+    $messageType = 'error';
+} elseif ($error === 'db_error') {
+    $message = 'Une erreur est survenue lors de l\'enregistrement en base de données.';
+    $messageType = 'error';
+}
+?>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -74,6 +105,20 @@
     .tab-pane.active-pane { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     @media (max-width: 768px) { .hero h1 { font-size: 1.8rem; } .tab-btn { padding: 8px 18px; font-size: 0.9rem; } .section-title { font-size: 1.5rem; } }
+
+    /* Nouveaux styles pour les participations */
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th { text-align: left; padding: 14px 8px 12px 0; font-weight: 600; font-size: 0.75rem; color: #6C7A73; border-bottom: 1px solid var(--gris-moyen); }
+    .data-table td { padding: 14px 8px 14px 0; border-bottom: 1px solid #F0F2F0; font-size: 0.85rem; vertical-align: middle; }
+    .btn-danger { background: #ef5350; border: none; padding: 6px 14px; border-radius: 40px; font-weight: 600; color: white; cursor: pointer; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-edit { background: var(--bleu-tech); border: none; padding: 6px 14px; border-radius: 40px; font-weight: 600; color: white; cursor: pointer; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 6px; margin-right: 8px; }
+    .btn-primary { background: var(--vert-kool); border: none; padding: 10px 22px; border-radius: 40px; font-weight: 600; color: white; display: inline-flex; justify-content: center; align-items: center; gap: 8px; cursor: pointer; transition: 0.2s; font-size: 0.85rem; }
+    .btn-primary:hover { background: var(--vert-kool-dark); transform: translateY(-1px); }
+    .status-active { background: var(--vert-kool-light); color: var(--vert-kool-dark); padding: 4px 12px; border-radius: 40px; font-size: 0.7rem; font-weight: 600; }
+    .badge-tech { background: var(--bleu-tech-light); color: var(--bleu-tech-dark); padding: 4px 14px; border-radius: 40px; font-size: 0.7rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
+    .modal-header { padding: 20px 28px; border-bottom: 2px solid var(--gris-moyen); display: flex; justify-content: space-between; align-items: center; background: var(--blanc); border-radius: 36px 36px 0 0; }
+    .modal-header h3 { font-size: 1.5rem; font-weight: 700; display: flex; align-items: center; gap: 12px; color: var(--vert-kool); }
+    .modal-body { padding: 24px 28px; overflow-y: auto; flex: 1; text-align: left; }
   </style>
 </head>
 <body>
@@ -81,6 +126,16 @@
     <div class="logo"><i class="fas fa-seedling"></i><h1>Kool Healthy</h1></div>
     <div class="nav-links"><a id="navAccueil">🏠 Accueil</a><a id="navDefisUnified">🏆 Défis & Récompenses</a><button class="btn-outline" id="openSignupBtn">S'inscrire</button><button class="btn-connect" id="openLoginBtn">Se connecter</button></div>
   </nav>
+
+  <?php if ($message): ?>
+    <?php if ($messageType === 'error'): ?>
+      <script>alert("<?= addslashes($message) ?>");</script>
+    <?php else: ?>
+      <div style="margin: 20px 5%; padding: 16px 20px; border-radius: 18px; background: #E8F5E9; border: 1px solid #C8E6C9; color: #256029; text-align: center; font-weight: bold;">
+        <?= htmlspecialchars($message) ?>
+      </div>
+    <?php endif; ?>
+  <?php endif; ?>
 
   <!-- SECTION ACCUEIL (dashboard only, plus de défis populaires) -->
   <div id="accueilSection">
@@ -99,7 +154,7 @@
     <div class="tab-container">
       <button class="tab-btn active" data-tab="defisTab">🏁 Défis actifs</button>
       <button class="tab-btn" data-tab="classementTab">📈 Classement</button>
-
+      <button class="tab-btn" data-tab="participationsTab">📋 Participations</button>
     </div>
 
     <!-- Pane Défis -->
@@ -113,6 +168,36 @@
       <div style="margin-bottom: 1rem;"><p><i class="fas fa-chart-simple"></i> Les champions de la communauté durable</p></div>
       <div id="rankingUnifiedList" class="ranking-list"></div>
     </div>
+
+    <!-- Pane Participations -->
+    <div id="participationsTab" class="tab-pane">
+      <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+        <p class="badge-tech" style="color: var(--bleu-tech-dark); margin:0;"><i class="fas fa-clipboard-list"></i> Suivi des performances utilisateur par défi.</p>
+        <button class="btn-outline" id="openAddParticipationBtn"><i class="fas fa-plus"></i> Ajouter</button>
+      </div>
+      <div style="background: var(--blanc); border-radius: 28px; padding: 24px; box-shadow: var(--ombre-legere); border: 1px solid var(--gris-moyen); overflow-x: auto;">
+        <table class="data-table">
+          <thead><tr><th>ID</th><th>Utilisateur</th><th>Défi</th><th>Progression</th><th>Statut</th><th>Points</th><th>Créé le</th><th>Actions</th></tr></thead>
+          <tbody>
+            <?php foreach ($participations as $participation): ?>
+              <tr>
+                <td><?= htmlspecialchars($participation['id']) ?></td>
+                <td><?= htmlspecialchars($participation['utilisateur_nom'] ?? 'N/A') ?></td>
+                <td><?= htmlspecialchars($participation['defi_titre'] ?? 'N/A') ?></td>
+                <td><?= htmlspecialchars($participation['progression']) ?>%</td>
+                <td><?= $participation['termine'] ? '<span class="status-active">Terminé</span>' : '<span class="badge-tech">En cours</span>' ?></td>
+                <td><?= htmlspecialchars($participation['points_gagnes']) ?> pts</td>
+                <td><?= htmlspecialchars($participation['created_at']) ?></td>
+                <td>
+                  <button type="button" class="btn-edit edit-participation-btn" data-id="<?= $participation['id'] ?>" data-utilisateur-id="<?= $participation['utilisateur_id'] ?>" data-defi-id="<?= $participation['defi_id'] ?>" data-progression="<?= $participation['progression'] ?>" data-points="<?= $participation['points_gagnes'] ?>" data-termine="<?= $participation['termine'] ?>"><i class="fas fa-pen"></i> Modifier</button>
+                  <a href="../CONTROLLER/ParticipationController.php?action=delete&id=<?= $participation['id'] ?>" class="btn-danger btn-delete-confirm"><i class="fas fa-trash"></i></a>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <footer class="footer"><div class="footer-col"><h4>Kool Healthy</h4><p>Gamification & nutrition durable — Manger mieux, gagner des points, préserver la planète 🌍</p></div><div class="footer-bottom" style="margin-top:1rem;"><p>© 2025 Kool Healthy — Ensemble pour un futur healthy</p></div></footer>
@@ -120,6 +205,10 @@
   <!-- Modales -->
   <div id="loginModal" class="modal"><div class="modal-content"><span class="close-modal" id="closeLoginModal">&times;</span><h3>Connexion</h3><input type="email" placeholder="Email" id="loginEmail"><input type="password" placeholder="Mot de passe" id="loginPwd"><button class="btn-connect" style="width:100%; margin-top: 12px;" id="doLoginBtn">Se connecter</button></div></div>
   <div id="signupModal" class="modal"><div class="modal-content"><span class="close-modal" id="closeSignupModal">&times;</span><h3>Inscription</h3><input type="text" placeholder="Nom complet" id="signupName"><input type="email" placeholder="Email" id="signupEmail"><input type="password" placeholder="Mot de passe" id="signupPwd"><button class="btn-connect" style="width:100%; margin-top:12px;" id="doSignupBtn">S'inscrire</button></div></div>
+
+  <!-- Modales Participations -->
+  <div id="addParticipationModal" class="modal"><div class="modal-content" style="max-width: 600px; padding: 0;"><div class="modal-header"><h3><i class="fas fa-plus-circle"></i> Nouvelle participation</h3><span class="close-modal" id="closeAddParticipationModal">&times;</span></div><div class="modal-body"><form id="addParticipationForm" action="../CONTROLLER/ParticipationController.php?action=add" method="POST"><div style="display:flex; flex-direction:column; gap:14px;"><select name="utilisateur_id" style="width:100%; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"><option value="">Sélectionner un utilisateur</option><?php foreach ($utilisateurs as $user): ?><option value="<?= $user['id'] ?>"><?= htmlspecialchars($user['nom']) ?></option><?php endforeach; ?></select><select name="defi_id" style="width:100%; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"><option value="">Sélectionner un défi</option><?php foreach ($defisForParticipation as $defiSelect): ?><option value="<?= $defiSelect['id'] ?>"><?= htmlspecialchars($defiSelect['titre']) ?></option><?php endforeach; ?></select><input type="number" name="progression" placeholder="Progression (%)" min="0" max="100" style="width:100%; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"><label style="display:flex; align-items:center; gap:10px;"><input type="checkbox" name="termine" value="1"> Terminé</label><input type="number" name="points_gagnes" placeholder="Points gagnés" min="0" style="width:100%; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"><button class="btn-primary" type="submit" style="width:100%;">Créer</button></div></form></div></div></div>
+  <div id="editParticipationModal" class="modal"><div class="modal-content" style="max-width: 600px; padding: 0;"><div class="modal-header"><h3><i class="fas fa-pen"></i> Modifier participation</h3><span class="close-modal" id="closeEditParticipationModal">&times;</span></div><div class="modal-body"><form id="editParticipationForm" action="../CONTROLLER/ParticipationController.php?action=edit" method="POST"><input type="hidden" name="id"><div style="display:flex; flex-direction:column; gap:14px;"><select name="utilisateur_id" style="width:100%; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"><option value="">Sélectionner un utilisateur</option><?php foreach ($utilisateurs as $user): ?><option value="<?= $user['id'] ?>"><?= htmlspecialchars($user['nom']) ?></option><?php endforeach; ?></select><select name="defi_id" style="width:100%; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"><option value="">Sélectionner un défi</option><?php foreach ($defisForParticipation as $defiSelect): ?><option value="<?= $defiSelect['id'] ?>"><?= htmlspecialchars($defiSelect['titre']) ?></option><?php endforeach; ?></select><input type="number" name="progression" placeholder="Progression (%)" min="0" max="100" style="width:100%; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"><label style="display:flex; align-items:center; gap:10px;"><input type="checkbox" name="termine" value="1"> Terminé</label><input type="number" name="points_gagnes" placeholder="Points gagnés" min="0" style="width:100%; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"><button class="btn-primary" type="submit" style="width:100%;">Mettre à jour</button></div></form></div></div></div>
 
   <script>
     // ---------- DATA MODEL ----------
@@ -130,23 +219,9 @@
       defisCompletes: 4 
     };
     
-    let allDefis = [
-      { id:1, titre:"Manger 5 fruits/légumes par jour", type:"nutrition", points:50, participants:89, progression:80 },
-      { id:2, titre:"Réduire son empreinte carbone", type:"ecologie", points:100, participants:45, progression:45 },
-      { id:3, titre:"Tester 3 recettes végétales", type:"recette", points:75, participants:62, progression:100 },
-      { id:4, titre:"Partager un repas durable", type:"social", points:30, participants:34, progression:0 },
-      { id:5, titre:"Zero déchet pendant 3 jours", type:"ecologie", points:120, participants:27, progression:20 },
-      { id:6, titre:"Cuisiner local une semaine", type:"nutrition", points:85, participants:51, progression:60 }
-    ];
+    let allDefis = <?= json_encode($defis, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) ?>;
     
-    let classement = [
-      { rang:1, nom:"Julien R.", points:1250, defis:5 },
-      { rang:2, nom:"Sophie M.", points:980, defis:4 },
-      { rang:3, nom:"Léa B.", points:750, defis:3 },
-      { rang:4, nom:"Thomas L.", points:620, defis:2 },
-      { rang:5, nom:"Emma C.", points:510, defis:2 },
-      { rang:6, nom:"Adam K.", points:430, defis:1 }
-    ];
+    let classement = <?= json_encode($classement, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) ?>;
     
     // Helper UI updates
     function updateUserUI() {
@@ -289,7 +364,24 @@
     renderUnifiedDefis();
     renderUnifiedRanking();
     initTabs();
-    showSection('accueil');
+
+    // Maintien de l'onglet actif après rechargement (ajout/modif/suppression participation)
+    const urlParams = new URLSearchParams(window.location.search);
+    const successMsg = urlParams.get('success');
+    const errorMsg = urlParams.get('error');
+
+    if ((successMsg && successMsg.includes('participation')) || (errorMsg && errorMsg.includes('participation')) || errorMsg === 'db_error') {
+      showSection('defisUnified');
+      const partTabBtn = document.querySelector('.tab-btn[data-tab="participationsTab"]');
+      if (partTabBtn) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        partTabBtn.classList.add('active');
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active-pane'));
+        document.getElementById('participationsTab').classList.add('active-pane');
+      }
+    } else {
+      showSection('accueil');
+    }
     
     const originalParticipate = window.participateDefi;
     window.participateDefi = (id) => {
@@ -308,6 +400,62 @@
       } else {
         alert(`Défi non trouvé.`);
       }
+    };
+
+    // ----- LOGIQUE CRUD PARTICIPATIONS -----
+    const addParticipationModal = document.getElementById('addParticipationModal');
+    const editParticipationModal = document.getElementById('editParticipationModal');
+    const openAddParticipationBtn = document.getElementById('openAddParticipationBtn');
+
+    if (openAddParticipationBtn) {
+      openAddParticipationBtn.onclick = () => addParticipationModal.style.display = 'flex';
+    }
+    
+    document.getElementById('closeAddParticipationModal').onclick = () => addParticipationModal.style.display = 'none';
+    document.getElementById('closeEditParticipationModal').onclick = () => editParticipationModal.style.display = 'none';
+
+    document.querySelectorAll('.edit-participation-btn').forEach(btn => {
+      btn.onclick = function() {
+        const form = document.getElementById('editParticipationForm');
+        form.querySelector('[name="id"]').value = this.dataset.id;
+        form.querySelector('[name="utilisateur_id"]').value = this.dataset.utilisateurId;
+        form.querySelector('[name="defi_id"]').value = this.dataset.defiId;
+        form.querySelector('[name="progression"]').value = this.dataset.progression;
+        form.querySelector('[name="points_gagnes"]').value = this.dataset.points;
+        form.querySelector('[name="termine"]').checked = this.dataset.termine === '1';
+        editParticipationModal.style.display = 'flex';
+      };
+    });
+
+    function validateParticipationForm(form) {
+      const utilisateur = form.querySelector('[name="utilisateur_id"]').value;
+      const defi = form.querySelector('[name="defi_id"]').value;
+      const progression = parseInt(form.querySelector('[name="progression"]').value, 10);
+      const points = parseInt(form.querySelector('[name="points_gagnes"]').value, 10);
+      if (!utilisateur) { alert('Veuillez sélectionner un utilisateur.'); return false; }
+      if (!defi) { alert('Veuillez sélectionner un défi.'); return false; }
+      if (isNaN(progression) || progression < 0 || progression > 100) { alert('La progression doit être entre 0 et 100.'); return false; }
+      if (isNaN(points) || points < 0) { alert('Les points gagnés doivent être un nombre positif.'); return false; }
+      return true;
+    }
+
+    document.getElementById('addParticipationForm').onsubmit = function(e) { if(!validateParticipationForm(this)) e.preventDefault(); };
+    document.getElementById('editParticipationForm').onsubmit = function(e) { if(!validateParticipationForm(this)) e.preventDefault(); };
+
+    document.querySelectorAll('.btn-delete-confirm').forEach(link => {
+      link.onclick = function(event) {
+        if (!confirm('Voulez-vous vraiment supprimer cet enregistrement ?')) {
+          event.preventDefault();
+        }
+      };
+    });
+
+    // Close modal on outside click (add to existing window.onclick if necessary, or let it be handled separately)
+    const existingOnClick = window.onclick;
+    window.onclick = (e) => {
+      if (existingOnClick) existingOnClick(e);
+      if (e.target === addParticipationModal) addParticipationModal.style.display = 'none';
+      if (e.target === editParticipationModal) editParticipationModal.style.display = 'none';
     };
   </script>
 </body>

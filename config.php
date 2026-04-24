@@ -96,7 +96,6 @@ class config
             `termine` TINYINT(1) NOT NULL DEFAULT 0,
             `points_gagnes` INT NOT NULL DEFAULT 0,
             `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE KEY `unique_participation` (`utilisateur_id`, `defi_id`),
             FOREIGN KEY (`defi_id`) REFERENCES `defis`(`id`) ON DELETE CASCADE,
             INDEX `idx_utilisateur` (`utilisateur_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");

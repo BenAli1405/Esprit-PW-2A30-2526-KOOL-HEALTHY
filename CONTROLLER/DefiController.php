@@ -8,7 +8,14 @@ class DefiController
     public function listeDefis(): array
     {
         $db = config::getConnexion();
-        $stmt = $db->query("SELECT * FROM defis ORDER BY created_at DESC");
+        $sql = "SELECT d.id, d.titre, d.type, d.points, d.date_debut, d.date_fin, d.created_at,
+                       COUNT(p.id) AS participants,
+                       ROUND(COALESCE(AVG(p.progression), 0)) AS progression
+                FROM defis d
+                LEFT JOIN participations p ON p.defi_id = d.id
+                GROUP BY d.id
+                ORDER BY d.created_at DESC";
+        $stmt = $db->query($sql);
         return $stmt->fetchAll();
     }
 
