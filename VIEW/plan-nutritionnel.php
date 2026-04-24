@@ -776,7 +776,21 @@
                     <section class="plan-builder">
                         <h3 class="builder-title">✨ CREER UN PLAN NUTRITIONNEL</h3>
 
-                        <form action="plan-adapte.php" method="GET">
+                        <?php if (!empty($message)): ?>
+                        <div style="padding:14px 18px; border-radius:14px; margin-bottom:18px; font-weight:600; <?= $messageType === 'success' ? 'background:#e8f5e9;color:#2f7a34;border:1px solid #c8e6c9;' : 'background:#fbe9e7;color:#b71c1c;border:1px solid #f5c6cb;' ?>">
+                            <?= htmlspecialchars($message) ?>
+                        </div>
+                        <?php endif; ?>
+
+                        <form action="index.php?page=plan-nutritionnel" method="POST" onsubmit="return validateAndPreparePlanForm(this);">
+                            <input type="hidden" name="action_type" value="plan">
+                            <input type="hidden" name="action" value="create">
+                            <input type="hidden" name="nom" id="autoNom" value="">
+                            <input type="hidden" name="utilisateur_id" id="autoUserId" value="">
+                            <input type="hidden" id="plansCount" value="<?= $nextUserId ?? 1 ?>">
+                            <input type="hidden" name="preference" id="autoPreference" value="">
+                            <div id="formErrors" style="display:none;"></div>
+
                             <div class="builder-block">
                                 <p class="builder-label">🎯 OBJECTIF :</p>
                                 <div class="choice-row">
@@ -787,22 +801,15 @@
                             </div>
 
                             <div class="builder-block">
-                                <p class="builder-label">🗓️ DUREE :</p>
-                                <div class="choice-row">
-                                    <label><input type="radio" name="duree" value="3"> 3 jours</label>
-                                    <label><input type="radio" name="duree" value="7" checked> 7 jours</label>
-                                    <label><input type="radio" name="duree" value="14"> 14 jours</label>
-                                    <label><input type="radio" name="duree" value="30"> 30 jours</label>
-                                </div>
+                                <p class="builder-label">🗓️ DUREE (en jours) :</p>
+                                <input type="text" name="duree" id="dureeInput" placeholder="ex: 7, 14, 21, 30" style="width:100%; border:1px solid #e0e0e0; border-radius:10px; padding:12px 14px; font:inherit;">
+                                <small style="color:#666; display:block; margin-top:5px;">La durée minimum est de 7 jours.</small>
                             </div>
 
                             <div class="builder-block">
                                 <p class="builder-label">🥗 PREFERENCES :</p>
-                                <div class="choice-row">
-                                    <label><input type="checkbox" name="preferences" value="vegetarien" checked> Vegetarien</label>
-                                    <label><input type="checkbox" name="preferences" value="sans-gluten"> Sans gluten</label>
-                                    <label><input type="checkbox" name="preferences" value="sans-lactose"> Sans lactose</label>
-                                </div>
+                                <input type="text" name="preference_input" id="preferenceInput" placeholder="ex: Végétarien, Sans gluten, Sans lactose" style="width:100%; border:1px solid #e0e0e0; border-radius:10px; padding:12px 14px; font:inherit;">
+                                <small style="color:#666; display:block; margin-top:5px;">Séparez vos préférences par des virgules.</small>
                             </div>
 
                             <div class="builder-block">
@@ -814,6 +821,86 @@
                                 <button class="generate-btn" type="submit">[ GENERER MON PLAN -> ]</button>
                             </div>
                         </form>
+
+                        <script>
+                        function validateAndPreparePlanForm(form) {
+                            var errors = [];
+
+                            // 1. Vérifier que l'objectif est sélectionné
+                            var objectifRadio = form.querySelector('input[name="objectif"]:checked');
+                            if (!objectifRadio) {
+                                errors.push("Veuillez choisir un objectif.");
+                            }
+
+                            // 2. Vérifier la durée (champ texte)
+                            var duree = document.getElementById('dureeInput').value.trim();
+                            if (duree === "") {
+                                errors.push("La durée est obligatoire.");
+                            } else if (!/^[0-9]+$/.test(duree)) {
+                                errors.push("La durée doit être un nombre valide.");
+                            } else if (parseInt(duree) < 7) {
+                                errors.push("La durée doit être au minimum de 7 jours.");
+                            } else if (parseInt(duree) > 365) {
+                                errors.push("La durée ne peut pas dépasser 365 jours.");
+                            }
+
+                            // 3. Vérifier la préférence
+                            var preference = document.getElementById('preferenceInput').value.trim();
+                            if (preference === "") {
+                                errors.push("La préférence alimentaire est obligatoire.");
+                            } else if (preference.length > 255) {
+                                errors.push("La préférence ne peut pas dépasser 255 caractères.");
+                            }
+
+                            // 4. Vérifier les allergies
+                            var allergies = form.querySelector('input[name="allergies"]').value.trim();
+                            if (allergies !== "") {
+                                if (allergies.length > 1000) {
+                                    errors.push("Les allergies ne peuvent pas dépasser 1000 caractères.");
+                                }
+                                if (/[<>]/.test(allergies)) {
+                                    errors.push("Le champ allergies ne doit pas contenir les caractères < ou >.");
+                                }
+                            }
+
+                            // 5. Afficher les erreurs
+                            var errorDiv = document.getElementById('formErrors');
+                            if (errors.length > 0) {
+                                errorDiv.innerHTML = '<ul style="margin:0;padding-left:18px;">' +
+                                    errors.map(function(e) { return '<li>' + e + '</li>'; }).join('') + '</ul>';
+                                errorDiv.style.display = 'block';
+                                errorDiv.style.padding = '14px 18px';
+                                errorDiv.style.borderRadius = '14px';
+                                errorDiv.style.marginBottom = '18px';
+                                errorDiv.style.background = '#fbe9e7';
+                                errorDiv.style.color = '#b71c1c';
+                                errorDiv.style.border = '1px solid #f5c6cb';
+                                errorDiv.style.fontWeight = '600';
+                                return false;
+                            }
+                            errorDiv.style.display = 'none';
+
+                            // 6. Préparer les champs cachés pour l'envoi
+                            var objectifLabels = {
+                                'perte-poids': 'Perte de poids',
+                                'maintien': 'Maintien',
+                                'prise-muscle': 'Prise de muscle'
+                            };
+                            var label = objectifLabels[objectifRadio.value] || 'Nutritionnel';
+                            document.getElementById('autoNom').value = 'Plan ' + label;
+
+                            var nextUserId = document.getElementById('plansCount').value;
+                            document.getElementById('autoUserId').value = parseInt(nextUserId);
+
+                            document.getElementById('autoPreference').value = preference;
+
+                            if (allergies === "") {
+                                form.querySelector('input[name="allergies"]').value = 'Aucune';
+                            }
+
+                            return true;
+                        }
+                        </script>
                     </section>
 
                 </div>

@@ -24,6 +24,11 @@ class PlanModel
         return $stmt->fetch();
     }
 
+    public function getLastInsertId()
+    {
+        return $this->pdo->lastInsertId();
+    }
+
     public function create(array $data)
     {
         $stmt = $this->pdo->prepare(

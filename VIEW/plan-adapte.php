@@ -387,22 +387,60 @@
         </ul>
     </nav>
 
+<?php
+// Préparer les données du plan pour l'affichage
+$objectifLabels = [
+    'perte-poids'  => 'Perte de poids',
+    'maintien'     => 'Maintien',
+    'prise-muscle' => 'Prise de muscle',
+];
+$caloriesMap = [
+    'perte-poids'  => 1750,
+    'maintien'     => 2000,
+    'prise-muscle' => 2500,
+];
+
+if (!empty($currentPlan)) {
+    $planNom       = htmlspecialchars($currentPlan['nom']);
+    $planObjectif  = $currentPlan['objectif'];
+    $planDuree     = (int)$currentPlan['duree'];
+    $planPref      = htmlspecialchars($currentPlan['preference'] ?? 'Standard');
+    $objectifText  = $objectifLabels[$planObjectif] ?? 'Maintien';
+    $baseCalories  = $caloriesMap[$planObjectif] ?? 2000;
+}
+?>
+
+    <?php if (!empty($currentPlan)): ?>
     <!-- Plan Summary -->
     <div class="plan-summary">
-        <h1 class="plan-title" id="planTitle">MON PLAN NUTRITIONNEL</h1>
+        <h1 class="plan-title"><?= strtoupper($planNom) ?> – <?= strtoupper($objectifText) ?> (<?= $planDuree ?> JOURS)</h1>
         <div class="plan-badges">
-            <div class="badge">
-                <span>🎯</span>
-                <span id="badgeObjectif">Objectif</span>
-            </div>
-            <div class="badge">
-                <span>⚡</span>
-                <span id="badgeCalories">kcal / jour</span>
-            </div>
-            <div class="badge">
-                <span>✓</span>
-                <span id="badgeDiet">Régime</span>
-            </div>
+            <div class="badge"><span>🎯</span><span>Objectif : <?= $objectifText ?></span></div>
+            <div class="badge"><span>⚡</span><span><?= $baseCalories ?> kcal / jour</span></div>
+            <div class="badge"><span>✓</span><span><?= $planPref ?></span></div>
+<?php
+// Calcul de la progression du plan
+$totalRepasPlan = count($repasForFront);
+$repasConsommes = 0;
+$repasAnnules = 0;
+$caloriesTotal = 0;
+$caloriesObjectifTotal = $baseCalories * $planDuree;
+
+foreach ($repasForFront as $r) {
+    if ($r['statut'] === 'consomme') {
+        $repasConsommes++;
+        $caloriesTotal += (int)($r['calories_consommees'] ?? 0);
+    } elseif ($r['statut'] === 'annule') {
+        $repasAnnules++;
+    }
+}
+$pourcentageRepas = $totalRepasPlan > 0 ? round(($repasConsommes / $totalRepasPlan) * 100) : 0;
+$pourcentageCalories = $caloriesObjectifTotal > 0 ? round(($caloriesTotal / $caloriesObjectifTotal) * 100) : 0;
+$reste = $totalRepasPlan - $repasConsommes - $repasAnnules;
+?>
+            <div class="badge"><span>📊</span><span><?= $pourcentageRepas ?>% complété</span></div>
+            <div class="badge"><span>🔥</span><span><?= $caloriesTotal ?> / <?= $caloriesObjectifTotal ?> kcal</span></div>
+            <div class="badge"><span>⏳</span><span><?= $reste ?> restants</span></div>
         </div>
     </div>
 
@@ -410,6 +448,13 @@
     <main class="container">
         <div id="plansContainer"></div>
 
+        <!-- Graphique des calories par jour -->
+        <div style="background: white; border-radius: 12px; padding: 20px; margin: 20px 0; border: 1px solid #e0e0e0;">
+            <h4 style="color: #2f8a43; margin: 0 0 15px; font-size: 16px;">📊 Évolution des calories consommées</h4>
+            <div id="caloriesChart" style="display: flex; gap: 10px; align-items: flex-end; min-height: 200px; justify-content: space-around;">
+                <!-- Les barres seront générées par JavaScript -->
+            </div>
+        </div>
         <!-- Recommendation -->
         <div class="recommendation">
             <div class="recommendation-title">💡 RECOMMANDATION IA</div>
@@ -420,161 +465,201 @@
 
         <!-- Action Buttons -->
         <div class="action-buttons">
-            <button class="btn btn-tertiary" onclick="window.location.href='plan-nutritionnel.php'">➕ AJOUTER</button>
-            <button class="btn" style="background:#e53935; color:white;" onclick="if(confirm('Voulez-vous supprimer ce plan ?')) window.location.href='plan-nutritionnel.php';">🗑️ SUPPRIMER</button>
-            <button class="btn btn-primary" onclick="window.history.back()">🔧 MODIFIER</button>
-            <button class="btn btn-secondary">📥 PDF</button>
+            <button class="btn btn-tertiary" onclick="window.location.href='index.php?page=plan-nutritionnel'">➕ AJOUTER</button>
+            <form method="post" action="index.php?page=plan-adapte" style="display:inline;" onsubmit="return confirm('Voulez-vous vraiment supprimer ce plan ? Cette action est irréversible.');">
+                <input type="hidden" name="action_type" value="plan">
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="id" value="<?= (int)$currentPlan['id'] ?>">
+                <button type="submit" class="btn" style="background:#e53935; color:white;">🗑️ SUPPRIMER</button>
+            </form>
+            <button class="btn btn-primary" onclick="openEditPlanModal()">🔧 MODIFIER</button>
+            <button type="button" class="btn btn-secondary" onclick="window.location.href='../CONTROLLER/generate_pdf.php?id=<?= (int)$currentPlan['id'] ?>'">📥 PDF</button>
+        </div>
+
+        <!-- Modal Modification du Plan -->
+        <div id="editPlanModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999;">
+            <div style="background:#fff; border-radius:18px; padding:28px; width:100%; max-width:520px; box-shadow:0 8px 40px rgba(0,0,0,0.2); margin:auto; position:relative; top:50%; transform:translateY(-50%);">
+                <h3 style="color:#2f8a43; margin:0 0 20px; font-size:1.2rem;">🔧 Modifier le plan</h3>
+                <form method="post" action="index.php?page=plan-adapte" id="editPlanForm">
+                    <input type="hidden" name="action_type" value="plan">
+                    <input type="hidden" name="action" value="update">
+                    <input type="hidden" name="id" value="<?= (int)$currentPlan['id'] ?>">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                        <div style="grid-column:span 2;">
+                            <label style="font-size:0.82rem;font-weight:600;color:#3e5d45;display:block;margin-bottom:4px;">Nom du plan</label>
+                            <input type="text" name="nom" value="<?= htmlspecialchars($currentPlan['nom']) ?>" required style="width:100%;border:1px solid #e0e0e0;border-radius:10px;padding:10px;font:inherit;">
+                        </div>
+                        <div>
+                            <label style="font-size:0.82rem;font-weight:600;color:#3e5d45;display:block;margin-bottom:4px;">Objectif</label>
+                            <select name="objectif" style="width:100%;border:1px solid #e0e0e0;border-radius:10px;padding:10px;font:inherit;background:white;">
+                                <option value="perte-poids" <?= $currentPlan['objectif']==='perte-poids'?'selected':'' ?>>Perte de poids</option>
+                                <option value="maintien" <?= $currentPlan['objectif']==='maintien'?'selected':'' ?>>Maintien</option>
+                                <option value="prise-muscle" <?= $currentPlan['objectif']==='prise-muscle'?'selected':'' ?>>Prise de muscle</option>
+                            </select>
+                        </div>
+                        <input type="hidden" name="utilisateur_id" value="<?= htmlspecialchars($currentPlan['utilisateur_id']) ?>">
+                        <div>
+                            <label style="font-size:0.82rem;font-weight:600;color:#3e5d45;display:block;margin-bottom:4px;">Durée (jours)</label>
+                            <input type="text" name="duree" value="<?= htmlspecialchars($currentPlan['duree']) ?>" required style="width:100%;border:1px solid #e0e0e0;border-radius:10px;padding:10px;font:inherit;">
+                        </div>
+                        <div>
+                            <label style="font-size:0.82rem;font-weight:600;color:#3e5d45;display:block;margin-bottom:4px;">Préférence</label>
+                            <input type="text" name="preference" value="<?= htmlspecialchars($currentPlan['preference'] ?? '') ?>" required style="width:100%;border:1px solid #e0e0e0;border-radius:10px;padding:10px;font:inherit;">
+                        </div>
+                        <div style="grid-column:span 2;">
+                            <label style="font-size:0.82rem;font-weight:600;color:#3e5d45;display:block;margin-bottom:4px;">Allergies</label>
+                            <textarea name="allergies" rows="2" required style="width:100%;border:1px solid #e0e0e0;border-radius:10px;padding:10px;font:inherit;resize:vertical;"><?= htmlspecialchars($currentPlan['allergies'] ?? '') ?></textarea>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:10px;margin-top:18px;">
+                        <button type="submit" class="btn btn-tertiary" style="flex:1;">✓ Enregistrer</button>
+                        <button type="button" class="btn" style="flex:1;background:#e0e0e0;color:#333;" onclick="closeEditPlanModal()">Annuler</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </main>
 
     <script>
         (function () {
-            const params = new URLSearchParams(window.location.search);
+            const baseCalories = <?= $baseCalories ?>;
 
-            const objectifMap = {
-                "perte-poids": "Perte de poids",
-                "maintien": "Maintien",
-                "prise-muscle": "Prise de muscle"
+            // ── Real meal data injected from PHP ──
+            const mealData = <?= json_encode($repasForFront ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+
+            const typeRepasLabels = {
+                'petit_dejeuner': 'Petit-déjeuner',
+                'dejeuner': 'Déjeuner',
+                'diner': 'Dîner',
+                'collation': 'Collation'
             };
-
-            const caloriesMap = {
-                "perte-poids": 1750,
-                "maintien": 2000,
-                "prise-muscle": 2500
-            };
-
-            const objectif = params.get("objectif") || "maintien";
-            const duree = params.get("duree") || "7";
-            const preferences = params.getAll("preferences").length ? params.getAll("preferences") : ["Standard"];
-
-            const totalDays = Math.max(1, Math.min(parseInt(duree) || 7, 30));
-            const baseCalories = caloriesMap[objectif] || 2000;
-            const objectifText = objectifMap[objectif] || "Maintien";
-            const dietText = preferences.map(p => p.charAt(0).toUpperCase() + p.slice(1).replace('-', ' ')).join(' & ');
-
-            // Mise à jour de la barre d'entête avec les infos dynamiques
-            document.getElementById('planTitle').textContent = `MON PLAN NUTRITIONNEL – ${objectifText.toUpperCase()} (${totalDays} JOURS)`;
-            document.getElementById('badgeObjectif').textContent = `Objectif : ${objectifText}`;
-            document.getElementById('badgeCalories').textContent = `${baseCalories} kcal / jour`;
-            document.getElementById('badgeDiet').textContent = dietText;
-
-            // Days of the week
-            const daysOfWeek = ["LUNDI", "MARDI", "MERCREDI", "JEUDI", "VENDREDI", "SAMEDI", "DIMANCHE"];
-            const startDate = new Date(2026, 3, 14);
-
-            // Meal templates
-            const mealData = [
-                {
-                    meals: [
-                        { name: "Petit-déjeuner", time: "08:00", desc: "Porridge à la banane – œufs brouillés bio", kcal: 450, status: "consumed" },
-                        { name: "Déjeuner", time: "12:30", desc: "Buddha bowl quinoa – légumes rôtis – sauce tahini", kcal: 580, status: "pending" },
-                        { name: "Dîner", time: "19:00", desc: "Curry pois chiches – lait de coco – riz basmati", kcal: 520, status: "pending" }
-                    ]
-                },
-                {
-                    meals: [
-                        { name: "Petit-déjeuner", time: "08:00", desc: "Smoothie bowl fruits – granola maison", kcal: 420, status: "pending" },
-                        { name: "Déjeuner", time: "12:30", desc: "Salade falafel – houmous – crudités", kcal: 610, status: "pending" },
-                        { name: "Dîner", time: "19:00", desc: "Risotto champignons – asperges – parmesan", kcal: 540, status: "pending" }
-                    ]
-                },
-                {
-                    meals: [
-                        { name: "Petit-déjeuner", time: "08:00", desc: "Toast fromage frais – tomate – avocado", kcal: 380, status: "pending" },
-                        { name: "Déjeuner", time: "12:30", desc: "Pâtes complètes sauce tomate – épinards", kcal: 600, status: "pending" },
-                        { name: "Dîner", time: "19:00", desc: "Ratatouille – tofu fumé – pain complet", kcal: 510, status: "pending" }
-                    ]
-                },
-                {
-                    meals: [
-                        { name: "Petit-déjeuner", time: "08:00", desc: "Yaourt grec – muesli – miel", kcal: 410, status: "pending" },
-                        { name: "Déjeuner", time: "12:30", desc: "Wrap végétal – guacamole – crudités", kcal: 610, status: "pending" },
-                        { name: "Dîner", time: "19:00", desc: "Lentilles corail – légumes estivaux", kcal: 480, status: "pending" }
-                    ]
-                },
-                {
-                    meals: [
-                        { name: "Petit-déjeuner", time: "08:00", desc: "Pancakes complets – fruits rouges", kcal: 470, status: "pending" },
-                        { name: "Déjeuner", time: "12:30", desc: "Buddha bowl riz – légumes – sauce soja", kcal: 610, status: "pending" },
-                        { name: "Dîner", time: "19:00", desc: "Pizza maison – base tomate – légumes", kcal: 520, status: "pending" }
-                    ]
-                },
-                {
-                    meals: [
-                        { name: "Petit-déjeuner", time: "08:00", desc: "Œufs à la coque – pain grillé – confiture", kcal: 430, status: "pending" },
-                        { name: "Déjeuner", time: "12:30", desc: "Taboulé quinoa – pois chiche – menthe", kcal: 550, status: "pending" },
-                        { name: "Dîner", time: "19:00", desc: "Gratin de légumes – sauce béchamel légère", kcal: 490, status: "pending" }
-                    ]
-                },
-                {
-                    meals: [
-                        { name: "Petit-déjeuner", time: "08:00", desc: "Acai bowl – granola – noix de coco", kcal: 460, status: "pending" },
-                        { name: "Déjeuner", time: "12:30", desc: "Falafel maison – salade croquante", kcal: 630, status: "pending" },
-                        { name: "Dîner", time: "19:00", desc: "Couscous légumes – sauce tomate épicée", kcal: 530, status: "pending" }
-                    ]
-                }
-            ];
 
             const plansContainer = document.getElementById("plansContainer");
             plansContainer.innerHTML = "";
 
-            for (let i = 0; i < totalDays && i < mealData.length; i++) {
-                const day = mealData[i];
-                const dayDate = new Date(startDate);
-                dayDate.setDate(dayDate.getDate() + i);
-                const dayName = daysOfWeek[dayDate.getDay()];
-                const dayNum = dayDate.getDate();
-                const monthName = ["JANVIER", "FÉVRIER", "MARS", "AVRIL", "MAI", "JUIN", "JUILLET", "AOÛT", "SEPTEMBRE", "OCTOBRE", "NOVEMBRE", "DÉCEMBRE"][dayDate.getMonth()];
+            if (mealData.length === 0) {
+                plansContainer.innerHTML = `
+                    <div style="text-align:center; padding:40px; color:#5b6f5f; background:#fff; border-radius:8px; border:1px solid #e0e0e0;">
+                        <div style="font-size:2.5rem; margin-bottom:12px;">🍽️</div>
+                        <p style="font-size:1rem; font-weight:600;">Aucun repas enregistré pour ce plan.</p>
+                        <p style="font-size:0.88rem; margin-top:6px;">Ajoutez des repas depuis le <a href="index.php?page=backoffice" style="color:#4a9b8e;font-weight:700;">backoffice</a>.</p>
+                    </div>`;
+            } else {
+                const byDate = {};
+                mealData.forEach(repas => {
+                    const d = repas.date || 'Sans date';
+                    if (!byDate[d]) byDate[d] = [];
+                    byDate[d].push(repas);
+                });
 
-                const totalMealKcal = day.meals.reduce((sum, meal) => sum + meal.kcal, 0);
-                const dayBlock = document.createElement("div");
-                dayBlock.className = "day-block";
-                dayBlock.innerHTML = `
-                    <div class="day-header" onclick="toggleDay(this)">
-                        <div class="day-date">📅 ${dayName} ${dayNum} ${monthName}</div>
-                        <div class="day-toggle">▼</div>
-                    </div>
-                    <div class="day-content">
-                        ${day.meals.map(meal => `
-                            <div class="meal">
-                                <div class="meal-header">
-                                    <div>
-                                        <div class="meal-title">🍽️ ${meal.name} (${meal.time})</div>
-                                        <div class="meal-description">${meal.desc}</div>
-                                    </div>
-                                    <div class="meal-kcal">${meal.kcal} kcal</div>
-                                </div>
-                                <button class="meal-action ${meal.status === 'consumed' ? 'consumed' : 'pending'}">
-                                    ${meal.status === 'consumed' ? '✓ Consommé' : '→ À venir'}
-                                </button>
+                const daysOfWeek = ["DIMANCHE", "LUNDI", "MARDI", "MERCREDI", "JEUDI", "VENDREDI", "SAMEDI"];
+                const monthNames = ["JANVIER", "FÉVRIER", "MARS", "AVRIL", "MAI", "JUIN",
+                                    "JUILLET", "AOÛT", "SEPTEMBRE", "OCTOBRE", "NOVEMBRE", "DÉCEMBRE"];
+
+                Object.keys(byDate).sort().forEach(dateStr => {
+                    const meals = byDate[dateStr];
+                    let dayLabel = dateStr;
+                    let totalKcal = 0;
+
+                    if (dateStr !== 'Sans date') {
+                        const d = new Date(dateStr);
+                        if (!isNaN(d)) {
+                            dayLabel = `${daysOfWeek[d.getDay()]} ${d.getDate()} ${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+                        }
+                    }
+
+                    meals.forEach(m => {
+                        totalKcal += parseInt(m.calories_consommees) || 0;
+                    });
+
+                    const dayBlock = document.createElement("div");
+                    dayBlock.className = "day-block";
+                    dayBlock.innerHTML = `
+                        <div class="day-header" onclick="toggleDay(this)">
+                            <div class="day-date">📅 ${dayLabel}</div>
+                            <div class="day-toggle">▼</div>
+                        </div>
+                        <div class="day-content">
+                            ${meals.map(repas => {
+                                const typeLabel = typeRepasLabels[repas.type_repas] || repas.type_repas || '—';
+                                const heure = repas.heure_prevue || '—';
+                                const kcal = repas.calories_consommees ? parseInt(repas.calories_consommees) : null;
+                                const isConsumed = repas.statut === 'consomme';
+                                const isAnnule  = repas.statut === 'annule';
+                                const btnClass  = isConsumed ? 'consumed' : 'pending';
+                                const btnLabel  = isConsumed ? '✓ Consommé' : (isAnnule ? '✗ Annulé' : '→ À venir');
+                                const notes     = repas.notes ? `<div class="meal-description" style="font-style:italic;">${repas.notes}</div>` : '';
+                                return `
+                                    <div class="meal">
+                                        <div class="meal-header">
+                                            <div>
+                                                <div class="meal-title">🍽️ ${repas.nom_recette || '—'} <span style="font-size:0.82rem;color:#888;font-weight:500;">(${typeLabel} – ${heure})</span></div>
+                                                ${notes}
+                                            </div>
+                                            <div class="meal-kcal">${kcal !== null ? kcal + ' kcal' : '—'}</div>
+                                        </div>
+                                        <button class="meal-action ${btnClass}">${btnLabel}</button>
+                                    </div>`;
+                            }).join('')}
+                        </div>
+                        <div class="day-footer">
+                            <span>Total jour : <span class="total-kcal ${totalKcal === baseCalories ? 'success' : ''}">${totalKcal} / ${baseCalories} kcal</span></span>
+                        </div>
+                    `;
+                    plansContainer.appendChild(dayBlock);
+                });
+            }
+
+            // Générer le graphique des calories par jour
+            function renderCaloriesChart() {
+                const chartContainer = document.getElementById('caloriesChart');
+                if (!chartContainer) return;
+                
+                // Grouper les calories par date
+                const caloriesParJour = {};
+                mealData.forEach(repas => {
+                    const date = repas.date;
+                    const calories = parseInt(repas.calories_consommees) || 0;
+                    if (!caloriesParJour[date]) caloriesParJour[date] = 0;
+                    caloriesParJour[date] += calories;
+                });
+                
+                const chartData = Object.keys(caloriesParJour).sort().map(date => ({
+                    date: date,
+                    calories: caloriesParJour[date],
+                    objectif: baseCalories
+                }));
+                
+                if (chartData.length === 0) {
+                    chartContainer.innerHTML = '<div style="text-align:center; color:#999; padding:40px;">📭 Aucune donnée calorique disponible</div>';
+                    return;
+                }
+                
+                const maxCalories = Math.max(...chartData.map(d => d.calories), baseCalories);
+                const maxHeight = 150;
+                
+                chartContainer.innerHTML = chartData.map(day => {
+                    const height = Math.max(30, (day.calories / maxCalories) * maxHeight);
+                    const objectifHeight = (day.objectif / maxCalories) * maxHeight;
+                    const dateObj = new Date(day.date);
+                    const dateFormatee = dateObj.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+                    
+                    return `
+                        <div style="flex:1; text-align: center;">
+                            <div style="position: relative; height: ${maxHeight}px; margin-bottom: 8px;">
+                                <div style="position: absolute; bottom: 0; width: 100%; background: #ff9800; height: ${objectifHeight}px; border-radius: 8px 8px 0 0; opacity: 0.3;"></div>
+                                <div style="position: absolute; bottom: 0; width: 100%; background: linear-gradient(180deg, #4caf50, #2e7d32); height: ${height}px; border-radius: 8px 8px 0 0; transition: height 0.3s;"></div>
                             </div>
-                        `).join('')}
-                    </div>
-                    <div class="day-footer">
-                        <span>Total jour : <span class="total-kcal ${totalMealKcal === baseCalories ? 'success' : ''}">${totalMealKcal} / ${baseCalories} kcal</span></span>
-                    </div>
-                `;
-                plansContainer.appendChild(dayBlock);
+                            <div style="font-size: 11px; color: #555;">${dateFormatee}</div>
+                            <div style="font-size: 13px; font-weight: bold; color: #2e7d32;">${day.calories}</div>
+                            <div style="font-size: 10px; color: #999;">/ ${day.objectif}</div>
+                        </div>
+                    `;
+                }).join('');
             }
 
-            // Add collapsed day headers for remaining days
-            for (let i = totalDays; i < 7; i++) {
-                const dayDate = new Date(startDate);
-                dayDate.setDate(dayDate.getDate() + i);
-                const dayName = daysOfWeek[dayDate.getDay()];
-                const dayNum = dayDate.getDate();
-                const monthName = ["JANVIER", "FÉVRIER", "MARS", "AVRIL", "MAI", "JUIN", "JUILLET", "AOÛT", "SEPTEMBRE", "OCTOBRE", "NOVEMBRE", "DÉCEMBRE"][dayDate.getMonth()];
-
-                const dayBlock = document.createElement("div");
-                dayBlock.className = "day-block";
-                dayBlock.innerHTML = `
-                    <div class="day-header collapsed" onclick="toggleDay(this)">
-                        <div class="day-date">📅 ${dayName} ${dayNum} ${monthName}</div>
-                        <div class="day-toggle">▶</div>
-                    </div>
-                `;
-                plansContainer.appendChild(dayBlock);
-            }
+            // Appeler la fonction après avoir construit les repas
+            renderCaloriesChart();
 
         })();
 
@@ -596,6 +681,29 @@
                 toggle.textContent = "▶";
             }
         }
+
+        function openEditPlanModal() {
+            document.getElementById('editPlanModal').style.display = 'flex';
+        }
+        function closeEditPlanModal() {
+            document.getElementById('editPlanModal').style.display = 'none';
+        }
+        document.getElementById('editPlanModal').addEventListener('click', function(e) {
+            if (e.target === this) closeEditPlanModal();
+        });
     </script>
+
+    <?php else: ?>
+    <!-- Aucun plan sélectionné -->
+    <main class="container">
+        <div style="text-align:center; padding:60px 20px; background:#fff; border-radius:12px; border:1px solid #e0e0e0; margin-top:30px;">
+            <div style="font-size:3rem; margin-bottom:16px;">📋</div>
+            <h2 style="color:#2f8a43; margin:0 0 10px;">Aucun plan sélectionné</h2>
+            <p style="color:#666; font-size:1rem; margin:0 0 20px;">Créez un plan nutritionnel personnalisé pour commencer.</p>
+            <a href="index.php?page=plan-nutritionnel" style="display:inline-block; padding:12px 28px; background:#4a9b8e; color:white; border-radius:25px; text-decoration:none; font-weight:700; font-size:0.95rem;">✨ Créer mon plan</a>
+        </div>
+    </main>
+    <?php endif; ?>
+
 </body>
 </html>
