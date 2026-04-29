@@ -3,7 +3,10 @@ session_start();
 require_once __DIR__ . '/../CONTROLLER/AuthController.php';
 
 $authController = new AuthController();
+$authController->exigerFront('backoffice.php');
 $utilisateurConnecte = $authController->utilisateurConnecte();
+$success = $_GET['success'] ?? '';
+$error = $_GET['error'] ?? '';
 
 if (!$utilisateurConnecte) {
     header('Location: auth.php');
@@ -19,6 +22,15 @@ $profilUtilisateur = [
     'taille' => $utilisateurConnecte['taille'] ?? null,
     'imc' => $utilisateurConnecte['imc'] ?? null,
     'objectif' => $utilisateurConnecte['objectif'] ?? null
+];
+
+$messagesErreur = [
+    'invalid_data' => 'Veuillez verifier les informations saisies (email, age, poids, taille).',
+    'email_exists' => 'Cette adresse email est deja utilisee par un autre compte.',
+    'name_exists' => 'Ce nom est deja utilise par un autre compte.',
+    'password_too_short' => 'Le nouveau mot de passe doit contenir au moins 6 caracteres.',
+    'server_error' => 'Une erreur est survenue pendant la mise a jour.',
+    'profile_update' => 'La mise a jour du profil a echoue.'
 ];
 ?>
 <!DOCTYPE html>
@@ -75,6 +87,14 @@ $profilUtilisateur = [
             <div class="profile-page">
                 <!-- Barre de profil simplifiée -->
                 <section class="panel profile-header-bar">
+                    <?php if ($success === 'profile_updated'): ?>
+                        <div class="profile-feedback success">Vos informations ont ete mises a jour avec succes.</div>
+                    <?php endif; ?>
+
+                    <?php if ($error !== '' && isset($messagesErreur[$error])): ?>
+                        <div class="profile-feedback error"><?php echo htmlspecialchars($messagesErreur[$error]); ?></div>
+                    <?php endif; ?>
+
                     <div class="profile-header-content">
                         <div class="profile-avatar-small">
                             <?php echo strtoupper(substr($profilUtilisateur['nom'], 0, 2)); ?>
@@ -112,7 +132,47 @@ $profilUtilisateur = [
                         <!-- Informations Personnelles -->
                         <section class="panel profile-section">
                             <h2>📋 Informations Personnelles</h2>
-                            <div class="profile-grid">
+                            <form class="profile-edit-form" method="POST" action="../CONTROLLER/AuthController.php?action=update_profile">
+                                <div class="profile-grid">
+                                    <div class="profile-field">
+                                        <label for="nom">Nom</label>
+                                        <input id="nom" name="nom" type="text" required value="<?php echo htmlspecialchars((string) $profilUtilisateur['nom']); ?>">
+                                    </div>
+                                    <div class="profile-field">
+                                        <label for="email">Email</label>
+                                        <input id="email" name="email" type="email" required value="<?php echo htmlspecialchars((string) $profilUtilisateur['email']); ?>">
+                                    </div>
+                                </div>
+
+                                <div class="profile-grid">
+                                    <div class="profile-field">
+                                        <label for="age">Age</label>
+                                        <input id="age" name="age" type="number" min="1" required value="<?php echo htmlspecialchars((string) ($profilUtilisateur['age'] ?? '')); ?>">
+                                    </div>
+                                    <div class="profile-field">
+                                        <label for="poids">Poids (kg)</label>
+                                        <input id="poids" name="poids" type="number" min="1" step="0.1" value="<?php echo htmlspecialchars((string) ($profilUtilisateur['poids'] ?? '')); ?>">
+                                    </div>
+                                    <div class="profile-field">
+                                        <label for="taille">Taille (cm)</label>
+                                        <input id="taille" name="taille" type="number" min="1" step="0.1" value="<?php echo htmlspecialchars((string) ($profilUtilisateur['taille'] ?? '')); ?>">
+                                    </div>
+                                </div>
+
+                                <div class="profile-grid">
+                                    <div class="profile-field">
+                                        <label for="nouveau_mot_de_passe">Nouveau mot de passe (optionnel)</label>
+                                        <input id="nouveau_mot_de_passe" name="nouveau_mot_de_passe" type="password" minlength="6" placeholder="Laisser vide pour conserver l'actuel">
+                                    </div>
+                                </div>
+
+                                <div class="profile-form-actions">
+                                    <button class="btn" type="submit">Enregistrer les modifications</button>
+                                </div>
+                            </form>
+
+                            <h3 class="profile-subtitle">Resume actuel</h3>
+                            <div class="profile-grid profile-readonly-grid">
                                 <div class="profile-field">
                                     <label>Âge</label>
                                     <p><?php echo $profilUtilisateur['age'] !== null && $profilUtilisateur['age'] !== '' ? htmlspecialchars((string) $profilUtilisateur['age']) . ' ans' : 'Non renseigne'; ?></p>

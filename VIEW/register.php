@@ -5,6 +5,15 @@ require_once __DIR__ . '/../CONTROLLER/AuthController.php';
 $authController = new AuthController();
 $utilisateur = $authController->utilisateurConnecte();
 $error = $_GET['error'] ?? '';
+
+if ($utilisateur) {
+    if ($authController->estAdmin($utilisateur)) {
+        header('Location: backoffice.php');
+    } else {
+        header('Location: home.php');
+    }
+    exit();
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -30,33 +39,24 @@ $error = $_GET['error'] ?? '';
                 <div class="alert error">Les mots de passe ne correspondent pas.</div>
             <?php endif; ?>
 
-            <?php if ($utilisateur): ?>
-                <div class="logged-box">
-                    <h2>Bonjour <?php echo htmlspecialchars($utilisateur['nom']); ?></h2>
-                    <p><?php echo htmlspecialchars($utilisateur['email']); ?></p>
-                    <a class="btn-link" href="../CONTROLLER/AuthController.php?action=logout">Se deconnecter</a>
-                    <a class="btn-link secondary" href="home.php">Aller au fil des recettes</a>
-                </div>
-            <?php else: ?>
-                <section class="auth-box">
-                    <form method="POST" action="../CONTROLLER/AuthController.php?action=register" id="registerForm" novalidate>
-                        <h2>Inscription</h2>
-                        <input type="text" name="nom" placeholder="Nom">
-                        <input type="email" name="email" placeholder="Mail">
-                        <input type="number" step="0.1" name="poids" placeholder="Poids (kg)">
-                        <input type="number" step="0.01" name="taille" placeholder="Taille (m, ex: 1.75)">
-                        <input type="number" name="age" placeholder="Age">
-                        <input type="text" name="allergies" placeholder="Allergies (ex: arachide, gluten)">
-                        <input type="number" name="besoins_caloriques" placeholder="Besoins caloriques (kcal/jour)">
-                        <input type="password" name="mot_de_passe" placeholder="Mot de passe" id="motDePasse">
-                        <input type="password" name="confirmer_mot_de_passe" placeholder="Confirmer mot de passe" id="confirmerMotDePasse">
-                        <span id="registerError" class="password-error" style="display:none;color:red;font-size:0.9rem;margin-bottom:10px;"></span>
-                        <span id="passwordError" class="password-error" style="display:none;color:red;font-size:0.9rem;margin-bottom:10px;">Les mots de passe ne correspondent pas</span>
-                        <button type="submit">S'inscrire</button>
-                        <p class="switch-link">Vous avez deja un compte ? <a href="auth.php">Se connecter</a></p>
-                    </form>
-                </section>
-            <?php endif; ?>
+            <section class="auth-box">
+                <form method="POST" action="../CONTROLLER/AuthController.php?action=register" id="registerForm" novalidate>
+                    <h2>Inscription</h2>
+                    <input type="text" name="nom" placeholder="Nom">
+                    <input type="email" name="email" placeholder="Mail">
+                    <input type="number" step="0.1" name="poids" placeholder="Poids (kg)">
+                    <input type="number" step="0.01" name="taille" placeholder="Taille (m, ex: 1.75)">
+                    <input type="number" name="age" placeholder="Age">
+                    <input type="text" name="allergies" placeholder="Allergies (ex: arachide, gluten)">
+                    <input type="number" name="besoins_caloriques" placeholder="Besoins caloriques (kcal/jour)">
+                    <input type="password" name="mot_de_passe" placeholder="Mot de passe" id="motDePasse">
+                    <input type="password" name="confirmer_mot_de_passe" placeholder="Confirmer mot de passe" id="confirmerMotDePasse">
+                    <span id="registerError" class="password-error" style="display:none;color:red;font-size:0.9rem;margin-bottom:10px;"></span>
+                    <span id="passwordError" class="password-error" style="display:none;color:red;font-size:0.9rem;margin-bottom:10px;">Les mots de passe ne correspondent pas</span>
+                    <button type="submit">S'inscrire</button>
+                    <p class="switch-link">Vous avez deja un compte ? <a href="auth.php">Se connecter</a></p>
+                </form>
+            </section>
         </section>
     </main>
 

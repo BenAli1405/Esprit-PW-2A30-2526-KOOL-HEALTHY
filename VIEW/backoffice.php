@@ -1,7 +1,10 @@
 <?php
 session_start();
+require_once __DIR__ . '/../CONTROLLER/AuthController.php';
 require_once __DIR__ . '/../CONTROLLER/BackofficeController.php';
 
+$authController = new AuthController();
+$utilisateurConnecte = $authController->exigerAdmin('auth.php', 'home.php');
 $backofficeController = new BackofficeController();
 $stats = $backofficeController->statsDashboard();
 $seriesUsers = $backofficeController->utilisateursParMois(6);
@@ -43,7 +46,7 @@ $tabFromQuery = $_GET['tab'] ?? 'dashboard';
                 <div class="user-badge">
                     <div class="user-avatar"><i class="fas fa-user-md"></i></div>
                     <div class="user-info">
-                        <p>Admin Kool Healthy</p>
+                        <p><?php echo htmlspecialchars((string) ($utilisateurConnecte['nom'] ?? 'Admin')); ?></p>
                         <small>backoffice global</small>
                     </div>
                 </div>
@@ -57,7 +60,7 @@ $tabFromQuery = $_GET['tab'] ?? 'dashboard';
                     <p>Vue d'ensemble de la plateforme · IA & nutrition durable</p>
                 </div>
                 <div class="header-actions">
-                    <a class="btn-outline" href="home.php">Aller au front office</a>
+                    <a class="btn-outline" href="../CONTROLLER/AuthController.php?action=logout">Se deconnecter</a>
                 </div>
             </div>
 
