@@ -119,7 +119,7 @@ class BackofficeController
             $sql = "SELECT u.nom, u.email, u.role, u.created_at,
                            p.age, p.allergies, p.besoins_caloriques
                     FROM utilisateurs u
-                    LEFT JOIN profil_nutritif p ON p.utilisateur = u.id
+                    LEFT JOIN profil_nutritif p ON p.id = u.profil
                     ORDER BY u.created_at DESC
                     LIMIT :limite";
             $req = $db->prepare($sql);
@@ -148,7 +148,7 @@ class BackofficeController
                         p.allergies,
                         p.besoins_caloriques
                     FROM utilisateurs u
-                    LEFT JOIN profil_nutritif p ON p.utilisateur = u.id
+                    LEFT JOIN profil_nutritif p ON p.id = u.profil
                     ORDER BY u.id DESC";
 
             $req = $db->query($sql);
@@ -184,11 +184,27 @@ class BackofficeController
     {
         $db = config::getConnexion();
         try {
+            $db->beginTransaction();
+
+            $reqProfil = $db->prepare("SELECT profil FROM utilisateurs WHERE id = :id LIMIT 1");
+            $reqProfil->execute(['id' => (int) $id]);
+            $profilId = (int) ($reqProfil->fetchColumn() ?: 0);
+
+            if ($profilId > 0) {
+                $deleteProfil = $db->prepare("DELETE FROM profil_nutritif WHERE id = :profil_id");
+                $deleteProfil->execute(['profil_id' => $profilId]);
+            }
+
             $sql = "DELETE FROM utilisateurs WHERE id = :id";
             $req = $db->prepare($sql);
             $req->execute(['id' => (int) $id]);
+
+            $db->commit();
             return $req->rowCount() > 0;
         } catch (Exception $e) {
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
             die('Erreur suppression utilisateur: ' . $e->getMessage());
         }
     }
@@ -201,6 +217,7 @@ if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'] ?? '')) {
 
     $controller = new BackofficeController();
     $authController = new AuthController();
+    $authController->exigerAdmin('../VIEW/auth.php', '../VIEW/home.php');
     $action = $_POST['action'] ?? '';
 
     if ($action === 'add-user') {

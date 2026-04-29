@@ -6,6 +6,15 @@ $authController = new AuthController();
 $utilisateur = $authController->utilisateurConnecte();
 $success = $_GET['success'] ?? '';
 $error = $_GET['error'] ?? '';
+
+if ($utilisateur) {
+    if ($authController->estAdmin($utilisateur)) {
+        header('Location: backoffice.php');
+    } else {
+        header('Location: home.php');
+    }
+    exit();
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -38,26 +47,31 @@ $error = $_GET['error'] ?? '';
                 <div class="alert error">Les mots de passe ne correspondent pas.</div>
             <?php endif; ?>
 
-            <?php if ($utilisateur): ?>
-                <div class="logged-box">
-                    <h2>Bonjour <?php echo htmlspecialchars($utilisateur['nom']); ?></h2>
-                    <p><?php echo htmlspecialchars($utilisateur['email']); ?></p>
-                    <a class="btn-link" href="../CONTROLLER/AuthController.php?action=logout">Se déconnecter</a>
-                    <a class="btn-link secondary" href="home.php">Aller au fil des recettes</a>
-                </div>
-            <?php else: ?>
-                <section class="auth-box">
-                    <form method="POST" action="../CONTROLLER/AuthController.php?action=login" id="loginForm" novalidate>
-                        <h2>Se connecter</h2>
-                        <input type="text" name="nom" placeholder="Nom">
-                        <input type="password" name="mot_de_passe" placeholder="Mot de passe">
-                        <span id="loginError" class="password-error" style="display:none;color:red;font-size:0.9rem;margin-bottom:10px;"></span>
-                        <button type="submit">Se connecter</button>
-                        <p class="switch-link">Pas encore de compte ? <a href="register.php">S'inscrire</a></p>
-                        <p class="switch-link">Mot de passe oublié ? <a href="#">Réinitialiser</a></p>
-                    </form>
-                </section>
+            <?php if ($success === 'password_reset'): ?>
+                <div class="alert success">Mot de passe reinitialise avec succes. Vous pouvez vous connecter.</div>
             <?php endif; ?>
+
+            <?php if ($error === 'google_not_configured'): ?>
+                <div class="alert error">Connexion Google indisponible. Configuration OAuth manquante.</div>
+            <?php endif; ?>
+
+            <?php if (strpos($error, 'google_') === 0): ?>
+                <div class="alert error">Connexion Google echouee. Veuillez reessayer.</div>
+            <?php endif; ?>
+
+            <section class="auth-box">
+                <form method="POST" action="../CONTROLLER/AuthController.php?action=login" id="loginForm" novalidate>
+                    <h2>Se connecter</h2>
+                    <input type="text" name="nom" placeholder="Nom">
+                    <input type="password" name="mot_de_passe" placeholder="Mot de passe">
+                    <span id="loginError" class="password-error" style="display:none;color:red;font-size:0.9rem;margin-bottom:10px;"></span>
+                    <button type="submit">Se connecter</button>
+                    <div class="oauth-divider"><span>ou</span></div>
+                    <a class="google-btn" href="../CONTROLLER/AuthController.php?action=google_login">Continuer avec Google</a>
+                    <p class="switch-link">Pas encore de compte ? <a href="register.php">S'inscrire</a></p>
+                    <p class="switch-link">Mot de passe oublie ? <a href="forgot-password.php">Reinitialiser</a></p>
+                </form>
+            </section>
         </section>
     </main>
 

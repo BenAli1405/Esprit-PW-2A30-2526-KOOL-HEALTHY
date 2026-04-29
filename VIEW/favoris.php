@@ -5,9 +5,16 @@ require_once __DIR__ . '/../CONTROLLER/AuthController.php';
 
 $controller = new RecetteController();
 $authController = new AuthController();
+$authController->exigerFront('backoffice.php');
 $utilisateurConnecte = $authController->utilisateurConnecte();
 
-$recettes = $controller->recettesFavoris(1);
+if (!$utilisateurConnecte || !isset($utilisateurConnecte['id'])) {
+    header('Location: auth.php');
+    exit();
+}
+
+$recettes = $controller->recettesFavoris((int) $utilisateurConnecte['id']);
+$success = $_GET['success'] ?? '';
 $titre_page = 'Mes Favoris';
 ?>
 <!DOCTYPE html>
@@ -77,6 +84,10 @@ $titre_page = 'Mes Favoris';
                 <p>Vos recettes favorites sauvegardées</p>
             </section>
 
+            <?php if ($success === 'favori_removed'): ?>
+                <section class="panel social-feedback success">Recette retiree des favoris.</section>
+            <?php endif; ?>
+
             <section class="feed">
                 <?php if (empty($recettes)): ?>
                     <article class="panel post">
@@ -105,7 +116,11 @@ $titre_page = 'Mes Favoris';
                         </div>
                         <p><?php echo htmlspecialchars($recette['etapes']); ?></p>
                         <div class="actions">
-                            <button class="action-btn like active" data-action="like" data-recipe-title="<?php echo htmlspecialchars($recette['titre']); ?>">❤ J'aime</button>
+                            <form method="POST" action="../CONTROLLER/RecetteController.php?action=toggle_favori&format=json" class="inline-action-form js-favori-form">
+                                <input type="hidden" name="recette_id" value="<?php echo (int) ($recette['id'] ?? 0); ?>">
+                                <input type="hidden" name="return_to" value="../VIEW/favoris.php">
+                                <button class="action-btn like active" type="submit">❤ Aime</button>
+                            </form>
                             <button class="action-btn" data-action="comment" data-recipe-title="<?php echo htmlspecialchars($recette['titre']); ?>">💬 Commenter</button>
                             <button class="action-btn" data-action="share" data-recipe-title="<?php echo htmlspecialchars($recette['titre']); ?>">📤 Partager</button>
                         </div>
@@ -191,6 +206,55 @@ $titre_page = 'Mes Favoris';
                 } else {
                     this.textContent = 'Suivre';
                     this.style.background = 'var(--vert-kool)';
+                }
+            });
+        });
+
+        document.querySelectorAll('.js-favori-form').forEach(form => {
+            form.addEventListener('submit', async function (event) {
+                event.preventDefault();
+
+                const button = form.querySelector('button[type="submit"]');
+                if (!button) {
+                    return;
+                }
+
+                const formData = new FormData(form);
+                button.disabled = true;
+
+                try {
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    const data = await response.json();
+                    if (!response.ok || !data.success) {
+                        throw new Error('Erreur favoris');
+                    }
+
+                    if (!data.is_favorite) {
+                        const post = form.closest('.post');
+                        if (post) {
+                            post.remove();
+                        }
+
+                        const feed = document.querySelector('.feed');
+                        if (feed && feed.querySelectorAll('.post').length === 0) {
+                            const empty = document.createElement('article');
+                            empty.className = 'panel post';
+                            empty.innerHTML = '<p>Vous n\'avez pas encore de favoris. <a href="fil-recettes.php">Decouvrez des recettes</a> et ajoutez-les en favoris!</p>';
+                            feed.appendChild(empty);
+                        }
+                    }
+                } catch (e) {
+                    alert('Impossible de mettre a jour le favori pour le moment.');
+                } finally {
+                    button.disabled = false;
                 }
             });
         });

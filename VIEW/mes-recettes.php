@@ -5,10 +5,26 @@ require_once __DIR__ . '/../CONTROLLER/AuthController.php';
 
 $controller = new RecetteController();
 $authController = new AuthController();
+$authController->exigerFront('backoffice.php');
 $utilisateurConnecte = $authController->utilisateurConnecte();
 
-$recettes = $controller->mesRecettes();
+$auteurConnecte = trim((string) ($utilisateurConnecte['nom'] ?? ''));
+$recettes = $controller->mesRecettes($auteurConnecte !== '' ? $auteurConnecte : 'Moi');
 $titre_page = 'Mes Recettes';
+$success = $_GET['success'] ?? '';
+$error = $_GET['error'] ?? '';
+
+$messagesSuccess = [
+    'recipe_created' => 'Recette publiee avec succes.',
+    'recipe_updated' => 'Recette modifiee avec succes.',
+    'recipe_deleted' => 'Recette supprimee avec succes.'
+];
+
+$messagesError = [
+    'invalid_data' => 'Veuillez verifier les champs obligatoires (titre, ingredients, temps).',
+    'invalid_recipe' => 'Recette introuvable ou invalide.',
+    'unauthorized' => 'Action non autorisee sur cette recette.'
+];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -77,6 +93,14 @@ $titre_page = 'Mes Recettes';
                 <p>Vos recettes partagées</p>
             </section>
 
+            <?php if ($success !== '' && isset($messagesSuccess[$success])): ?>
+                <div class="panel social-feedback success"><?php echo htmlspecialchars($messagesSuccess[$success]); ?></div>
+            <?php endif; ?>
+
+            <?php if ($error !== '' && isset($messagesError[$error])): ?>
+                <div class="panel social-feedback error"><?php echo htmlspecialchars($messagesError[$error]); ?></div>
+            <?php endif; ?>
+
             <section class="feed">
                 <?php if (empty($recettes)): ?>
                     <article class="panel post">
@@ -88,8 +112,8 @@ $titre_page = 'Mes Recettes';
                         <div class="user-info">
                             <div class="user-avatar"><?php echo strtoupper(substr($recette['nom'] ?? 'U', 0, 1)); ?></div>
                             <div>
-                                <strong><?php echo htmlspecialchars($recette['nom'] ?? 'Utilisateur'); ?></strong>
-                                <small><?php echo htmlspecialchars($recette['email'] ?? ''); ?></small>
+                                <strong><?php echo htmlspecialchars((string) ($recette['auteur'] ?? ($recette['nom'] ?? 'Utilisateur'))); ?></strong>
+                                <small><?php echo htmlspecialchars($utilisateurConnecte['email'] ?? ''); ?></small>
                             </div>
                         </div>
                         <?php if ($recette['image']): ?>
@@ -104,6 +128,27 @@ $titre_page = 'Mes Recettes';
                             <p><?php echo htmlspecialchars($recette['ingredients']); ?></p>
                         </div>
                         <p><?php echo htmlspecialchars($recette['etapes']); ?></p>
+
+                        <form class="recipe-edit-form" method="POST" action="../CONTROLLER/addRecette.php?action=update" enctype="multipart/form-data">
+                            <h4>Modifier cette recette</h4>
+                            <input type="hidden" name="id" value="<?php echo (int) ($recette['id'] ?? 0); ?>">
+                            <input type="text" name="titre" value="<?php echo htmlspecialchars((string) ($recette['titre'] ?? '')); ?>" required>
+                            <input type="number" name="temps_prep" min="1" value="<?php echo htmlspecialchars((string) ($recette['temps_prep'] ?? '1')); ?>" required>
+                            <input type="text" name="ingredients" value="<?php echo htmlspecialchars((string) ($recette['ingredients'] ?? '')); ?>" required>
+                            <textarea name="etapes" rows="3"><?php echo htmlspecialchars((string) ($recette['etapes'] ?? '')); ?></textarea>
+                            <input type="file" name="image" accept="image/*">
+                            <div class="recipe-owner-actions">
+                                <button class="btn" type="submit">Sauvegarder</button>
+                            </div>
+                        </form>
+
+                        <form method="POST" action="../CONTROLLER/addRecette.php?action=delete" onsubmit="return confirm('Supprimer cette recette ?');">
+                            <input type="hidden" name="id" value="<?php echo (int) ($recette['id'] ?? 0); ?>">
+                            <div class="recipe-owner-actions">
+                                <button class="btn btn-danger" type="submit">Supprimer</button>
+                            </div>
+                        </form>
+
                         <div class="actions">
                             <button class="action-btn like" data-action="like" data-recipe-title="<?php echo htmlspecialchars($recette['titre']); ?>">❤ J'aime</button>
                             <button class="action-btn" data-action="comment" data-recipe-title="<?php echo htmlspecialchars($recette['titre']); ?>">💬 Commenter</button>

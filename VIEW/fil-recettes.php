@@ -5,9 +5,16 @@ require_once __DIR__ . '/../CONTROLLER/AuthController.php';
 
 $controller = new RecetteController();
 $authController = new AuthController();
+$authController->exigerFront('backoffice.php');
 $utilisateurConnecte = $authController->utilisateurConnecte();
 
 $recettes = $controller->listeRecettes();
+$favorisIds = [];
+if ($utilisateurConnecte && isset($utilisateurConnecte['id'])) {
+    $favorisIds = $controller->recupererIdsFavoris((int) $utilisateurConnecte['id']);
+}
+$success = $_GET['success'] ?? '';
+$error = $_GET['error'] ?? '';
 $titre_page = 'Fil Recettes';
 ?>
 <!DOCTYPE html>
@@ -72,9 +79,19 @@ $titre_page = 'Fil Recettes';
         </aside>
 
         <main class="main-col">
+            <?php if ($success === 'favori_added'): ?>
+                <section class="panel social-feedback success">Recette ajoutee aux favoris.</section>
+            <?php elseif ($success === 'favori_removed'): ?>
+                <section class="panel social-feedback success">Recette retiree des favoris.</section>
+            <?php endif; ?>
+
+            <?php if ($error === 'invalid_recipe'): ?>
+                <section class="panel social-feedback error">Recette invalide pour l'action favoris.</section>
+            <?php endif; ?>
+
             <section class="panel composer" id="partage-recette">
                 <h2>Partager une recette</h2>
-                <form method="POST" action="../CONTROLLER/addRecette.php" enctype="multipart/form-data" id="recetteForm" novalidate>
+                <form method="POST" action="../CONTROLLER/addRecette.php?action=create" enctype="multipart/form-data" id="recetteForm" novalidate>
                     <input type="text" name="titre" placeholder="Titre de la recette (ex: Salade fraiche quinoa)">
                     <input type="number" name="temps_prep" placeholder="Temps de preparation (en minutes)">
                     <input type="text" name="ingredients" placeholder="Ingredients (separes par des virgules)">
@@ -99,7 +116,7 @@ $titre_page = 'Fil Recettes';
                         <div class="user-info">
                             <div class="user-avatar"><?php echo strtoupper(substr($recette['nom'] ?? 'U', 0, 1)); ?></div>
                             <div>
-                                <strong><?php echo htmlspecialchars($recette['nom'] ?? 'Utilisateur'); ?></strong>
+                                <strong><?php echo htmlspecialchars((string) ($recette['auteur'] ?? ($recette['nom'] ?? 'Utilisateur'))); ?></strong>
                                 <small><?php echo htmlspecialchars($recette['email'] ?? ''); ?></small>
                             </div>
                         </div>
@@ -115,8 +132,19 @@ $titre_page = 'Fil Recettes';
                             <p><?php echo htmlspecialchars($recette['ingredients']); ?></p>
                         </div>
                         <p><?php echo htmlspecialchars($recette['etapes']); ?></p>
+                        <?php $estFavori = in_array((int) ($recette['id'] ?? 0), $favorisIds, true); ?>
                         <div class="actions">
-                            <button class="action-btn like" data-action="like" data-recipe-title="<?php echo htmlspecialchars($recette['titre']); ?>">❤ J'aime</button>
+                            <?php if ($utilisateurConnecte): ?>
+                                <form method="POST" action="../CONTROLLER/RecetteController.php?action=toggle_favori&format=json" class="inline-action-form js-favori-form">
+                                    <input type="hidden" name="recette_id" value="<?php echo (int) ($recette['id'] ?? 0); ?>">
+                                    <input type="hidden" name="return_to" value="../VIEW/fil-recettes.php">
+                                    <button class="action-btn like <?php echo $estFavori ? 'active' : ''; ?>" type="submit">
+                                        <?php echo $estFavori ? '❤ Aime' : '❤ J\'aime'; ?>
+                                    </button>
+                                </form>
+                            <?php else: ?>
+                                <a class="action-btn" href="auth.php">❤ J'aime</a>
+                            <?php endif; ?>
                             <button class="action-btn" data-action="comment" data-recipe-title="<?php echo htmlspecialchars($recette['titre']); ?>">💬 Commenter</button>
                             <button class="action-btn" data-action="share" data-recipe-title="<?php echo htmlspecialchars($recette['titre']); ?>">📤 Partager</button>
                         </div>
@@ -232,6 +260,48 @@ $titre_page = 'Fil Recettes';
                 recetteError.style.display = 'none';
             });
         }
+
+        document.querySelectorAll('.js-favori-form').forEach(form => {
+            form.addEventListener('submit', async function (event) {
+                event.preventDefault();
+
+                const button = form.querySelector('button[type="submit"]');
+                if (!button) {
+                    return;
+                }
+
+                const formData = new FormData(form);
+                button.disabled = true;
+
+                try {
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    const data = await response.json();
+                    if (!response.ok || !data.success) {
+                        throw new Error('Erreur favoris');
+                    }
+
+                    if (data.is_favorite) {
+                        button.classList.add('active');
+                        button.textContent = '❤ Aime';
+                    } else {
+                        button.classList.remove('active');
+                        button.textContent = "❤ J'aime";
+                    }
+                } catch (e) {
+                    alert('Impossible de mettre a jour le favori pour le moment.');
+                } finally {
+                    button.disabled = false;
+                }
+            });
+        });
     </script>
 </body>
 </html>

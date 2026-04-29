@@ -3,6 +3,7 @@ session_start();
 require_once __DIR__ . '/../CONTROLLER/AuthController.php';
 
 $authController = new AuthController();
+$authController->exigerFront('backoffice.php');
 $utilisateurConnecte = $authController->utilisateurConnecte();
 ?>
 <!DOCTYPE html>
