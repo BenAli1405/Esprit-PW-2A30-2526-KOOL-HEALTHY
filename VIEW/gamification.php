@@ -5,10 +5,17 @@ require_once __DIR__ . '/../CONTROLLER/ParticipationController.php';
 $defiController = new DefiController();
 $participationController = new ParticipationController();
 $defis = $defiController->listeDefis();
+<<<<<<< HEAD
 $participations = $participationController->listeParticipations();
 $utilisateurs = $participationController->listeUtilisateurs();
 $defisForParticipation = $participationController->listeDefis();
 $statsPoints = $participationController->statsParticipationsPoints();
+=======
+$classement = $participationController->classement();
+$participations = $participationController->listeParticipations();
+$utilisateurs = $participationController->listeUtilisateurs();
+$defisForParticipation = $participationController->listeDefis();
+>>>>>>> 222e31aab72bd731c51faa4ab89b5b484ae15183
 
 $success = $_GET['success'] ?? '';
 $error = $_GET['error'] ?? '';
@@ -120,6 +127,7 @@ if ($success === 'participation_added') {
     .modal-header { padding: 20px 28px; border-bottom: 2px solid var(--gris-moyen); display: flex; justify-content: space-between; align-items: center; background: var(--blanc); border-radius: 36px 36px 0 0; }
     .modal-header h3 { font-size: 1.5rem; font-weight: 700; display: flex; align-items: center; gap: 12px; color: var(--vert-kool); }
     .modal-body { padding: 24px 28px; overflow-y: auto; flex: 1; text-align: left; }
+<<<<<<< HEAD
 
     /* Styles pour la barre de recherche */
     .search-container { background: var(--blanc); border-radius: 28px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: var(--ombre-legere); border: 1px solid var(--gris-moyen); display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
@@ -131,6 +139,8 @@ if ($success === 'participation_added') {
     .search-results-info { color: var(--gris-texte); font-size: 0.9rem; font-weight: 500; }
     .no-results { text-align: center; padding: 2rem; color: var(--gris-texte); background: var(--gris-clair); border-radius: 20px; }
     @media (max-width: 768px) { .search-container { flex-direction: column; } .search-input { width: 100%; } .search-select { width: 100%; } }
+=======
+>>>>>>> 222e31aab72bd731c51faa4ab89b5b484ae15183
   </style>
 </head>
 <body>
@@ -160,6 +170,7 @@ if ($success === 'participation_added') {
 
   <!-- SECTION UNIFIÉE : DÉFIS + BADGES (regroupées joliment) -->
   <div id="defisUnifiedSection" style="display:none;" class="section">
+<<<<<<< HEAD
     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:0.5rem;">
       <h2 class="section-title" style="margin-bottom:0;"><i class="fas fa-chalkboard-user"></i> Défis &amp; Récompenses</h2>
       <button id="openStatsModalBtn" style="background:linear-gradient(135deg,var(--bleu-tech),var(--bleu-tech-dark)); color:white; border:none; padding:10px 22px; border-radius:40px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:8px; font-size:0.9rem; box-shadow:0 4px 14px rgba(41,182,246,0.35); transition:0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''"><i class="fas fa-chart-bar"></i> Statistiques Points</button>
@@ -168,6 +179,14 @@ if ($success === 'participation_added') {
     <!-- Tabs élégants -->
     <div class="tab-container" style="margin-top:1.5rem;">
       <button class="tab-btn active" data-tab="defisTab">🏁 Défis actifs</button>
+=======
+    <h2 class="section-title"><i class="fas fa-chalkboard-user"></i> Défis, Classement & Récompenses</h2>
+    
+    <!-- Tabs élégants -->
+    <div class="tab-container">
+      <button class="tab-btn active" data-tab="defisTab">🏁 Défis actifs</button>
+      <button class="tab-btn" data-tab="classementTab">📈 Classement</button>
+>>>>>>> 222e31aab72bd731c51faa4ab89b5b484ae15183
       <button class="tab-btn" data-tab="participationsTab">📋 Participations</button>
     </div>
 
@@ -247,6 +266,38 @@ if ($success === 'participation_added') {
       </div>
     </div>
 
+<<<<<<< HEAD
+=======
+    <!-- Pane Participations -->
+    <div id="participationsTab" class="tab-pane">
+      <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+        <p class="badge-tech" style="color: var(--bleu-tech-dark); margin:0;"><i class="fas fa-clipboard-list"></i> Suivi des performances utilisateur par défi.</p>
+        <button class="btn-outline" id="openAddParticipationBtn"><i class="fas fa-plus"></i> Ajouter</button>
+      </div>
+      <div style="background: var(--blanc); border-radius: 28px; padding: 24px; box-shadow: var(--ombre-legere); border: 1px solid var(--gris-moyen); overflow-x: auto;">
+        <table class="data-table">
+          <thead><tr><th>ID</th><th>Utilisateur</th><th>Défi</th><th>Progression</th><th>Statut</th><th>Points</th><th>Créé le</th><th>Actions</th></tr></thead>
+          <tbody>
+            <?php foreach ($participations as $participation): ?>
+              <tr>
+                <td><?= htmlspecialchars($participation['id']) ?></td>
+                <td><?= htmlspecialchars($participation['utilisateur_nom'] ?? 'N/A') ?></td>
+                <td><?= htmlspecialchars($participation['defi_titre'] ?? 'N/A') ?></td>
+                <td><?= htmlspecialchars($participation['progression']) ?>%</td>
+                <td><?= $participation['termine'] ? '<span class="status-active">Terminé</span>' : '<span class="badge-tech">En cours</span>' ?></td>
+                <td><?= htmlspecialchars($participation['points_gagnes']) ?> pts</td>
+                <td><?= htmlspecialchars($participation['created_at']) ?></td>
+                <td>
+                  <button type="button" class="btn-edit edit-participation-btn" data-id="<?= $participation['id'] ?>" data-utilisateur-id="<?= $participation['utilisateur_id'] ?>" data-defi-id="<?= $participation['defi_id'] ?>" data-progression="<?= $participation['progression'] ?>" data-points="<?= $participation['points_gagnes'] ?>" data-termine="<?= $participation['termine'] ?>"><i class="fas fa-pen"></i> Modifier</button>
+                  <a href="../CONTROLLER/ParticipationController.php?action=delete&id=<?= $participation['id'] ?>" class="btn-danger btn-delete-confirm"><i class="fas fa-trash"></i></a>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    </div>
+>>>>>>> 222e31aab72bd731c51faa4ab89b5b484ae15183
   </div>
 
   <footer class="footer"><div class="footer-col"><h4>Kool Healthy</h4><p>Gamification & nutrition durable — Manger mieux, gagner des points, préserver la planète 🌍</p></div><div class="footer-bottom" style="margin-top:1rem;"><p>© 2025 Kool Healthy — Ensemble pour un futur healthy</p></div></footer>
@@ -255,6 +306,7 @@ if ($success === 'participation_added') {
   <div id="loginModal" class="modal"><div class="modal-content"><span class="close-modal" id="closeLoginModal">&times;</span><h3>Connexion</h3><input type="email" placeholder="Email" id="loginEmail"><input type="password" placeholder="Mot de passe" id="loginPwd"><button class="btn-connect" style="width:100%; margin-top: 12px;" id="doLoginBtn">Se connecter</button></div></div>
   <div id="signupModal" class="modal"><div class="modal-content"><span class="close-modal" id="closeSignupModal">&times;</span><h3>Inscription</h3><input type="text" placeholder="Nom complet" id="signupName"><input type="email" placeholder="Email" id="signupEmail"><input type="password" placeholder="Mot de passe" id="signupPwd"><button class="btn-connect" style="width:100%; margin-top:12px;" id="doSignupBtn">S'inscrire</button></div></div>
 
+<<<<<<< HEAD
   <!-- ===== MODALE STATISTIQUES CHART.JS ===== -->
   <div id="statsPointsModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.55); z-index:3000; justify-content:center; align-items:center; backdrop-filter:blur(6px);">
     <div style="background:#fff; border-radius:36px; width:92%; max-width:860px; max-height:88vh; overflow-y:auto; box-shadow:0 30px 60px rgba(0,0,0,0.25); animation:fadeIn 0.25s ease;">
@@ -312,11 +364,16 @@ if ($success === 'participation_added') {
     </div>
   </div>
 
+=======
+>>>>>>> 222e31aab72bd731c51faa4ab89b5b484ae15183
   <!-- Modales Participations -->
   <div id="addParticipationModal" class="modal"><div class="modal-content" style="max-width: 600px; padding: 0;"><div class="modal-header"><h3><i class="fas fa-plus-circle"></i> Nouvelle participation</h3><span class="close-modal" id="closeAddParticipationModal">&times;</span></div><div class="modal-body"><form id="addParticipationForm" action="../CONTROLLER/ParticipationController.php?action=add" method="POST"><div style="display:flex; flex-direction:column; gap:14px;"><select name="utilisateur_id" style="width:100%; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"><option value="">Sélectionner un utilisateur</option><?php foreach ($utilisateurs as $user): ?><option value="<?= $user['id'] ?>"><?= htmlspecialchars($user['nom']) ?></option><?php endforeach; ?></select><select name="defi_id" style="width:100%; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"><option value="">Sélectionner un défi</option><?php foreach ($defisForParticipation as $defiSelect): ?><option value="<?= $defiSelect['id'] ?>"><?= htmlspecialchars($defiSelect['titre']) ?></option><?php endforeach; ?></select><input type="number" name="progression" placeholder="Progression (%)" min="0" max="100" style="width:100%; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"><label style="display:flex; align-items:center; gap:10px;"><input type="checkbox" name="termine" value="1"> Terminé</label><input type="number" name="points_gagnes" placeholder="Points gagnés" min="0" style="width:100%; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"><button class="btn-primary" type="submit" style="width:100%;">Créer</button></div></form></div></div></div>
   <div id="editParticipationModal" class="modal"><div class="modal-content" style="max-width: 600px; padding: 0;"><div class="modal-header"><h3><i class="fas fa-pen"></i> Modifier participation</h3><span class="close-modal" id="closeEditParticipationModal">&times;</span></div><div class="modal-body"><form id="editParticipationForm" action="../CONTROLLER/ParticipationController.php?action=edit" method="POST"><input type="hidden" name="id"><div style="display:flex; flex-direction:column; gap:14px;"><select name="utilisateur_id" style="width:100%; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"><option value="">Sélectionner un utilisateur</option><?php foreach ($utilisateurs as $user): ?><option value="<?= $user['id'] ?>"><?= htmlspecialchars($user['nom']) ?></option><?php endforeach; ?></select><select name="defi_id" style="width:100%; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"><option value="">Sélectionner un défi</option><?php foreach ($defisForParticipation as $defiSelect): ?><option value="<?= $defiSelect['id'] ?>"><?= htmlspecialchars($defiSelect['titre']) ?></option><?php endforeach; ?></select><input type="number" name="progression" placeholder="Progression (%)" min="0" max="100" style="width:100%; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"><label style="display:flex; align-items:center; gap:10px;"><input type="checkbox" name="termine" value="1"> Terminé</label><input type="number" name="points_gagnes" placeholder="Points gagnés" min="0" style="width:100%; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"><button class="btn-primary" type="submit" style="width:100%;">Mettre à jour</button></div></form></div></div></div>
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 222e31aab72bd731c51faa4ab89b5b484ae15183
   <script>
     // ---------- DATA MODEL ----------
     let currentUser = { 
@@ -327,6 +384,7 @@ if ($success === 'participation_added') {
     };
     
     let allDefis = <?= json_encode($defis, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) ?>;
+<<<<<<< HEAD
 
     // Variables pour la recherche
     let filteredDefis = [...allDefis];
@@ -510,6 +568,10 @@ if ($success === 'participation_added') {
     }
     
     
+=======
+    
+    let classement = <?= json_encode($classement, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) ?>;
+>>>>>>> 222e31aab72bd731c51faa4ab89b5b484ae15183
     
     // Helper UI updates
     function updateUserUI() {
@@ -741,6 +803,7 @@ if ($success === 'participation_added') {
       };
     });
 
+<<<<<<< HEAD
     // Fermeture modales participation au clic en dehors
     addParticipationModal.addEventListener('click', (e) => { if (e.target === addParticipationModal) addParticipationModal.style.display = 'none'; });
     editParticipationModal.addEventListener('click', (e) => { if (e.target === editParticipationModal) editParticipationModal.style.display = 'none'; });
@@ -824,6 +887,15 @@ if ($success === 'participation_added') {
 
     document.getElementById('openStatsModalBtn').addEventListener('click', openStatsModal);
     document.getElementById('closeStatsModalBtn').addEventListener('click', closeStatsModal);
+=======
+    // Close modal on outside click (add to existing window.onclick if necessary, or let it be handled separately)
+    const existingOnClick = window.onclick;
+    window.onclick = (e) => {
+      if (existingOnClick) existingOnClick(e);
+      if (e.target === addParticipationModal) addParticipationModal.style.display = 'none';
+      if (e.target === editParticipationModal) editParticipationModal.style.display = 'none';
+    };
+>>>>>>> 222e31aab72bd731c51faa4ab89b5b484ae15183
   </script>
 </body>
 </html>
