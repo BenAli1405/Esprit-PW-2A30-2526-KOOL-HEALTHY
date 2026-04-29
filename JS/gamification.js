@@ -69,9 +69,7 @@ document.querySelectorAll('.btn-delete-confirm').forEach(btn => {
     });
 });
 
-// ============================================================
 // ===== BACKOFFICE – MODALES & VALIDATION DÉFIS/PARTICIPATIONS
-// ============================================================
 
 (function () {
     // --- Références aux éléments du DOM ---

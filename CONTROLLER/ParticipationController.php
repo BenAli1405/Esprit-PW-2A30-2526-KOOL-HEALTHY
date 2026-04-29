@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../MODEL/Participation.php';
 
+
 class ParticipationController
 {
     public function listeParticipations(): array
@@ -30,45 +31,56 @@ class ParticipationController
         }
     }
 
-    public function classement(): array
-    {
-        $db = config::getConnexion();
-        $sql = "SELECT u.id, u.nom,
-                       COALESCE(SUM(p.points_gagnes),0) AS total_points,
-                       COALESCE(SUM(p.termine),0) AS defis_completes
-                FROM utilisateurs u
-                LEFT JOIN participations p ON p.utilisateur_id = u.id
-                GROUP BY u.id, u.nom
-                ORDER BY total_points DESC
-                LIMIT 10";
-        $rows = $db->query($sql)->fetchAll();
-        foreach ($rows as $i => &$row) {
-            $row['rang'] = $i + 1;
-        }
-        return $rows;
-    }
-
     public function ajouterParticipation(Participation $participation): bool
     {
         $db = config::getConnexion();
+        
+        // Vérifier s'il y a déjà une participation EN COURS
+        $check = $db->prepare("SELECT COUNT(*) FROM participations WHERE utilisateur_id = :uid AND defi_id = :did AND termine = 0");
+        $check->execute([
+            'uid' => $participation->getUtilisateurId(),
+            'did' => $participation->getDefiId()
+        ]);
+        if ($check->fetchColumn() > 0) {
+            throw new PDOException("Duplicate active participation", 23000);
+        }
+
         $sql = "INSERT INTO participations (utilisateur_id, defi_id, progression, termine, points_gagnes)
                 VALUES (:uid, :did, :progression, :termine, :points_gagnes)";
         $req = $db->prepare($sql);
-        return $req->execute([
+        $result = $req->execute([
             'uid' => $participation->getUtilisateurId(),
             'did' => $participation->getDefiId(),
             'progression' => $participation->getProgression(),
             'termine' => $participation->getTermine() ? 1 : 0,
             'points_gagnes' => $participation->getPointsGagnes(),
         ]);
+        
+
+        
+        return $result;
     }
 
     public function modifierParticipation(int $id, array $data): bool
     {
         $db = config::getConnexion();
+        
+        // Vérifier s'il y a déjà une participation EN COURS autre que l'actuelle si on veut définir termine = 0
+        if (empty($data['termine'])) {
+            $check = $db->prepare("SELECT COUNT(*) FROM participations WHERE utilisateur_id = :uid AND defi_id = :did AND termine = 0 AND id != :id");
+            $check->execute([
+                'uid' => $data['utilisateur_id'],
+                'did' => $data['defi_id'],
+                'id' => $id
+            ]);
+            if ($check->fetchColumn() > 0) {
+                throw new PDOException("Duplicate active participation", 23000);
+            }
+        }
+
         $sql = "UPDATE participations SET utilisateur_id = :uid, defi_id = :did, progression = :progression, termine = :termine, points_gagnes = :points_gagnes WHERE id = :id";
         $req = $db->prepare($sql);
-        return $req->execute([
+        $result = $req->execute([
             'id' => $id,
             'uid' => $data['utilisateur_id'],
             'did' => $data['defi_id'],
@@ -76,13 +88,27 @@ class ParticipationController
             'termine' => $data['termine'] ? 1 : 0,
             'points_gagnes' => $data['points_gagnes'],
         ]);
+        
+
+        
+        return $result;
     }
 
     public function supprimerParticipation(int $id): bool
     {
         $db = config::getConnexion();
+        
+        // Récupérer le utilisateur_id avant suppression
+        $getReq = $db->prepare("SELECT utilisateur_id FROM participations WHERE id = :id");
+        $getReq->execute(['id' => $id]);
+        $participation = $getReq->fetch();
+        
         $req = $db->prepare("DELETE FROM participations WHERE id = :id");
-        return $req->execute(['id' => $id]);
+        $result = $req->execute(['id' => $id]);
+        
+
+        
+        return $result;
     }
 
     public function trouverParticipation(int $id): ?array
@@ -106,6 +132,43 @@ class ParticipationController
         $db = config::getConnexion();
         $stmt = $db->query("SELECT id, titre FROM defis ORDER BY titre ASC");
         return $stmt->fetchAll();
+    }
+
+    public function statsParticipationsPoints(): array
+    {
+        $db = config::getConnexion();
+
+        $row = $db->query("
+            SELECT
+                COALESCE(SUM(points_gagnes), 0)   AS total_points,
+                COALESCE(AVG(points_gagnes), 0)   AS moyenne_points,
+                COALESCE(MAX(points_gagnes), 0)   AS max_points,
+                COALESCE(MIN(points_gagnes), 0)   AS min_points,
+                COUNT(*)                           AS total_participations,
+                SUM(CASE WHEN termine = 1 THEN 1 ELSE 0 END) AS total_terminees
+            FROM participations
+        ")->fetch();
+
+        // Top utilisateur par points gagnés
+        $top = $db->query("
+            SELECT u.nom, SUM(p.points_gagnes) AS pts
+            FROM participations p
+            LEFT JOIN utilisateurs u ON u.id = p.utilisateur_id
+            GROUP BY p.utilisateur_id
+            ORDER BY pts DESC
+            LIMIT 1
+        ")->fetch();
+
+        return [
+            'total_points'        => (int) $row['total_points'],
+            'moyenne_points'      => round((float) $row['moyenne_points'], 1),
+            'max_points'          => (int) $row['max_points'],
+            'min_points'          => (int) $row['min_points'],
+            'total_participations'=> (int) $row['total_participations'],
+            'total_terminees'     => (int) $row['total_terminees'],
+            'top_user'            => $top['nom'] ?? '—',
+            'top_user_pts'        => (int) ($top['pts'] ?? 0),
+        ];
     }
 }
 
@@ -135,8 +198,17 @@ if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'] ?? '')) {
         $points_gagnes = max(0, (int) ($_POST['points_gagnes'] ?? 0));
 
         $participation = new Participation($utilisateur_id, $defi_id, $progression, $termine, $points_gagnes);
-        $controller->ajouterParticipation($participation);
-        header('Location: ../VIEW/backoffice-gamification.php?success=participation_added');
+        
+        try {
+            $controller->ajouterParticipation($participation);
+            header('Location: ../VIEW/gamification.php?success=participation_added');
+        } catch (PDOException $e) {
+            if ($e->getCode() == 23000) {
+                header('Location: ../VIEW/gamification.php?error=duplicate_participation');
+            } else {
+                header('Location: ../VIEW/gamification.php?error=db_error');
+            }
+        }
         exit();
     }
 
@@ -148,24 +220,32 @@ if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'] ?? '')) {
         $termine = isset($_POST['termine']) ? 1 : 0;
         $points_gagnes = max(0, (int) ($_POST['points_gagnes'] ?? 0));
 
-        $controller->modifierParticipation($id, [
-            'utilisateur_id' => $utilisateur_id,
-            'defi_id' => $defi_id,
-            'progression' => $progression,
-            'termine' => $termine,
-            'points_gagnes' => $points_gagnes,
-        ]);
-        header('Location: ../VIEW/backoffice-gamification.php?success=participation_edited');
+        try {
+            $controller->modifierParticipation($id, [
+                'utilisateur_id' => $utilisateur_id,
+                'defi_id' => $defi_id,
+                'progression' => $progression,
+                'termine' => $termine,
+                'points_gagnes' => $points_gagnes,
+            ]);
+            header('Location: ../VIEW/gamification.php?success=participation_edited');
+        } catch (PDOException $e) {
+            if ($e->getCode() == 23000) {
+                header('Location: ../VIEW/gamification.php?error=duplicate_participation');
+            } else {
+                header('Location: ../VIEW/gamification.php?error=db_error');
+            }
+        }
         exit();
     }
 
     if ($action === 'delete' && isset($_GET['id'])) {
         $controller->supprimerParticipation((int) $_GET['id']);
-        header('Location: ../VIEW/backoffice-gamification.php?success=participation_deleted');
+        header('Location: ../VIEW/gamification.php?success=participation_deleted');
         exit();
     }
 
-    header('Location: ../VIEW/backoffice-gamification.php');
+    header('Location: ../VIEW/gamification.php');
     exit();
 }
 ?>
