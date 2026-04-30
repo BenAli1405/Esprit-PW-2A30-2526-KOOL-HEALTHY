@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Kool Healthy | Front Office - Recettes & Ingrédients</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="<?php echo isset($baseUrl) ? $baseUrl : ''; ?>VIEW/css/frontoffice.css">
+</head>
+<body>
+  <!-- Navigation Utilisateur -->
+  <nav class="navbar">
+    <div class="logo">
+      <i class="fas fa-seedling"></i>
+      <h1>Kool Healthy</h1>
+    </div>
+    <div class="user-badge">
+      <div class="user-avatar">
+        <i class="fas fa-user"></i>
+      </div>
+      <div class="user-info">
+        <span class="user-name"><?php echo isset($user) ? htmlspecialchars($user['nom']) : 'Visiteur'; ?></span>
+        <small class="user-status">Membre</small>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero-recettes">
+    <h1><i class="fas fa-utensils"></i> Découvrez nos recettes durables</h1>
+    <p>Consultez, recherchez, filtrez et donnez votre avis sur les recettes</p>
+  </section>
+
+  <!-- Module Principal -->
+  <div class="module-container">
+    <!-- Barre de recherche et filtres -->
+    <div class="filter-bar">
+      <div class="search-group">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchInput" class="search-input" placeholder="Rechercher par nom ou ingrédient...">
+      </div>
+      <select id="difficultyFilter" class="filter-select">
+        <option value="">Toutes difficultés</option>
+        <option value="Facile">Facile</option>
+        <option value="Moyen">Moyen</option>
+        <option value="Difficile">Difficile</option>
+      </select>
+      <select id="ecoScoreFilter" class="filter-select">
+        <option value="">Tous éco-scores</option>
+        <option value="A+">A+</option>
+        <option value="A">A</option>
+        <option value="B">B</option>
+        <option value="C">C</option>
+      </select>
+      <select id="timeFilter" class="filter-select">
+        <option value="">Tous temps</option>
+        <option value="15">Moins de 15 min</option>
+        <option value="30">Moins de 30 min</option>
+        <option value="45">Moins de 45 min</option>
+        <option value="60">Moins de 60 min</option>
+      </select>
+      <button id="resetFiltersBtn" class="btn-outline"><i class="fas fa-undo"></i> Réinitialiser</button>
+    </div>
+
+    <!-- Grille des recettes -->
+    <div id="recipesContainer" class="recipes-grid">
+      <!-- Les recettes seront injectées ici par JavaScript -->
+    </div>
+  </div>
+
+  <!-- Modal Avis (Note + Commentaire) -->
+  <div id="reviewModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fas fa-star"></i> Donner mon avis</h3>
+        <span class="close-modal" id="closeReviewModal">&times;</span>
+      </div>
+      <div class="modal-body">
+        <h4 id="reviewRecipeTitle" class="review-recipe-title"></h4>
+        <div class="rating-section">
+          <label>Votre note :</label>
+          <div class="stars-container">
+            <i class="far fa-star star-rating" data-value="1"></i>
+            <i class="far fa-star star-rating" data-value="2"></i>
+            <i class="far fa-star star-rating" data-value="3"></i>
+            <i class="far fa-star star-rating" data-value="4"></i>
+            <i class="far fa-star star-rating" data-value="5"></i>
+          </div>
+          <input type="hidden" id="selectedRating" value="0">
+        </div>
+        <div class="comment-section">
+          <label>Votre commentaire :</label>
+          <textarea id="reviewComment" rows="4" placeholder="Partagez votre expérience avec cette recette..."></textarea>
+        </div>
+        <div class="modal-actions">
+          <button id="submitReviewBtn" class="btn-primary">Envoyer mon avis</button>
+          <button id="cancelReviewBtn" class="btn-outline">Annuler</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast notification -->
+  <div id="toast" class="toast">
+    <i class="fas fa-check-circle"></i>
+    <span id="toastMessage">Avis envoyé !</span>
+  </div>
+
+  <script src="<?php echo isset($baseUrl) ? $baseUrl : ''; ?>VIEW/js/frontoffice.js"></script>
+</body>
+</html>

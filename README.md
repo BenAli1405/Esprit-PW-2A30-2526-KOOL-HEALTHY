@@ -1,219 +1,165 @@
-# 🌱 KOOL HEALTHY – Alimentation durable & nutrition intelligente
+# Kool Healthy - MVC Application
 
-<p align="center">
-  <img src="screenshots/home.png" alt="KOOL HEALTHY Banner" width="100%" />
-</p>
+Application web pour la gestion de recettes durables avec architecture Model-View-Controller (MVC).
 
-<p align="center">
-  <img src="https://img.shields.io/badge/PHP-OOP-blue?logo=php" />
-  <img src="https://img.shields.io/badge/MySQL-Database-orange?logo=mysql" />
-  <img src="https://img.shields.io/badge/HTML%2FCSS%2FJS-Frontend-green?logo=html5" />
-  <img src="https://img.shields.io/badge/License-MIT-yellow" />
-  <img src="https://img.shields.io/badge/PIDEV-Esprit%20Engineering-purple" />
-</p>
-
----
-
-## 📌 À propos du projet
-
-**KOOL HEALTHY** est une plateforme web innovante qui combine intelligence artificielle et conscience écologique pour promouvoir une alimentation saine et durable.
-
-Elle aide les utilisateurs à :
-
-- 🥗 Adopter de meilleures habitudes alimentaires
-- 🌍 Réduire leur impact environnemental
-- 🤖 Recevoir des recommandations nutritionnelles personnalisées par IA
-- ♻️ Lutter contre le gaspillage alimentaire
-
-### 🎯 Problématique
-
-Le projet répond à un double enjeu :
-
-| Enjeu | Description |
-|-------|-------------|
-| 🏥 **Santé** | Manque de recommandations nutritionnelles adaptées à chaque individu |
-| 🌿 **Environnement** | Gaspillage alimentaire et méconnaissance de l'impact écologique des aliments |
-
----
-
-## ⚙️ Fonctionnalités principales
-
-- 👤 **Gestion des comptes utilisateurs** – Inscription, connexion, profil personnalisé
-- 🤖 **Recommandation intelligente de repas** – Propulsée par IA
-- 🌱 **Éco-score des aliments** – Affichage de l'impact environnemental
-- 📦 **Gestion d'inventaire alimentaire** – Suivi de vos stocks
-- ♻️ **Suggestions anti-gaspillage** – Recettes basées sur vos ingrédients disponibles
-- 🏆 **Gamification** – Défis écologiques, badges et classement
-- 🛠️ **Interface d'administration** – Gestion complète du contenu et des utilisateurs
-
----
-
-## 📚 Table des matières
-
-- [Installation](#️-installation)
-- [Utilisation](#-utilisation)
-- [Technologies utilisées](#️-technologies-utilisées)
-- [Captures d'écran](#-captures-décran)
-- [Contribution](#-contribution)
-- [Licence](#-licence)
-
----
-
-## ⚙️ Installation
-
-### 1. Cloner le repository
-
-```bash
-git clone https://github.com/votre-utilisateur/kool-healthy.git
-cd kool-healthy
-```
-
-### 2. Configurer un serveur local
-
-Utilisez l'un des environnements suivants :
-
-- [XAMPP](https://www.apachefriends.org/)
-- [WAMP](https://www.wampserver.com/)
-- [MAMP](https://www.mamp.info/)
-
-Placez le projet dans le dossier `htdocs` (ou équivalent).
-
-### 3. Configurer la base de données
-
-1. Ouvrez **phpMyAdmin**
-2. Créez une base de données nommée :
+## Structure du Projet
 
 ```
-kool_healthy
+all/
+├── config.php                 # Configuration globale
+├── INDEX.php                  # Routeur principal (entry point)
+├── MODEL/                     # Modèles de données
+│   ├── Recipe.php            # Modèle Recette
+│   ├── Ingredient.php        # Modèle Ingrédient
+│   └── User.php              # Modèle Utilisateur
+├── CONTROLLER/                # Contrôleurs
+│   ├── RecipeC.php           # Contrôleur Recettes
+│   ├── IngredientC.php       # Contrôleur Ingrédients
+│   └── UserC.php             # Contrôleur Utilisateurs
+└── VIEW/                      # Vues
+    ├── frontoffice.html      # Interface utilisateur
+    ├── backoffice.html       # Interface administration
+    ├── css/
+    │   ├── frontoffice.css   # Styles front-office
+    │   └── backoffice.css    # Styles back-office
+    └── js/
+        ├── frontoffice.js    # Logique front-office
+        └── backoffice.js     # Logique back-office
 ```
 
-3. Importez le fichier :
+## Architecture MVC
 
+### MODEL (Couche Métier)
+Les modèles gèrent les données et la logique métier:
+- **Recipe.php**: Gestion des recettes, ingrédients, avis
+- **Ingredient.php**: Gestion des ingrédients
+- **User.php**: Gestion des utilisateurs
+
+### CONTROLLER (Couche Métier/Presentation)
+Les contrôleurs traitent les requêtes et coordonnent modèles et vues:
+- **RecipeC.php**: Logique pour les recettes (filtrage, création, suppression)
+- **IngredientC.php**: Logique pour les ingrédients
+- **UserC.php**: Logique pour les utilisateurs
+
+### VIEW (Couche Présentation)
+Les vues affichent les données:
+- **frontoffice.html**: Interface utilisateur pour consulter les recettes
+- **backoffice.html**: Interface admin pour gérer les données
+- CSS et JS associés pour l'interactivité
+
+## Flux de l'Application
+
+1. **Requête HTTP** → `INDEX.php` (routeur)
+2. **Routeur** → Détermine l'action/vue à afficher
+3. **Contrôleur** → Traite la logique métier
+4. **Modèle** → Récupère/modifie les données
+5. **Vue** → Affiche le résultat
+
+## Utilisation
+
+### Accès aux Interfaces
+
+**Front Office (Utilisateurs)**
 ```
-database/kool_healthy.sql
+http://localhost/all/INDEX.php?view=frontoffice
 ```
+- Consulter les recettes
+- Filtrer par critères (difficulté, éco-score, temps)
+- Donner des avis
 
-### 4. Configurer la connexion
-
-Modifiez le fichier `config/db.php` avec vos informations :
-
-```php
-define('DB_HOST', 'localhost');
-define('DB_USER', 'votre_utilisateur');
-define('DB_PASS', 'votre_mot_de_passe');
-define('DB_NAME', 'kool_healthy');
+**Back Office (Administrateurs)**
 ```
-
-### 5. Lancer l'application
-
-Ouvrez votre navigateur et accédez à :
-
+http://localhost/all/INDEX.php?view=backoffice
 ```
-http://localhost/kool-healthy
+- Dashboard avec statistiques
+- Gérer les recettes, ingrédients, utilisateurs, avis
+
+### Routes API
+
+Les contrôleurs exposent des endpoints AJAX:
+
+**GET Requests**
 ```
-
----
-
-## 🚀 Utilisation
-
-### 🔓 Visiteur (non connecté)
-
-- Consulter les recettes disponibles
-- Voir les éco-scores des aliments
-- Explorer les défis écologiques
-
-### 🔐 Utilisateur inscrit
-
-Après connexion, accès à :
-
-- Gestion du profil personnel
-- Recommandations de repas personnalisées par IA
-- Gestion de l'inventaire alimentaire
-- Suggestions anti-gaspillage basées sur l'inventaire
-- Participation aux défis écologiques
-- Suivi du classement et des badges obtenus
-
-### 🛠️ Administrateur
-
-L'administrateur dispose d'un espace dédié pour :
-
-- Gérer les comptes utilisateurs
-- Gérer les aliments et leurs éco-scores
-- Créer, modifier et supprimer des défis
-- Superviser et modérer le contenu de la plateforme
-
----
-
-## 🛠️ Technologies utilisées
-
-| Couche | Technologies |
-|--------|-------------|
-| **Front-end** | HTML5, CSS3, JavaScript |
-| **Back-end** | PHP (Programmation Orientée Objet) |
-| **Base de données** | MySQL |
-| **Intelligence artificielle** | Recommandations basées sur les préférences utilisateur, l'analyse d'inventaire et la saisonnalité |
-
----
-
-## 📸 Captures d'écran
-
-<p align="center">
-  <img src="screenshots/home.png" alt="Page d'accueil" width="48%" />
-  <img src="screenshots/dashboard.png" alt="Dashboard utilisateur" width="48%" />
-</p>
-
----
-
-## 🤝 Contribution
-
-Ce projet a été réalisé dans le cadre du cours **PW – 2ème année** à [Esprit School of Engineering](https://esprit.tn/).
-
-### 👥 Équipe
-
-| Membre     | Module              |
-|------------|---------------------|
-| Étudiant 1 | Gestion utilisateur |
-| Étudiant 2 | Recommandation IA   |
-| Étudiant 3 | Produits & éco-score|
-| Étudiant 4 | Anti-gaspillage     |
-| Étudiant 5 | Gamification        |
-| Étudiant 6 | Administration      |
-
-### 🔄 Processus de contribution
-
-1. **Fork** le projet
-2. **Créer** une branche pour votre fonctionnalité :
-
-```bash
-git checkout -b feature/ma-fonctionnalite
+INDEX.php?action=getAllRecipes
+INDEX.php?action=getAllIngredients
+INDEX.php?action=getAllUsers
+INDEX.php?action=getDashboardStats
 ```
 
-3. **Committer** vos modifications :
-
-```bash
-git commit -m "Ajout d'une fonctionnalité"
+**POST Requests**
+```
+action=createRecipe
+action=updateRecipe
+action=deleteRecipe
+action=addReview
+action=createIngredient
+action=updateIngredient
+action=deleteIngredient
+action=createUser
+action=updateUser
+action=toggleBlockUser
 ```
 
-4. **Pusher** la branche :
+## Propriétés des Modèles
 
-```bash
-git push origin feature/ma-fonctionnalite
-```
+### Recipe
+- `id`: Identifiant unique
+- `utilisateurId`: ID du créateur
+- `titre`: Nom de la recette
+- `instruction`: Préparation
+- `temp`: Temps de préparation (min)
+- `difficulte`: Facile/Moyen/Difficile
+- `ecoScore`: A+/A/B/C
+- `ingredients`: Array d'ingrédients avec quantité
+- `avis`: Array d'avis (utilisateur, note, commentaire)
 
-5. **Ouvrir** une Pull Request
+### Ingredient
+- `id`: Identifiant unique
+- `nom`: Nom de l'ingrédient
+- `calories`: Calorie par 100g
+- `ecoScore`: Score écologique
 
----
+### User
+- `id`: Identifiant unique
+- `nom`: Nom complet
+- `email`: Adresse email
+- `dateInscription`: Date d'inscription
+- `statut`: actif/bloque
+- `recettesCrees`: Liste des recettes créées
+- `avisDonnes`: Liste des avis donnés
 
-## 📜 Licence
+## Configuration
 
-Ce projet est sous licence **MIT**.
+Modifier le fichier `config.php` pour:
+- Configurer la base de données (si applicable)
+- Définir les chemins de l'application
+- Configurer les paramètres globaux
 
-Vous êtes autorisé à utiliser, modifier et distribuer ce projet, à condition de conserver la licence originale.
+## Stockage des Données
 
-Voir le fichier [`LICENSE`](LICENSE) pour plus d'informations.
+Actuellement, les données sont stockées en mémoire (dans les modèles).
+Pour une utilisation en production, remplacer par une vraie base de données.
 
----
+## Points d'Extension
 
-<p align="center">
-  Made with ❤️ by the KOOL HEALTHY Team – Esprit School of Engineering
-</p>
+- Ajouter une vraie base de données (remplacer les tableaux statiques)
+- Implémenter l'authentification/autorisation
+- Ajouter une pagination pour les tables
+- Ajouter des validations côté serveur
+- Intégrer un système de cache
+- Ajouter des logs
+
+## Technologies
+
+- PHP 7.4+
+- JavaScript (vanilla)
+- CSS3
+- Font Awesome Icons
+- Google Fonts (Inter)
+
+## Commentaires du Code
+
+Le code est fortement commenté avec sections claires:
+- Séparation des responsabilités
+- Nommage explicite des variables
+- Documentation des fonctions principales
