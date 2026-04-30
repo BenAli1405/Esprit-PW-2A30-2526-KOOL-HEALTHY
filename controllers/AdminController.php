@@ -21,6 +21,13 @@ class AdminController
     public function listEntrainements()
     {
         $entrainements = $this->entrainementModel->getAllWithUser();
+        
+        // Ajouter le compteur d'exercices pour chaque séance
+        foreach ($entrainements as &$entrainement) {
+            $entrainement['nb_exercices'] = $this->entrainementModel->getExercicesCount($entrainement['id_entrainement']);
+        }
+        unset($entrainement);
+        
         $layout = 'back';
         $action = 'admin_entrainements';
         $pageTitle = 'Kool Healthy | Admin - Entraînements';
@@ -106,7 +113,8 @@ class AdminController
     public function createExercice()
     {
         $data = $this->postExerciceData();
-        $entrainements = $this->entrainementModel->getAllWithUser();
+        // Récupérer les séances formatées pour le select amélioré
+        $entrainements = $this->entrainementModel->getAllForSelect();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($this->validateExercice($data)) {
@@ -129,7 +137,8 @@ class AdminController
     {
         $id = (int)($_GET['id'] ?? 0);
         $exercice = $this->exerciceModel->getById($id);
-        $entrainements = $this->entrainementModel->getAllWithUser();
+        // Récupérer les séances formatées pour le select amélioré
+        $entrainements = $this->entrainementModel->getAllForSelect();
 
         if (!$exercice) {
             header('Location: index.php?action=admin_exercices');

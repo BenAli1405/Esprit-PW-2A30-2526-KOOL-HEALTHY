@@ -18,12 +18,48 @@ class EntrainementController
     public function index()
     {
         $userId = $this->getCurrentUserId();
-        $entrainements = $this->model->getAllByUser($userId);
+        
+        // Récupérer le filtre par type de sport depuis l'URL
+        $typeSportFilter = $_GET['type_sport'] ?? null;
+        
+        // Récupérer le paramètre de recherche
+        $search = $_GET['search'] ?? null;
+        
+        // Récupérer les séances (avec filtres optionnels)
+        $entrainements = $this->model->getAllByUser($userId, $typeSportFilter, $search);
+        
+        // Ajouter le compteur d'exercices pour chaque séance
+        foreach ($entrainements as &$entrainement) {
+            $entrainement['nb_exercices'] = $this->model->getExercicesCount($entrainement['id_entrainement']);
+        }
+        unset($entrainement);
+        
+        // Récupérer les types de sports distincts pour le filtre
+        $sportTypes = $this->model->getDistinctSportTypes();
+        
         $layout = 'front';
         $action = 'mes_entrainements';
         $pageTitle = 'Kool Healthy | Entraînement & Exercice';
         include __DIR__ . '/../views/layout/header.php';
         include __DIR__ . '/../views/front/entrainements/list.php';
+        include __DIR__ . '/../views/layout/footer.php';
+    }
+
+    /**
+     * Affiche les statistiques de calories par semaine
+     */
+    public function statistiques()
+    {
+        $userId = $this->getCurrentUserId();
+        
+        // Récupérer les données de calories par semaine (4 dernières semaines)
+        $caloriesPerWeek = $this->model->getCaloriesPerWeek($userId, 4);
+        
+        $layout = 'front';
+        $action = 'statistiques_entrainements';
+        $pageTitle = 'Kool Healthy | Statistiques - Calories par Semaine';
+        include __DIR__ . '/../views/layout/header.php';
+        include __DIR__ . '/../views/front/entrainements/statistiques.php';
         include __DIR__ . '/../views/layout/footer.php';
     }
 

@@ -16,13 +16,16 @@
   <form id="exercice-form" method="post" action="">
     <div id="exercice-errors" class="alert hidden"></div>
     <div class="form-group">
-      <label>Séance</label>
+      <label>Séance d'Entraînement</label>
       <select name="id_entrainement">
-        <option value="">Sélectionnez</option>
+        <option value="">Sélectionnez une séance</option>
         <?php foreach ($entrainements as $ent): ?>
-          <option value="<?= $ent['id_entrainement'] ?>" <?= (isset($data['id_entrainement']) && $data['id_entrainement'] == $ent['id_entrainement']) ? 'selected' : '' ?>>Séance #<?= $ent['id_entrainement'] ?> - <?= htmlspecialchars($ent['date']) ?></option>
+          <option value="<?= htmlspecialchars($ent['id']) ?>" <?= (isset($data['id_entrainement']) && $data['id_entrainement'] == $ent['id']) ? 'selected' : '' ?>>
+            Séance #<?= htmlspecialchars($ent['id']) ?> - <?= htmlspecialchars($ent['date']) ?> (<?= htmlspecialchars($ent['type_sport']) ?>) - <?= htmlspecialchars($ent['duree_minutes']) ?> min
+          </option>
         <?php endforeach; ?>
       </select>
+      <small style="color: #666;">Format: Séance #ID - Date (Type de Sport) - Durée</small>
     </div>
     <div class="form-group"><label>Nom de l'exercice</label><input type="text" name="nom" value="<?= htmlspecialchars($data['nom'] ?? '') ?>"></div>
     <div class="form-group"><label>Séries</label><input type="text" name="series" value="<?= htmlspecialchars($data['series'] ?? '') ?>"></div>
@@ -37,4 +40,3 @@
     </div>
   </form>
 </div>
-     

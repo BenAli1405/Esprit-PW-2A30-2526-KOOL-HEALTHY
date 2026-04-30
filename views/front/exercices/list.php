@@ -1,11 +1,21 @@
+<?php $entrainement = $entrainement ?? []; ?>
 <div class="card-panel">
-  <div class="section-header">
-    <h3>Exercices de la séance du <?= htmlspecialchars(formatDateFR($entrainement['date'])) ?></h3>
-    <div class="button-row">
-      <a class="btn-primary" href="index.php?action=ajouter_exercice&id=<?= $entrainement['id_entrainement'] ?>"><i class="fas fa-plus"></i> Ajouter un exercice</a>
-      <a class="btn-secondary" href="index.php?action=mes_entrainements">Retour</a>
+  <?php if (empty($entrainement)): ?>
+    <div class="section-header">
+      <h3>Séance introuvable</h3>
+      <div class="button-row">
+        <a class="btn-secondary" href="index.php?action=mes_entrainements">Retour</a>
+      </div>
     </div>
-  </div>
+  <?php else: ?>
+    <div class="section-header">
+      <h3>Exercices de la séance du <?= htmlspecialchars(formatDateFR($entrainement['date'])) ?></h3>
+      <div class="button-row">
+        <a class="btn-primary" href="index.php?action=ajouter_exercice&id=<?= $entrainement['id_entrainement'] ?>"><i class="fas fa-plus"></i> Ajouter un exercice</a>
+        <a class="btn-secondary" href="index.php?action=mes_entrainements">Retour</a>
+      </div>
+    </div>
+  <?php endif; ?>
   <?php if (empty($exercices)): ?>
     <p>Aucun exercice pour cette séance. Commencez par ajouter un exercice.</p>
   <?php else: ?>

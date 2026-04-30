@@ -17,6 +17,9 @@ function formatDateFR($date)
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link rel="stylesheet" href="/kool_healthy3/public/css/style.css">
+  <?php if ($action === 'statistiques_entrainements'): ?>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <?php endif; ?>
 </head>
 <body class="<?= $layout ?>-layout">
 <?php if ($layout === 'front'): ?>

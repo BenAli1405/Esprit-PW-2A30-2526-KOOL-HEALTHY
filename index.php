@@ -74,6 +74,9 @@ switch ($action) {
     case 'admin_supprimer_regle':
         $adminController->deleteRegle();
         break;
+    case 'statistiques':
+    $entrainementController->statistiques();
+    break;
     default:
         http_response_code(404);
         echo '<h1>404 - Page introuvable</h1>';
