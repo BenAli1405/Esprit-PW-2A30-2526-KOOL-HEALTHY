@@ -12,11 +12,8 @@ class IngredientC {
         return self::$ingredient;
     }
 
-    // ========== FONCTIONS DE VALIDATION ==========
-    
-    /**
-     * Valide le nom d'un ingrédient
-     */
+    // ========== VALIDATION ==========
+
     private static function validateName($nom) {
         if (empty($nom) || trim($nom) === '') {
             return ['valid' => false, 'message' => 'Le nom de l\'ingredient est requis'];
@@ -27,109 +24,135 @@ class IngredientC {
         if (strlen($nom) > 100) {
             return ['valid' => false, 'message' => 'Le nom ne peut pas depasser 100 caracteres'];
         }
-        // Validation des caracteres (lettres, chiffres, espaces, tirets, apostrophes)
         if (!preg_match('/^[a-zA-Z0-9\s\-\'àâäæçéèêëïîôöœùûüÿÀÂÄÆÇÉÈÊËÏÎÔÖŒÙÛÜ]+$/u', $nom)) {
             return ['valid' => false, 'message' => 'Le nom contient des caracteres non autorises'];
         }
         return ['valid' => true, 'message' => ''];
     }
-    
-    /**
-     * Valide le format des calories
-     */
+
     private static function validateCalories($calories) {
         if (empty($calories)) {
-            return ['valid' => true, 'message' => '']; // Optionnel
+            return ['valid' => true, 'message' => ''];
         }
-        // Format: "120kcal/100g" ou "52kcal"
         if (!preg_match('/^(\d+(?:\.\d+)?)(kcal(?:\/\d+g)?)?$/i', trim($calories))) {
             return ['valid' => false, 'message' => 'Format calories invalide (ex: 120kcal/100g)'];
         }
         return ['valid' => true, 'message' => ''];
     }
 
-    // ========== METHODES PRINCIPALES ==========
-    
-    // Get all ingredients
+    /**
+     * Validate a nutritional value (must be a non-negative number)
+     */
+    private static function validateNutritionalValue($value, $fieldName) {
+        if ($value === '' || $value === null) {
+            return ['valid' => true, 'message' => ''];
+        }
+        if (!is_numeric($value)) {
+            return ['valid' => false, 'message' => "$fieldName doit etre un nombre"];
+        }
+        if ((float)$value < 0) {
+            return ['valid' => false, 'message' => "$fieldName ne peut pas etre negatif"];
+        }
+        if ((float)$value > 999) {
+            return ['valid' => false, 'message' => "$fieldName semble trop eleve (max 999g)"];
+        }
+        return ['valid' => true, 'message' => ''];
+    }
+
+    // ========== PUBLIC METHODS ==========
+
     public static function getAllIngredients() {
         return self::getInstance()->getAll();
     }
 
-    // Get ingredient by ID
     public static function getIngredientById($id) {
         return self::getInstance()->getById($id);
     }
 
-    // Create new ingredient avec validation
-    public static function createIngredient($nom, $calories = null, $ecoScore = 'A') {
-        // Validation du nom
+    public static function createIngredient($nom, $calories = null, $ecoScore = 'A',
+                                            $proteines = 0, $glucides = 0, $lipides = 0,
+                                            $fibres = 0, $sel = 0) {
+        // Validate name
         $nameValidation = self::validateName($nom);
         if (!$nameValidation['valid']) {
             return ['success' => false, 'message' => $nameValidation['message']];
         }
-        
-        // Validation des calories
+        // Validate calories
         if ($calories) {
-            $caloriesValidation = self::validateCalories($calories);
-            if (!$caloriesValidation['valid']) {
-                return ['success' => false, 'message' => $caloriesValidation['message']];
-            }
+            $calVal = self::validateCalories($calories);
+            if (!$calVal['valid']) return ['success' => false, 'message' => $calVal['message']];
         }
-        
-        // Validation de l'éco-score
-        $validScores = ['A+', 'A', 'B', 'C', 'D', 'E'];
-        if (!in_array($ecoScore, $validScores)) {
+        // Validate eco-score
+        if (!in_array($ecoScore, ['A+', 'A', 'B', 'C', 'D', 'E'])) {
             return ['success' => false, 'message' => 'Eco-score invalide'];
         }
-        
-        // Nettoyage
-        $nom = htmlspecialchars(trim($nom), ENT_QUOTES, 'UTF-8');
-        
-        $newId = self::getInstance()->create($nom, $calories, $ecoScore);
-        return ['success' => $newId !== false, 'id' => $newId, 'message' => $newId ? 'Ingredient cree avec succes' : 'Erreur lors de la creation'];
+        // Validate nutritional values
+        foreach ([
+            [$proteines, 'Protéines'],
+            [$glucides,  'Glucides'],
+            [$lipides,   'Lipides'],
+            [$fibres,    'Fibres'],
+            [$sel,       'Sel'],
+        ] as [$val, $label]) {
+            $v = self::validateNutritionalValue($val, $label);
+            if (!$v['valid']) return ['success' => false, 'message' => $v['message']];
+        }
+
+        $nom   = htmlspecialchars(trim($nom), ENT_QUOTES, 'UTF-8');
+        $newId = self::getInstance()->create($nom, $calories, $ecoScore,
+                                             $proteines, $glucides, $lipides, $fibres, $sel);
+        return [
+            'success' => $newId !== false,
+            'id'      => $newId,
+            'message' => $newId ? 'Ingredient cree avec succes' : 'Erreur lors de la creation',
+        ];
     }
 
-    // Update ingredient avec validation
-    public static function updateIngredient($id, $nom, $calories = null, $ecoScore = 'A') {
-        // Validation du nom
+    public static function updateIngredient($id, $nom, $calories = null, $ecoScore = 'A',
+                                            $proteines = 0, $glucides = 0, $lipides = 0,
+                                            $fibres = 0, $sel = 0) {
         $nameValidation = self::validateName($nom);
         if (!$nameValidation['valid']) {
             return ['success' => false, 'message' => $nameValidation['message']];
         }
-        
-        // Validation des calories
         if ($calories) {
-            $caloriesValidation = self::validateCalories($calories);
-            if (!$caloriesValidation['valid']) {
-                return ['success' => false, 'message' => $caloriesValidation['message']];
-            }
+            $calVal = self::validateCalories($calories);
+            if (!$calVal['valid']) return ['success' => false, 'message' => $calVal['message']];
         }
-        
-        // Validation de l'éco-score
-        $validScores = ['A+', 'A', 'B', 'C', 'D', 'E'];
-        if (!in_array($ecoScore, $validScores)) {
+        if (!in_array($ecoScore, ['A+', 'A', 'B', 'C', 'D', 'E'])) {
             return ['success' => false, 'message' => 'Eco-score invalide'];
         }
-        
-        // Nettoyage
-        $nom = htmlspecialchars(trim($nom), ENT_QUOTES, 'UTF-8');
-        
-        $success = self::getInstance()->update($id, $nom, $calories, $ecoScore);
-        return ['success' => $success, 'message' => $success ? 'Ingredient mis a jour avec succes' : 'Ingredient non trouve'];
+        foreach ([
+            [$proteines, 'Protéines'],
+            [$glucides,  'Glucides'],
+            [$lipides,   'Lipides'],
+            [$fibres,    'Fibres'],
+            [$sel,       'Sel'],
+        ] as [$val, $label]) {
+            $v = self::validateNutritionalValue($val, $label);
+            if (!$v['valid']) return ['success' => false, 'message' => $v['message']];
+        }
+
+        $nom     = htmlspecialchars(trim($nom), ENT_QUOTES, 'UTF-8');
+        $success = self::getInstance()->update($id, $nom, $calories, $ecoScore,
+                                               $proteines, $glucides, $lipides, $fibres, $sel);
+        return [
+            'success' => $success,
+            'message' => $success ? 'Ingredient mis a jour avec succes' : 'Ingredient non trouve',
+        ];
     }
 
-    // Delete ingredient
     public static function deleteIngredient($id) {
         if (!is_numeric($id) || $id <= 0) {
             return ['success' => false, 'message' => 'ID d\'ingredient invalide'];
         }
-        error_log("deleteIngredient called with ID: {$id}");
         $success = self::getInstance()->delete($id);
-        error_log("deleteIngredient result: " . ($success ? 'true' : 'false'));
-        return ['success' => $success, 'message' => $success ? 'Ingredient supprime avec succes' : 'Echec de la suppression'];
+        return [
+            'success' => $success,
+            'message' => $success ? 'Ingredient supprime avec succes' : 'Echec de la suppression',
+        ];
     }
 
-    // Get ingredient with usage info
     public static function getIngredientInfo($id) {
         $ingredient = self::getIngredientById($id);
         if ($ingredient) {
@@ -138,7 +161,6 @@ class IngredientC {
         return $ingredient;
     }
 
-    // Get all ingredients with usage count
     public static function getAllIngredientsWithUsage() {
         $ingredients = self::getAllIngredients();
         foreach ($ingredients as &$ing) {
@@ -147,12 +169,10 @@ class IngredientC {
         return $ingredients;
     }
 
-    // Get top ingredients by usage
     public static function getTopIngredients($limit = 5) {
         return self::getInstance()->getTop($limit);
     }
 
-    // Search ingredients
     public static function searchIngredients($keyword) {
         return self::getInstance()->search($keyword);
     }
