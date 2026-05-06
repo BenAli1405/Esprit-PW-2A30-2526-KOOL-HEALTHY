@@ -79,9 +79,6 @@ function renderStars(note) {
 
 // ========== FONCTIONS DE VALIDATION ==========
 
-/**
- * Valide le titre d'une recette
- */
 function validateRecipeTitle(titre) {
   if (!titre || titre.trim() === '') {
     return { valid: false, message: 'Le titre est requis' };
@@ -92,7 +89,6 @@ function validateRecipeTitle(titre) {
   if (titre.length > 100) {
     return { valid: false, message: 'Le titre ne peut pas dépasser 100 caractères' };
   }
-  // Autorise lettres, chiffres, espaces, tirets, apostrophes, accents
   const regex = /^[a-zA-Z0-9\s\-'àâäæçéèêëïîôöœùûüüÿÀÂÄÆÇÉÈÊËÏÎÔÖŒÙÛÜŸ]+$/;
   if (!regex.test(titre)) {
     return { valid: false, message: 'Le titre contient des caractères non autorisés' };
@@ -100,9 +96,6 @@ function validateRecipeTitle(titre) {
   return { valid: true, message: '' };
 }
 
-/**
- * Valide les instructions d'une recette
- */
 function validateRecipeInstructions(instructions) {
   if (!instructions || instructions.trim() === '') {
     return { valid: false, message: 'Les instructions sont requises' };
@@ -116,9 +109,6 @@ function validateRecipeInstructions(instructions) {
   return { valid: true, message: '' };
 }
 
-/**
- * Valide le temps de préparation
- */
 function validateRecipeTime(temp) {
   const time = parseInt(temp);
   if (isNaN(time)) {
@@ -133,9 +123,6 @@ function validateRecipeTime(temp) {
   return { valid: true, message: '' };
 }
 
-/**
- * Valide la difficulté
- */
 function validateDifficulty(difficulte) {
   const validDifficulties = ['Facile', 'Moyen', 'Difficile'];
   if (!validDifficulties.includes(difficulte)) {
@@ -144,9 +131,6 @@ function validateDifficulty(difficulte) {
   return { valid: true, message: '' };
 }
 
-/**
- * Valide l'éco-score
- */
 function validateEcoScore(ecoScore) {
   const validScores = ['A+', 'A', 'B', 'C', 'D', 'E'];
   if (!validScores.includes(ecoScore)) {
@@ -155,9 +139,6 @@ function validateEcoScore(ecoScore) {
   return { valid: true, message: '' };
 }
 
-/**
- * Valide les ingrédients
- */
 function validateIngredients(ingredients) {
   if (!ingredients || ingredients.length === 0) {
     return { valid: false, message: 'Au moins un ingrédient est requis' };
@@ -181,9 +162,6 @@ function validateIngredients(ingredients) {
   return { valid: true, message: '' };
 }
 
-/**
- * Valide le nom d'un ingrédient
- */
 function validateIngredientName(nom) {
   if (!nom || nom.trim() === '') {
     return { valid: false, message: 'Le nom de l\'ingrédient est requis' };
@@ -201,47 +179,13 @@ function validateIngredientName(nom) {
   return { valid: true, message: '' };
 }
 
-/**
- * Valide les calories
- */
 function validateCalories(calories) {
   if (!calories || calories.trim() === '') {
-    return { valid: true, message: '' }; // Optionnel
+    return { valid: true, message: '' };
   }
-  // Format: "120kcal/100g" ou "52kcal"
   const regex = /^(\d+(?:\.\d+)?)(kcal(?:\/\d+g)?)?$/i;
   if (!regex.test(calories.trim())) {
     return { valid: false, message: 'Format calories invalide (ex: 120kcal/100g)' };
-  }
-  return { valid: true, message: '' };
-}
-
-/**
- * Valide une note (avis)
- */
-function validateRating(note) {
-  const rating = parseInt(note);
-  if (isNaN(rating)) {
-    return { valid: false, message: 'Veuillez sélectionner une note' };
-  }
-  if (rating < 1 || rating > 5) {
-    return { valid: false, message: 'La note doit être comprise entre 1 et 5' };
-  }
-  return { valid: true, message: '' };
-}
-
-/**
- * Valide un commentaire (avis)
- */
-function validateComment(commentaire) {
-  if (!commentaire || commentaire.trim() === '') {
-    return { valid: false, message: 'Le commentaire est requis' };
-  }
-  if (commentaire.length < 3) {
-    return { valid: false, message: 'Le commentaire doit contenir au moins 3 caractères' };
-  }
-  if (commentaire.length > 1000) {
-    return { valid: false, message: 'Le commentaire ne peut pas dépasser 1000 caractères' };
   }
   return { valid: true, message: '' };
 }
@@ -261,7 +205,6 @@ function updateDashboard() {
   });
   document.getElementById('statReviews').textContent = totalReviews;
   
-  // Top recettes par note moyenne
   let recettesWithAvg = recettesDB.map(rec => ({
     titre: rec.titre,
     avgNote: rec.note_moyenne || 0,
@@ -278,7 +221,6 @@ function updateDashboard() {
   `).join('');
   document.getElementById('topRecipesList').innerHTML = topRecipesHtml || '<div>Aucune recette</div>';
   
-  // Top ingrédients
   let ingredientCount = {};
   recettesDB.forEach(rec => {
     if (rec.ingredients && Array.isArray(rec.ingredients)) {
@@ -307,7 +249,6 @@ function updateDashboard() {
   `).join('');
   document.getElementById('topIngredientsList').innerHTML = topIngredientsHtml || '<div>Aucun ingrédient</div>';
   
-  // Activité récente
   let allReviews = [];
   recettesDB.forEach(rec => {
     if (rec.avis && Array.isArray(rec.avis)) {
@@ -339,23 +280,31 @@ function renderRecipesTable() {
   if (!tbody) return;
   
   if (recettesDB.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Aucune recette trouvée</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Aucune recette trouvée</td></tr>';
     return;
   }
   
-  tbody.innerHTML = recettesDB.map(rec => `
-    <tr>
-      <td>${escapeHtml(rec.titre)}</td>
-      <td>${rec.difficulte || 'N/A'}</td>
-      <td>${rec.temps_preparation || 0} min</td>
-      <td>${rec.eco_score || 'A'}</td>
-      <td>${rec.nombre_avis || 0}</td>
-      <td class="action-icons">
-        <i class="fas fa-edit edit-icon" onclick="openRecipeModal(${rec.id})" style="cursor:pointer; color:#29B6F6; margin:0 5px;"></i>
-        <i class="fas fa-trash delete-icon" onclick="deleteRecipe(${rec.id})" style="cursor:pointer; color:#ef5350; margin:0 5px;"></i>
-      </td>
-    </tr>
-  `).join('');
+  tbody.innerHTML = recettesDB.map(rec => {
+    const calories = rec.nutrition ? Math.round(rec.nutrition.calories || 0) : 'N/A';
+    const proteines = rec.nutrition ? Math.round(rec.nutrition.proteines || 0) : 'N/A';
+    const avisCount = rec.avis ? rec.avis.length : (rec.nombre_avis || 0);
+    
+    return `
+      <tr>
+        <td>${escapeHtml(rec.titre)}</td>
+        <td>${rec.difficulte || 'N/A'}</td>
+        <td>${rec.temps_preparation || 0} min</td>
+        <td>${rec.eco_score || 'A'}</td>
+        <td>${calories}</td>
+        <td>${proteines}</td>
+        <td>${avisCount}</td>
+        <td class="action-icons">
+          <i class="fas fa-edit edit-icon" onclick="openRecipeModal(${rec.id})" style="cursor:pointer; color:#29B6F6; margin:0 5px;"></i>
+          <i class="fas fa-trash delete-icon" onclick="deleteRecipe(${rec.id})" style="cursor:pointer; color:#ef5350; margin:0 5px;"></i>
+        </td>
+      </tr>
+    `;
+  }).join('');
 }
 
 function openRecipeModal(recipeId = null) {
@@ -363,7 +312,6 @@ function openRecipeModal(recipeId = null) {
   const title = document.getElementById('recipeModalTitle');
   const ingredientContainer = document.getElementById('ingredientsListContainer');
   
-  // Réinitialiser les erreurs
   clearRecipeErrors();
   
   if (recipeId) {
@@ -389,7 +337,7 @@ function openRecipeModal(recipeId = null) {
         return `
           <div class="ingredient-row">
             <select class="ingredient-select">
-              ${ingredientsDB.map(i => `<option value="${i.id}" ${i.id === ingId ? 'selected' : ''}>${escapeHtml(i.nom)}</option>`).join('')}
+              ${ingredientsDB.map(i => `<option value="${i.id}" ${i.id == ingId ? 'selected' : ''}>${escapeHtml(i.nom)}</option>`).join('')}
             </select>
             <input type="number" class="ingredient-qty" value="${qty}" step="0.01" min="0.01" max="9999">
             <input type="text" class="ingredient-unite" value="${escapeHtml(unite)}" placeholder="g, ml..." maxlength="20">
@@ -428,9 +376,7 @@ function addEmptyIngredientRow() {
 }
 
 function clearRecipeErrors() {
-  // Supprimer les messages d'erreur existants
   document.querySelectorAll('.error-message').forEach(el => el.remove());
-  // Réinitialiser les styles des champs
   document.querySelectorAll('.form-group input, .form-group select, .form-group textarea').forEach(field => {
     field.style.borderColor = '';
   });
@@ -440,7 +386,6 @@ function showFieldError(fieldId, message) {
   const field = document.getElementById(fieldId);
   if (field) {
     field.style.borderColor = '#d32f2f';
-    // Ajouter un message d'erreur
     let errorDiv = field.parentElement.querySelector('.error-message');
     if (!errorDiv) {
       errorDiv = document.createElement('div');
@@ -491,7 +436,7 @@ function renderIngredientsTable() {
   if (!tbody) return;
   
   if (ingredientsDB.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Aucun ingrédient trouvé</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Aucun ingrédient trouvé</td></tr>';
     return;
   }
   
@@ -499,17 +444,25 @@ function renderIngredientsTable() {
     let usage = 0;
     recettesDB.forEach(rec => {
       if (rec.ingredients && Array.isArray(rec.ingredients)) {
-        if (rec.ingredients.some(i => (i.ingredient_id === ing.id) || (i.idIng === ing.id) || (i.id === ing.id))) {
+        if (rec.ingredients.some(i => (i.ingredient_id == ing.id) || (i.idIng == ing.id) || (i.id == ing.id))) {
           usage++;
         }
       }
     });
     
+    const calories = ing.calories || '-';
+    const proteines = ing.proteines ? parseFloat(ing.proteines).toFixed(1) : '0';
+    const glucides = ing.glucides ? parseFloat(ing.glucides).toFixed(1) : '0';
+    const lipides = ing.lipides ? parseFloat(ing.lipides).toFixed(1) : '0';
+    
     return `
       <tr>
         <td>${escapeHtml(ing.nom)}</td>
-        <td>${ing.calories || '-'}</td>
+        <td>${escapeHtml(calories)}</td>
         <td>${ing.eco_score || 'A'}</td>
+        <td>${proteines}</td>
+        <td>${glucides}</td>
+        <td>${lipides}</td>
         <td>${usage}</td>
         <td class="action-icons">
           <i class="fas fa-edit edit-icon" onclick="openIngredientModal(${ing.id})" style="cursor:pointer; color:#29B6F6; margin:0 5px;"></i>
@@ -524,7 +477,6 @@ function openIngredientModal(ingredientId = null) {
   const modal = document.getElementById('ingredientModal');
   const title = document.getElementById('ingredientModalTitle');
   
-  // Réinitialiser les erreurs
   clearIngredientErrors();
   
   if (ingredientId) {
@@ -539,12 +491,18 @@ function openIngredientModal(ingredientId = null) {
     document.getElementById('ingredientName').value = ing.nom || '';
     document.getElementById('ingredientCalories').value = ing.calories || '';
     document.getElementById('ingredientEcoScore').value = ing.eco_score || 'A';
+    document.getElementById('ingredientProteines').value = ing.proteines || 0;
+    document.getElementById('ingredientGlucides').value = ing.glucides || 0;
+    document.getElementById('ingredientLipides').value = ing.lipides || 0;
   } else {
     title.textContent = 'Ajouter un ingrédient';
     document.getElementById('ingredientForm').reset();
     document.getElementById('ingredientId').value = '';
     document.getElementById('ingredientName').value = '';
     document.getElementById('ingredientCalories').value = '';
+    document.getElementById('ingredientProteines').value = 0;
+    document.getElementById('ingredientGlucides').value = 0;
+    document.getElementById('ingredientLipides').value = 0;
   }
   
   modal.style.display = 'flex';
@@ -601,30 +559,6 @@ async function deleteIngredient(id) {
   }
 }
 
-async function deleteReview(recipeId, reviewId) {
-  if (!confirm('Êtes-vous sûr de vouloir supprimer cet avis ?')) return;
-  
-  const formData = new FormData();
-  formData.append('action', 'deleteReview');
-  formData.append('recipeId', recipeId);
-  formData.append('id', reviewId);
-  
-  try {
-    const response = await fetch('INDEX.php', { method: 'POST', body: formData });
-    const result = await response.json();
-    
-    if (result.success) {
-      showToast(result.message || 'Avis supprimé');
-      loadData();
-    } else {
-      showToast(result.message || 'Échec de la suppression', true);
-    }
-  } catch (error) {
-    console.error('Erreur:', error);
-    showToast('Erreur lors de la suppression', true);
-  }
-}
-
 // ========== GESTION AVIS ==========
 function renderReviewsTable() {
   const tbody = document.getElementById('reviewsTableBody');
@@ -660,9 +594,33 @@ function renderReviewsTable() {
       <td>${escapeHtml(avis.commentaire)}</td>
       <td class="action-icons">
         <i class="fas fa-trash delete-icon" onclick="deleteReview(${avis.recipeId}, ${avis.reviewId})" style="cursor:pointer; color:#ef5350; margin:0 5px;"></i>
-      </td>
+       </td>
     </tr>
   `).join('');
+}
+
+async function deleteReview(recipeId, reviewId) {
+  if (!confirm('Êtes-vous sûr de vouloir supprimer cet avis ?')) return;
+  
+  const formData = new FormData();
+  formData.append('action', 'deleteReview');
+  formData.append('recipeId', recipeId);
+  formData.append('id', reviewId);
+  
+  try {
+    const response = await fetch('INDEX.php', { method: 'POST', body: formData });
+    const result = await response.json();
+    
+    if (result.success) {
+      showToast(result.message || 'Avis supprimé');
+      loadData();
+    } else {
+      showToast(result.message || 'Échec de la suppression', true);
+    }
+  } catch (error) {
+    console.error('Erreur:', error);
+    showToast('Erreur lors de la suppression', true);
+  }
 }
 
 // ========== NAVIGATION TABS ==========
@@ -680,23 +638,19 @@ function showTab(tabId) {
   if (contents[tabId]) contents[tabId].style.display = 'block';
 }
 
-// ========== FORM SUBMISSION HANDLERS AVEC VALIDATION ==========
+// ========== FORM SUBMISSION HANDLERS ==========
 
-// Recipe Form Submission avec validation complète
 document.getElementById('recipeForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   
-  // Réinitialiser les erreurs
   clearRecipeErrors();
   
-  // Récupérer les valeurs
   const titre = document.getElementById('recipeTitle').value.trim();
   const instruction = document.getElementById('recipeInstructions').value.trim();
   const temp = document.getElementById('recipeTime').value;
   const difficulte = document.getElementById('recipeDifficulty').value;
   const ecoScore = document.getElementById('recipeEcoScore').value;
   
-  // VALIDATION TITRE
   const titleValidation = validateRecipeTitle(titre);
   if (!titleValidation.valid) {
     showFieldError('recipeTitle', titleValidation.message);
@@ -705,7 +659,6 @@ document.getElementById('recipeForm').addEventListener('submit', async (e) => {
     return;
   }
   
-  // VALIDATION INSTRUCTIONS
   const instructionsValidation = validateRecipeInstructions(instruction);
   if (!instructionsValidation.valid) {
     showFieldError('recipeInstructions', instructionsValidation.message);
@@ -714,7 +667,6 @@ document.getElementById('recipeForm').addEventListener('submit', async (e) => {
     return;
   }
   
-  // VALIDATION TEMPS
   const timeValidation = validateRecipeTime(temp);
   if (!timeValidation.valid) {
     showFieldError('recipeTime', timeValidation.message);
@@ -723,25 +675,21 @@ document.getElementById('recipeForm').addEventListener('submit', async (e) => {
     return;
   }
   
-  // VALIDATION DIFFICULTE
   const diffValidation = validateDifficulty(difficulte);
   if (!diffValidation.valid) {
     showToast(diffValidation.message, true);
     return;
   }
   
-  // VALIDATION ECO-SCORE
   const ecoValidation = validateEcoScore(ecoScore);
   if (!ecoValidation.valid) {
     showToast(ecoValidation.message, true);
     return;
   }
   
-  // Collecter et valider les ingrédients
   const ingredients = [];
-  let ingredientError = null;
   
-  document.querySelectorAll('#ingredientsListContainer .ingredient-row').forEach((row, index) => {
+  document.querySelectorAll('#ingredientsListContainer .ingredient-row').forEach((row) => {
     const ingredientId = row.querySelector('.ingredient-select').value;
     const qty = row.querySelector('.ingredient-qty').value;
     const unite = row.querySelector('.ingredient-unite').value;
@@ -755,14 +703,12 @@ document.getElementById('recipeForm').addEventListener('submit', async (e) => {
     }
   });
   
-  // VALIDATION INGREDIENTS
   const ingredientsValidation = validateIngredients(ingredients);
   if (!ingredientsValidation.valid) {
     showToast(ingredientsValidation.message, true);
     return;
   }
   
-  // Préparer et envoyer la requête
   const recipeId = document.getElementById('recipeId').value;
   const formData = new FormData();
   formData.append('titre', titre);
@@ -805,7 +751,6 @@ document.getElementById('recipeForm').addEventListener('submit', async (e) => {
   }
 });
 
-// Ingredient Form Submission avec validation
 document.getElementById('ingredientForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   
@@ -814,8 +759,10 @@ document.getElementById('ingredientForm').addEventListener('submit', async (e) =
   const nom = document.getElementById('ingredientName').value.trim();
   const calories = document.getElementById('ingredientCalories').value.trim();
   const ecoScore = document.getElementById('ingredientEcoScore').value;
+  const proteines = document.getElementById('ingredientProteines').value;
+  const glucides = document.getElementById('ingredientGlucides').value;
+  const lipides = document.getElementById('ingredientLipides').value;
   
-  // VALIDATION NOM
   const nameValidation = validateIngredientName(nom);
   if (!nameValidation.valid) {
     showToast(nameValidation.message, true);
@@ -823,7 +770,6 @@ document.getElementById('ingredientForm').addEventListener('submit', async (e) =
     return;
   }
   
-  // VALIDATION CALORIES (optionnelle)
   if (calories) {
     const caloriesValidation = validateCalories(calories);
     if (!caloriesValidation.valid) {
@@ -838,6 +784,11 @@ document.getElementById('ingredientForm').addEventListener('submit', async (e) =
   formData.append('nom', nom);
   if (calories) formData.append('calories', calories);
   formData.append('ecoScore', ecoScore);
+  formData.append('proteines', proteines || 0);
+  formData.append('glucides', glucides || 0);
+  formData.append('lipides', lipides || 0);
+  formData.append('fibres', 0);
+  formData.append('sel', 0);
   
   if (ingredientId) {
     formData.append('action', 'updateIngredient');
@@ -877,7 +828,6 @@ document.getElementById('closeIngredientModal').onclick = () => document.getElem
 document.getElementById('cancelRecipeBtn').onclick = () => document.getElementById('recipeModal').style.display = 'none';
 document.getElementById('cancelIngredientBtn').onclick = () => document.getElementById('ingredientModal').style.display = 'none';
 
-// Ingredient row management
 document.getElementById('addIngredientRowBtn').addEventListener('click', (e) => {
   e.preventDefault();
   const container = document.getElementById('ingredientsListContainer');
@@ -900,7 +850,6 @@ document.getElementById('addIngredientRowBtn').addEventListener('click', (e) => 
   container.appendChild(newRow);
 });
 
-// Event delegation for ingredient remove buttons
 document.addEventListener('click', (e) => {
   if (e.target.classList && e.target.classList.contains('ingredient-remove')) {
     e.preventDefault();
