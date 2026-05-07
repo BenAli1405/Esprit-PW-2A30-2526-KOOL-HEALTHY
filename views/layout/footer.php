@@ -11,7 +11,7 @@
       <div>
         <h4>Liens rapides</h4>
         <a href="index.php?action=mes_entrainements">Mes séances</a>
-        <a href="index.php?action=recommander_ia">Recommandations IA</a>
+        <a href="index.php?action=recommander_knn">Recommandations IA</a>
       </div>
     </div>
     <p>© 2026 Kool Healthy — Entraînement &amp; Exercice</p>

@@ -2,20 +2,21 @@
 
 require_once __DIR__ . '/../models/EntrainementModel.php';
 require_once __DIR__ . '/../models/ExerciceModel.php';
-require_once __DIR__ . '/../models/RecommandationModel.php';
+require_once __DIR__ . '/../models/KnnModel.php';
+require_once __DIR__ . '/../services/WorkoutXApiService.php';
 
 class AdminController
 {
     private $entrainementModel;
     private $exerciceModel;
-    private $recommendationModel;
+    private $knnModel;
     private $errors = [];
 
     public function __construct()
     {
         $this->entrainementModel = new \EntrainementModel();
         $this->exerciceModel = new \ExerciceModel();
-        $this->recommendationModel = new \RecommandationModel();
+        $this->knnModel = new \KnnModel();
     }
 
     public function listEntrainements()
@@ -175,76 +176,154 @@ class AdminController
         exit;
     }
 
-    public function listRegles()
+
+
+    /**
+     * Liste les exercices de référence
+     */
+    public function listReference()
     {
-        $regles = $this->recommendationModel->getAll();
+        $references = $this->knnModel->getAllReferenceExercises();
+        
         $layout = 'back';
-        $action = 'admin_regles';
-        $pageTitle = 'Kool Healthy | Admin - Règles IA';
+        $action = 'admin_reference_list';
+        $pageTitle = 'Kool Healthy | Admin - Catalogue de Référence';
         include __DIR__ . '/../views/layout/header.php';
-        include __DIR__ . '/../views/back/regles/list.php';
+        include __DIR__ . '/../views/back/reference/list.php';
         include __DIR__ . '/../views/layout/footer.php';
     }
 
-    public function createRegle()
+    /**
+     * Crée un exercice de référence
+     */
+    public function createReference()
     {
-        $data = $this->postRegleData();
+        $data = $this->postReferenceData();
+        $this->errors = [];
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            if ($this->validateRegle($data)) {
-                $this->recommendationModel->create($data);
-                header('Location: index.php?action=admin_regles');
-                exit;
+            if ($this->validateReference($data)) {
+                if ($this->knnModel->referenceExists($data['nom'])) {
+                    $this->errors[] = 'Un exercice avec ce nom existe déjà.';
+                } else {
+                    $this->knnModel->createReference($data);
+                    header('Location: index.php?action=admin_reference_list');
+                    exit;
+                }
             }
         }
 
         $editing = false;
         $layout = 'back';
-        $action = 'admin_creer_regle';
-        $pageTitle = 'Kool Healthy | Admin - Ajouter une règle';
+        $action = 'admin_reference_create';
+        $pageTitle = 'Kool Healthy | Admin - Ajouter une Référence';
         include __DIR__ . '/../views/layout/header.php';
-        include __DIR__ . '/../views/back/regles/form.php';
+        include __DIR__ . '/../views/back/reference/form.php';
         include __DIR__ . '/../views/layout/footer.php';
     }
 
-    public function editRegle()
+    /**
+     * Modifie un exercice de référence
+     */
+    public function editReference()
     {
         $id = (int)($_GET['id'] ?? 0);
-        $regle = $this->recommendationModel->getById($id);
+        $reference = $this->knnModel->getReferenceExercise($id);
 
-        if (!$regle) {
-            header('Location: index.php?action=admin_regles');
+        if (!$reference) {
+            header('Location: index.php?action=admin_reference_list');
             exit;
         }
 
-        $data = $regle;
+        $data = $reference;
+        $this->errors = [];
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $data = $this->postRegleData();
-            if ($this->validateRegle($data)) {
-                $this->recommendationModel->update($id, $data);
-                header('Location: index.php?action=admin_regles');
-                exit;
+            $data = $this->postReferenceData();
+            if ($this->validateReference($data)) {
+                if ($this->knnModel->referenceExists($data['nom'], $id)) {
+                    $this->errors[] = 'Un exercice avec ce nom existe déjà.';
+                } else {
+                    $this->knnModel->updateReference($id, $data);
+                    header('Location: index.php?action=admin_reference_list');
+                    exit;
+                }
             }
         }
 
         $editing = true;
         $layout = 'back';
-        $action = 'admin_modifier_regle';
-        $pageTitle = 'Kool Healthy | Admin - Modifier une règle';
+        $action = 'admin_reference_edit';
+        $pageTitle = 'Kool Healthy | Admin - Modifier une Référence';
         include __DIR__ . '/../views/layout/header.php';
-        include __DIR__ . '/../views/back/regles/form.php';
+        include __DIR__ . '/../views/back/reference/form.php';
         include __DIR__ . '/../views/layout/footer.php';
     }
 
-    public function deleteRegle()
+    /**
+     * Supprime un exercice de référence
+     */
+    public function deleteReference()
     {
         $id = (int)($_GET['id'] ?? 0);
         if ($id > 0) {
-            $this->recommendationModel->delete($id);
+            $this->knnModel->deleteReference($id);
         }
-        header('Location: index.php?action=admin_regles');
+        header('Location: index.php?action=admin_reference_list');
         exit;
+    }
+
+    private function postReferenceData(): array
+    {
+        return [
+            'nom'                 => trim($_POST['nom']                 ?? ''),
+            'intensite_calorique' => trim($_POST['intensite_calorique'] ?? ''),
+            'equipement'          => trim($_POST['equipement']          ?? ''),
+            'difficulte'          => trim($_POST['difficulte']          ?? ''),
+            'cible_musculaire'    => trim($_POST['cible_musculaire']    ?? ''),
+            'type_mouvement'      => trim($_POST['type_mouvement']      ?? '0.5'),
+            'groupe_primaire'     => trim($_POST['groupe_primaire']     ?? '0.5'),
+        ];
+    }
+
+    private function validateReference(array $data): bool
+    {
+        $this->errors = [];
+
+        if ($data['nom'] === '') {
+            $this->errors[] = "Le nom de l'exercice est requis.";
+        }
+
+        // Les 6 features numériques doivent toutes être entre 0 et 1
+        $fields = [
+            'intensite_calorique',
+            'equipement',
+            'difficulte',
+            'cible_musculaire',
+            'type_mouvement',
+            'groupe_primaire',
+        ];
+
+        foreach ($fields as $field) {
+            $value = $data[$field] ?? '';
+
+            if ($value === '') {
+                $this->errors[] = ucfirst(str_replace('_', ' ', $field)) . ' est requis.';
+                continue;
+            }
+
+            if (!is_numeric($value)) {
+                $this->errors[] = ucfirst(str_replace('_', ' ', $field)) . ' doit être un nombre.';
+                continue;
+            }
+
+            $floatValue = (float)$value;
+            if ($floatValue < 0 || $floatValue > 1) {
+                $this->errors[] = ucfirst(str_replace('_', ' ', $field)) . ' doit être entre 0 et 1.';
+            }
+        }
+
+        return empty($this->errors);
     }
 
     private function postData(): array
@@ -329,36 +408,5 @@ class AdminController
         return empty($this->errors);
     }
 
-    private function postRegleData(): array
-    {
-        return [
-            'type_repas' => trim($_POST['type_repas'] ?? ''),
-            'exercice_suggere' => trim($_POST['exercice_suggere'] ?? ''),
-            'series' => trim($_POST['series'] ?? ''),
-            'repetitions' => trim($_POST['repetitions'] ?? ''),
-        ];
-    }
 
-    private function validateRegle(array $data): bool
-    {
-        $this->errors = [];
-
-        if ($data['type_repas'] === '') {
-            $this->errors[] = 'Le type de repas est requis.';
-        }
-
-        if ($data['exercice_suggere'] === '') {
-            $this->errors[] = 'Le nom d\'exercice suggéré est requis.';
-        }
-
-        if ($data['series'] === '' || !ctype_digit($data['series']) || (int)$data['series'] <= 0) {
-            $this->errors[] = 'Le nombre de séries doit être un entier positif.';
-        }
-
-        if ($data['repetitions'] === '' || !ctype_digit($data['repetitions']) || (int)$data['repetitions'] <= 0) {
-            $this->errors[] = 'Le nombre de répétitions doit être un entier positif.';
-        }
-
-        return empty($this->errors);
-    }
 }

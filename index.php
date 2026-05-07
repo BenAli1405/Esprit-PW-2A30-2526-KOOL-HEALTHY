@@ -35,9 +35,13 @@ switch ($action) {
     case 'supprimer_exercice':
         $exerciceController->delete();
         break;
-    case 'recommander_ia':
-        $entrainementController->recommend();
+    case 'recommander':
+        $exerciceController->recommanderKnn();
         break;
+    case 'progression':
+        $exerciceController->progression();
+        break;
+
     case 'admin_entrainements':
         $adminController->listEntrainements();
         break;
@@ -62,21 +66,22 @@ switch ($action) {
     case 'admin_supprimer_exercice':
         $adminController->deleteExercice();
         break;
-    case 'admin_regles':
-        $adminController->listRegles();
+    case 'admin_reference_list':
+        $adminController->listReference();
         break;
-    case 'admin_creer_regle':
-        $adminController->createRegle();
+    case 'admin_reference_create':
+        $adminController->createReference();
         break;
-    case 'admin_modifier_regle':
-        $adminController->editRegle();
+    case 'admin_reference_edit':
+        $adminController->editReference();
         break;
-    case 'admin_supprimer_regle':
-        $adminController->deleteRegle();
+    case 'admin_reference_delete':
+        $adminController->deleteReference();
         break;
+
     case 'statistiques':
-    $entrainementController->statistiques();
-    break;
+        $entrainementController->statistiques();
+        break;
     default:
         http_response_code(404);
         echo '<h1>404 - Page introuvable</h1>';

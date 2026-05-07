@@ -1,18 +1,15 @@
 <?php
 
 require_once __DIR__ . '/../models/EntrainementModel.php';
-require_once __DIR__ . '/../models/RecommandationModel.php';
 
 class EntrainementController
 {
     private $model;
-    private $recommendationModel;
     private $errors = [];
 
     public function __construct()
     {
         $this->model = new \EntrainementModel();
-        $this->recommendationModel = new \RecommandationModel();
     }
 
     public function index()
@@ -126,30 +123,7 @@ class EntrainementController
         exit;
     }
 
-    public function recommend()
-    {
-        $suggestions = [];
-        $selectedType = '';
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $selectedType = trim($_POST['type_repas'] ?? '');
-            if ($selectedType === '') {
-                $this->errors[] = 'Veuillez choisir un type de repas.';
-            } else {
-                $suggestions = $this->recommendationModel->findByTypeRepas($selectedType);
-                if (empty($suggestions)) {
-                    $this->errors[] = 'Aucune recommandation disponible pour ce type de repas.';
-                }
-            }
-        }
-
-        $layout = 'front';
-        $action = 'recommander_ia';
-        $pageTitle = 'Kool Healthy | Recommander IA';
-        include __DIR__ . '/../views/layout/header.php';
-        include __DIR__ . '/../views/front/entrainements/recommander.php';
-        include __DIR__ . '/../views/layout/footer.php';
-    }
 
     private function postData(): array
     {

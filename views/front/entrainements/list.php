@@ -1,9 +1,11 @@
 <div class="card-panel">
   <div class="section-header">
     <h3 class="no-margin">Mes séances</h3>
-    <div>
+    <div style="display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;">
       <a class="btn-primary" href="index.php?action=statistiques"><i class="fas fa-chart-bar"></i> Statistiques</a>
       <a class="btn-primary" href="index.php?action=ajouter_entrainement"><i class="fas fa-plus"></i> Ajouter une séance</a>
+      <a class="btn-outline" href="index.php?action=recommander" title="Recommandation d'exercices par IA (KNN)"><i class="fas fa-robot"></i> Recommander KNN</a>
+      <a class="btn-outline" href="index.php?action=progression" title="Analyser votre progression et prédictions" style="border-color:var(--vert-kool);color:var(--vert-kool);"><i class="fas fa-chart-line"></i> Ma progression</a>
     </div>
   </div>
 

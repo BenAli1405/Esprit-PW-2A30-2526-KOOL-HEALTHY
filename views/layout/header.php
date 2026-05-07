@@ -26,9 +26,16 @@ function formatDateFR($date)
   <nav class="navbar">
     <div class="logo"><a href="index.php?action=mes_entrainements"><img src="/kool_healthy3/public/images/logo.png" alt="Kool Healthy"></a></div>
     <div class="nav-links">
-      <a href="index.php?action=mes_entrainements">Mes séances</a>
-      <a href="index.php?action=recommander_ia">Recommander IA</a>
-      <a href="index.php?action=mes_entrainements">Mes exercices</a>
+      <a href="index.php?action=mes_entrainements"
+         <?= $action === 'mes_entrainements' ? 'style="color:var(--vert-kool);font-weight:700;"' : '' ?>>Mes séances</a>
+      <a href="index.php?action=recommander"
+         <?= $action === 'recommander_knn' ? 'style="color:var(--vert-kool);font-weight:700;"' : '' ?>>
+        <i class="fas fa-robot" style="margin-right:4px;"></i>Recommandation KNN
+      </a>
+      <a href="index.php?action=progression"
+         <?= $action === 'progression' ? 'style="color:var(--vert-kool);font-weight:700;"' : '' ?>>
+        <i class="fas fa-chart-line" style="margin-right:4px;"></i>Ma progression
+      </a>
       <button class="btn-outline" onclick="window.location.href='index.php?action=admin_entrainements'">Admin</button>
     </div>
   </nav>
@@ -39,7 +46,8 @@ function formatDateFR($date)
       <p>Suivez vos séances, organisez vos exercices et laissez l'IA vous recommander le bon enchaînement après votre repas.</p>
       <div class="hero-buttons">
         <button class="btn-primary" onclick="window.location.href='index.php?action=ajouter_entrainement'"><i class="fas fa-dumbbell"></i> Ajouter une séance</button>
-        <button class="btn-secondary" onclick="window.location.href='index.php?action=recommander_ia'"><i class="fas fa-brain"></i> Recommander IA</button>
+        <button class="btn-secondary" onclick="window.location.href='index.php?action=recommander'"><i class="fas fa-robot"></i> Recommandation KNN</button>
+        <button class="btn-secondary" onclick="window.location.href='index.php?action=progression'" style="border-color:var(--vert-kool);color:var(--vert-kool);"><i class="fas fa-chart-line"></i> Ma progression</button>
       </div>
     </div>
     <div class="hero-image">
@@ -61,7 +69,9 @@ function formatDateFR($date)
       <div class="nav-menu">
         <a class="nav-item<?= $action === 'admin_entrainements' ? ' active' : '' ?>" href="index.php?action=admin_entrainements"><i class="fas fa-chart-pie"></i><span>Entraînements</span></a>
         <a class="nav-item<?= in_array($action, ['admin_exercices','admin_creer_exercice','admin_modifier_exercice']) ? ' active' : '' ?>" href="index.php?action=admin_exercices"><i class="fas fa-dumbbell"></i><span>Exercices</span></a>
-        <a class="nav-item<?= in_array($action, ['admin_regles','admin_creer_regle','admin_modifier_regle']) ? ' active' : '' ?>" href="index.php?action=admin_regles"><i class="fas fa-brain"></i><span>IA Rules</span></a>
+        <a class="nav-item<?= in_array($action, ['admin_reference_list','admin_reference_create','admin_reference_edit']) ? ' active' : '' ?>" href="index.php?action=admin_reference_list"><i class="fas fa-book"></i><span>Catalogue KNN</span></a>
+        <a class="nav-item<?= $action === 'recommander_knn' ? ' active' : '' ?>" href="index.php?action=recommander"><i class="fas fa-robot"></i><span>Recommandation KNN</span></a>
+        <a class="nav-item<?= $action === 'progression' ? ' active' : '' ?>" href="index.php?action=progression"><i class="fas fa-chart-line"></i><span>Assistant progression</span></a>
       </div>
       <div class="sidebar-footer">
         <div class="user-badge">
