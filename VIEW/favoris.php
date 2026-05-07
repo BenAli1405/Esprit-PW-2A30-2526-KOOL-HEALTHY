@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . '/../CONTROLLER/RecetteController.php';
 require_once __DIR__ . '/../CONTROLLER/AuthController.php';
+require_once __DIR__ . '/../config.php';
 
 $controller = new RecetteController();
 $authController = new AuthController();
@@ -24,7 +25,7 @@ $titre_page = 'Mes Favoris';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mes Favoris - Kool Healthy</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../CSS/styles.css">
+    <link rel="stylesheet" href="/Recettes/CSS/styles.css">
 </head>
 <body>
     <header class="topbar">
@@ -66,17 +67,7 @@ $titre_page = 'Mes Favoris';
 
     <section class="section-wrap recipes-section">
     <div class="layout">
-        <aside class="panel left-nav" aria-label="Navigation recettes">
-            <div class="profile-mini">
-                <strong><?php echo htmlspecialchars($utilisateurConnecte['nom'] ?? 'Mondher'); ?></strong>
-                <small><?php echo htmlspecialchars($utilisateurConnecte['email'] ?? '@monther.healthy'); ?></small>
-            </div>
-            <nav class="menu">
-                <a href="fil-recettes.php">Fil recettes</a>
-                <a href="mes-recettes.php">Mes recettes</a>
-                <a class="active" href="favoris.php">Favoris</a>
-            </nav>
-        </aside>
+        <?php include __DIR__ . '/includes/left-nav.php'; ?>
 
         <main class="main-col">
             <section class="panel profile-header">
@@ -130,33 +121,7 @@ $titre_page = 'Mes Favoris';
             </section>
         </main>
 
-        <aside class="panel right-sidebar" aria-label="Tendances">
-            <h3 class="card-title">Tendances</h3>
-            <div class="tag-list">
-                <span class="tag">#Sante</span>
-                <span class="tag">#Nutrition</span>
-                <span class="tag">#Recettes</span>
-                <span class="tag">#Durable</span>
-            </div>
-
-            <h3 class="card-title" style="margin-top: 20px;">A suivre</h3>
-            <div class="suggest-list">
-                <div class="suggest-item">
-                    <div>
-                        <strong>Nutrition Experts</strong>
-                        <small>2.3K followers</small>
-                    </div>
-                    <button class="follow-btn">Suivre</button>
-                </div>
-                <div class="suggest-item">
-                    <div>
-                        <strong>Cuisine Verte</strong>
-                        <small>1.2K followers</small>
-                    </div>
-                    <button class="follow-btn">Suivre</button>
-                </div>
-            </div>
-        </aside>
+        <?php include __DIR__ . '/includes/right-sidebar.php'; ?>
     </div>
     </section>
 
@@ -259,5 +224,6 @@ $titre_page = 'Mes Favoris';
             });
         });
     </script>
+    <script src="/Recettes/JS/follow-system.js?v=20260506"></script>
 </body>
 </html>

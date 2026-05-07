@@ -2,17 +2,36 @@
 session_start();
 require_once __DIR__ . '/../CONTROLLER/RecetteController.php';
 require_once __DIR__ . '/../CONTROLLER/AuthController.php';
+require_once __DIR__ . '/../config.php';
 
 $controller = new RecetteController();
 $authController = new AuthController();
 $authController->exigerFront('backoffice.php');
 $utilisateurConnecte = $authController->utilisateurConnecte();
 
-$recettes = $controller->listeRecettes();
+// Initialize tables (lazy initialization)
+$controller->getTrendingHashtags(1);
+$controller->getFollowersCount(0);
+
+// Get hashtag filter if present
+$hashtagFilter = trim($_GET['hashtag'] ?? '');
+
+// Get recipes based on filter or all (exclude current user's own recipes and blocked authors)
+$currentUserId = $utilisateurConnecte['id'] ?? 0;
+if (!empty($hashtagFilter)) {
+    $recettes = $controller->getRecettesByHashtag($hashtagFilter, $currentUserId);
+} else {
+    $recettes = $controller->listeRecettes($currentUserId);
+}
+
 $favorisIds = [];
 if ($utilisateurConnecte && isset($utilisateurConnecte['id'])) {
     $favorisIds = $controller->recupererIdsFavoris((int) $utilisateurConnecte['id']);
 }
+
+// Get trending hashtags for sidebar
+$trendingHashtags = $controller->getTrendingHashtags(10);
+
 $success = $_GET['success'] ?? '';
 $error = $_GET['error'] ?? '';
 $titre_page = 'Fil Recettes';
@@ -24,7 +43,7 @@ $titre_page = 'Fil Recettes';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fil Recettes - Kool Healthy</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../CSS/styles.css">
+    <link rel="stylesheet" href="/Recettes/CSS/styles.css">
 </head>
 <body>
     <header class="topbar">
@@ -66,17 +85,7 @@ $titre_page = 'Fil Recettes';
 
     <section class="section-wrap recipes-section">
     <div class="layout">
-        <aside class="panel left-nav" aria-label="Navigation recettes">
-            <div class="profile-mini">
-                <strong><?php echo htmlspecialchars($utilisateurConnecte['nom'] ?? 'Mondher'); ?></strong>
-                <small><?php echo htmlspecialchars($utilisateurConnecte['email'] ?? '@monther.healthy'); ?></small>
-            </div>
-            <nav class="menu">
-                <a class="active" href="fil-recettes.php">Fil recettes</a>
-                <a href="mes-recettes.php">Mes recettes</a>
-                <a href="favoris.php">Favoris</a>
-            </nav>
-        </aside>
+        <?php include __DIR__ . '/includes/left-nav.php'; ?>
 
         <main class="main-col">
             <?php if ($success === 'favori_added'): ?>
@@ -96,6 +105,7 @@ $titre_page = 'Fil Recettes';
                     <input type="number" name="temps_prep" placeholder="Temps de preparation (en minutes)">
                     <input type="text" name="ingredients" placeholder="Ingredients (separes par des virgules)">
                     <textarea name="etapes" placeholder="Etapes de preparation..."></textarea>
+                    <input type="text" name="hashtags" placeholder="Hashtags (ex: #vegan #rapide #bio ou separés par des virgules)">
                     <input type="file" name="image" accept="image/*">
                     <span id="recetteError" class="password-error" style="display:none;color:red;font-size:0.9rem;margin-bottom:10px;"></span>
                     <div class="composer-footer">
@@ -104,6 +114,13 @@ $titre_page = 'Fil Recettes';
                     </div>
                 </form>
             </section>
+
+            <?php if (!empty($hashtagFilter)): ?>
+                <section class="panel profile-header" style="margin-bottom: 20px;">
+                    <h2>Tendances : #<?php echo htmlspecialchars($hashtagFilter); ?></h2>
+                    <p>Découvrez les meilleures recettes liées à cette tendance. <a href="fil-recettes.php" style="color: var(--vert-kool); font-weight: 600;">Afficher tout le fil</a></p>
+                </section>
+            <?php endif; ?>
 
             <section class="feed">
                 <?php if (empty($recettes)): ?>
@@ -116,7 +133,9 @@ $titre_page = 'Fil Recettes';
                         <div class="user-info">
                             <div class="user-avatar"><?php echo strtoupper(substr($recette['nom'] ?? 'U', 0, 1)); ?></div>
                             <div>
-                                <strong><?php echo htmlspecialchars((string) ($recette['auteur'] ?? ($recette['nom'] ?? 'Utilisateur'))); ?></strong>
+                                <strong class="username-clickable" data-user-id="<?php echo $recette['user_id'] ?? 0; ?>" style="cursor: pointer;">
+                                    <?php echo htmlspecialchars((string) ($recette['auteur'] ?? ($recette['nom'] ?? 'Utilisateur'))); ?>
+                                </strong>
                                 <small><?php echo htmlspecialchars($recette['email'] ?? ''); ?></small>
                             </div>
                         </div>
@@ -127,6 +146,16 @@ $titre_page = 'Fil Recettes';
                         <div class="recipe-meta">
                             <span class="meta-pill">⏱ <?php echo htmlspecialchars($recette['temps_prep'] ?? 'N/A'); ?> min</span>
                         </div>
+                        <?php 
+                            $hashtags = $controller->getRecetteHashtags($recette['id'] ?? 0);
+                            if (!empty($hashtags)): 
+                        ?>
+                            <div class="recipe-hashtags">
+                                <?php foreach ($hashtags as $tag): ?>
+                                    <a href="fil-recettes.php?hashtag=<?php echo urlencode($tag); ?>" class="tag-link">#<?php echo htmlspecialchars($tag); ?></a>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
                         <div class="recipe-block">
                             <strong>Ingredients:</strong>
                             <p><?php echo htmlspecialchars($recette['ingredients']); ?></p>
@@ -154,33 +183,7 @@ $titre_page = 'Fil Recettes';
             </section>
         </main>
 
-        <aside class="panel right-sidebar" aria-label="Tendances">
-            <h3 class="card-title">Tendances</h3>
-            <div class="tag-list">
-                <span class="tag">#Sante</span>
-                <span class="tag">#Nutrition</span>
-                <span class="tag">#Recettes</span>
-                <span class="tag">#Durable</span>
-            </div>
-
-            <h3 class="card-title" style="margin-top: 20px;">A suivre</h3>
-            <div class="suggest-list">
-                <div class="suggest-item">
-                    <div>
-                        <strong>Nutrition Experts</strong>
-                        <small>2.3K followers</small>
-                    </div>
-                    <button class="follow-btn">Suivre</button>
-                </div>
-                <div class="suggest-item">
-                    <div>
-                        <strong>Cuisine Verte</strong>
-                        <small>1.2K followers</small>
-                    </div>
-                    <button class="follow-btn">Suivre</button>
-                </div>
-            </div>
-        </aside>
+        <?php include __DIR__ . '/includes/right-sidebar.php'; ?>
     </div>
     </section>
 
@@ -303,5 +306,9 @@ $titre_page = 'Fil Recettes';
             });
         });
     </script>
+    <script src="/Recettes/JS/follow-system.js?v=20260506"></script>
+    <script src="/Recettes/JS/user-modal.js?v=20260506"></script>
+
+    <?php include __DIR__ . '/includes/user-action-modal.php'; ?>
 </body>
 </html>

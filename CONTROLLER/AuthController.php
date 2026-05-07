@@ -185,6 +185,7 @@ class AuthController
             'poids' => $utilisateur['poids'],
             'taille' => $utilisateur['taille'],
             'imc' => $utilisateur['imc'],
+            'avatar' => $utilisateur['avatar'] ?? null,
             'age' => $utilisateur['age'],
             'allergies' => $utilisateur['allergies'],
             'besoins_caloriques' => $utilisateur['besoins_caloriques']
@@ -314,6 +315,47 @@ class AuthController
         $stmt->execute(['colonne' => $colonne]);
         return $stmt->fetchColumn() !== false;
     }
+    public function traiterUploadAvatar($fichier)
+    {
+        if (!is_array($fichier) || empty($fichier['name']) || (int) ($fichier['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+            return ['success' => true, 'avatar' => null];
+        }
+
+        if ((int) ($fichier['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK || !is_uploaded_file($fichier['tmp_name'] ?? '')) {
+            return ['success' => false, 'error' => 'invalid_avatar'];
+        }
+
+        if ((int) ($fichier['size'] ?? 0) > 2 * 1024 * 1024) {
+            return ['success' => false, 'error' => 'invalid_avatar'];
+        }
+
+        $mimesAutorises = [
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/gif' => 'gif',
+            'image/webp' => 'webp'
+        ];
+
+        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $mime = $finfo->file($fichier['tmp_name'] ?? '');
+        if (!isset($mimesAutorises[$mime])) {
+            return ['success' => false, 'error' => 'invalid_avatar'];
+        }
+
+        $dossierUpload = __DIR__ . '/../assets/uploads/avatars';
+        if (!is_dir($dossierUpload) && !@mkdir($dossierUpload, 0777, true) && !is_dir($dossierUpload)) {
+            return ['success' => false, 'error' => 'invalid_avatar'];
+        }
+
+        $nomFichier = 'avatar_' . bin2hex(random_bytes(8)) . '.' . $mimesAutorises[$mime];
+        $cheminComplet = $dossierUpload . '/' . $nomFichier;
+
+        if (!move_uploaded_file($fichier['tmp_name'], $cheminComplet)) {
+            return ['success' => false, 'error' => 'invalid_avatar'];
+        }
+
+        return ['success' => true, 'avatar' => '/Recettes/assets/uploads/avatars/' . $nomFichier];
+    }
 
     private function calculerImc($poids, $taille)
     {
@@ -357,19 +399,34 @@ class AuthController
                 return false;
             }
 
-                $sql = "INSERT INTO utilisateurs (nom, email, mot_de_passe, role, poids, taille, imc, created_at)
-                    VALUES (:nom, :email, :mot_de_passe, :role, :poids, :taille, :imc, :created_at)";
-            $req = $db->prepare($sql);
-            $req->execute([
-                'nom' => $utilisateur->getNom(),
-                'email' => $utilisateur->getEmail(),
-                'mot_de_passe' => password_hash($utilisateur->getMotDePasse(), PASSWORD_DEFAULT),
-                'role' => $utilisateur->getRole(),
-                'poids' => $utilisateur->getPoids(),
-                'taille' => $utilisateur->getTaille(),
-                'imc' => $utilisateur->getImc(),
-                'created_at' => $utilisateur->getCreatedAt()
-            ]);
+                $aAvatar = $this->colonneExiste($db, 'utilisateurs', 'avatar');
+
+                if ($aAvatar) {
+                    $sql = "INSERT INTO utilisateurs (nom, email, mot_de_passe, role, poids, taille, imc, avatar, created_at)
+                        VALUES (:nom, :email, :mot_de_passe, :role, :poids, :taille, :imc, :avatar, :created_at)";
+                } else {
+                    $sql = "INSERT INTO utilisateurs (nom, email, mot_de_passe, role, poids, taille, imc, created_at)
+                        VALUES (:nom, :email, :mot_de_passe, :role, :poids, :taille, :imc, :created_at)";
+                }
+
+                $req = $db->prepare($sql);
+
+                $params = [
+                    'nom' => $utilisateur->getNom(),
+                    'email' => $utilisateur->getEmail(),
+                    'mot_de_passe' => password_hash($utilisateur->getMotDePasse(), PASSWORD_DEFAULT),
+                    'role' => $utilisateur->getRole(),
+                    'poids' => $utilisateur->getPoids(),
+                    'taille' => $utilisateur->getTaille(),
+                    'imc' => $utilisateur->getImc(),
+                    'created_at' => $utilisateur->getCreatedAt()
+                ];
+
+                if ($aAvatar) {
+                    $params['avatar'] = $utilisateur->getAvatar();
+                }
+
+                $req->execute($params);
 
             $utilisateurId = (int) $db->lastInsertId();
 
@@ -733,8 +790,12 @@ class AuthController
 
             $imc = $this->calculerImc($poids, $taille);
             $aObjectif = $this->colonneExiste($db, 'utilisateurs', 'objectif');
+            $aAvatar = $this->colonneExiste($db, 'utilisateurs', 'avatar');
 
             $sql = "UPDATE utilisateurs SET nom = :nom, email = :email, poids = :poids, taille = :taille, imc = :imc";
+            if ($aAvatar && array_key_exists('avatar', $donnees)) {
+                $sql .= ", avatar = :avatar";
+            }
             if ($aObjectif) {
                 $sql .= ", objectif = :objectif";
             }
@@ -751,6 +812,10 @@ class AuthController
                 'imc' => $imc,
                 'id' => $userId
             ];
+
+            if ($aAvatar && array_key_exists('avatar', $donnees)) {
+                $params['avatar'] = $donnees['avatar'];
+            }
 
             if ($aObjectif) {
                 $params['objectif'] = trim((string) ($donnees['objectif'] ?? ''));
@@ -826,6 +891,7 @@ class AuthController
                     'poids' => $utilisateur['poids'],
                     'taille' => $utilisateur['taille'],
                     'imc' => $utilisateur['imc'],
+                    'avatar' => $utilisateur['avatar'] ?? null,
                     'age' => $utilisateur['age'],
                     'allergies' => $utilisateur['allergies'],
                     'besoins_caloriques' => $utilisateur['besoins_caloriques'],
@@ -865,6 +931,12 @@ if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'] ?? '')) {
             exit();
         }
 
+        $avatarResultat = $controller->traiterUploadAvatar($_FILES['avatar'] ?? null);
+        if (!($avatarResultat['success'] ?? false)) {
+            header('Location: ../VIEW/register.php?error=invalid_avatar');
+            exit();
+        }
+
         $utilisateur = new Utilisateur(
             $nom,
             $email,
@@ -872,7 +944,8 @@ if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'] ?? '')) {
             $role,
             $poids,
             $taille,
-            null
+            null,
+            $avatarResultat['avatar'] ?? null
         );
         $profilNutritif = new ProfilNutritif(null, $age, $allergies, $besoins_caloriques);
         $resultat = $controller->inscrire($utilisateur, $profilNutritif);
@@ -881,7 +954,6 @@ if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'] ?? '')) {
             header('Location: ../VIEW/register.php?error=register');
             exit();
         }
-
         header('Location: ../VIEW/auth.php?success=register');
         exit();
     }
@@ -983,7 +1055,18 @@ if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'] ?? '')) {
             exit();
         }
 
-        $resultat = $controller->mettreAJourProfil((int) $utilisateurConnecte['id'], $_POST);
+        $donnees = $_POST;
+        $avatarResultat = $controller->traiterUploadAvatar($_FILES['avatar'] ?? null);
+        if (!($avatarResultat['success'] ?? false)) {
+            header('Location: ../VIEW/profil.php?error=invalid_avatar');
+            exit();
+        }
+
+        if (!empty($avatarResultat['avatar'])) {
+            $donnees['avatar'] = $avatarResultat['avatar'];
+        }
+
+        $resultat = $controller->mettreAJourProfil((int) $utilisateurConnecte['id'], $donnees);
 
         if (!($resultat['success'] ?? false)) {
             $code = $resultat['error'] ?? 'profile_update';
