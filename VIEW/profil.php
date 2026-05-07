@@ -1,8 +1,13 @@
 <?php
 session_start();
 require_once __DIR__ . '/../CONTROLLER/AuthController.php';
+require_once __DIR__ . '/../CONTROLLER/RecetteController.php';
+require_once __DIR__ . '/../CONTROLLER/UserController.php';
+require_once __DIR__ . '/../config.php';
 
 $authController = new AuthController();
+$recetteController = new RecetteController();
+$userController = new UserController();
 $authController->exigerFront('backoffice.php');
 $utilisateurConnecte = $authController->utilisateurConnecte();
 $success = $_GET['success'] ?? '';
@@ -13,10 +18,55 @@ if (!$utilisateurConnecte) {
     exit();
 }
 
+// Get viewed profile (either current user or another user)
+$profileUsername = $_GET['user'] ?? '';
+$viewedProfile = null;
+$isOwnProfile = true;
+$isFollowing = false;
+$followersCount = 0;
+$followingCount = 0;
+$recipesCount = 0;
+
+if (!empty($profileUsername)) {
+    $viewedProfile = $userController->getUserByNom($profileUsername);
+    if (!$viewedProfile) {
+        header('Location: fil-recettes.php?error=user_not_found');
+        exit();
+    }
+    $isOwnProfile = ((int) $viewedProfile['id'] === (int) $utilisateurConnecte['id']);
+} else {
+    $viewedProfile = $userController->getUserById((int) $utilisateurConnecte['id']) ?: $utilisateurConnecte;
+}
+
+$avatarProfil = $viewedProfile['avatar'] ?? ($utilisateurConnecte['avatar'] ?? null);
+
+// Get follower/following stats
+$followersCount = $recetteController->getFollowersCount($viewedProfile['id']);
+$followingCount = $recetteController->getFollowingCount($viewedProfile['id']);
+$blockedUsers = [];
+
+// Check if current user is following this profile
+if (!$isOwnProfile) {
+    $isFollowing = $recetteController->isFollowing($utilisateurConnecte['id'], $viewedProfile['id']);
+}
+
+if ($isOwnProfile) {
+    $blockedUsers = $recetteController->getBlockedUsers((int) $utilisateurConnecte['id']);
+}
+
+// Get recipes count
+$db = config::getConnexion();
+$sql = "SELECT COUNT(*) FROM recettes WHERE auteur = :auteur";
+$req = $db->prepare($sql);
+$req->execute(['auteur' => $viewedProfile['nom']]);
+$recipesCount = (int) $req->fetchColumn();
+
 // Profil base uniquement sur les donnees du compte connecte
 $profilUtilisateur = [
-    'nom' => (string) $utilisateurConnecte['nom'],
-    'email' => (string) $utilisateurConnecte['email'],
+    'id' => $viewedProfile['id'] ?? null,
+    'nom' => (string) $viewedProfile['nom'],
+    'email' => (string) $viewedProfile['email'],
+    'avatar' => $avatarProfil,
     'age' => $utilisateurConnecte['age'] ?? null,
     'poids' => $utilisateurConnecte['poids'] ?? null,
     'taille' => $utilisateurConnecte['taille'] ?? null,
@@ -40,7 +90,7 @@ $messagesErreur = [
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mon Profil - Kool Healthy</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../CSS/styles.css">
+    <link rel="stylesheet" href="/Recettes/CSS/styles.css">
 </head>
 <body>
     <header class="topbar">
@@ -60,9 +110,12 @@ $messagesErreur = [
             <?php if ($utilisateurConnecte): ?>
                 <details class="profile-menu">
                     <summary class="profile-menu-trigger" aria-label="Menu profil">
-                        <span class="profile-avatar"><?php echo strtoupper(substr($utilisateurConnecte['nom'] ?? 'U', 0, 1)); ?></span>
+                        <?php if (!empty($utilisateurConnecte['avatar'])): ?>
+                            <img src="<?php echo htmlspecialchars($utilisateurConnecte['avatar']); ?>" alt="Mon avatar" class="profile-avatar-img-tiny">
+                        <?php else: ?>
+                            <span class="profile-avatar"><?php echo strtoupper(substr($utilisateurConnecte['nom'] ?? 'U', 0, 1)); ?></span>
+                        <?php endif; ?>
                     </summary>
-                    <div class="profile-menu-dropdown">
                         <div class="profile-menu-user">
                             <strong><?php echo htmlspecialchars($utilisateurConnecte['nom'] ?? 'Utilisateur'); ?></strong>
                             <small><?php echo htmlspecialchars($utilisateurConnecte['email'] ?? ''); ?></small>
@@ -96,8 +149,12 @@ $messagesErreur = [
                     <?php endif; ?>
 
                     <div class="profile-header-content">
-                        <div class="profile-avatar-small">
-                            <?php echo strtoupper(substr($profilUtilisateur['nom'], 0, 2)); ?>
+                        <div class="profile-avatar-main">
+                            <?php if (!empty($profilUtilisateur['avatar'])): ?>
+                                <img src="<?php echo htmlspecialchars($profilUtilisateur['avatar']); ?>" alt="Avatar de <?php echo htmlspecialchars($profilUtilisateur['nom']); ?>">
+                            <?php else: ?>
+                                <div class="avatar-main-placeholder"><?php echo strtoupper(substr($profilUtilisateur['nom'], 0, 1)); ?></div>
+                            <?php endif; ?>
                         </div>
                         <div class="profile-header-info">
                             <h1><?php echo htmlspecialchars($profilUtilisateur['nom']); ?></h1>
@@ -105,14 +162,21 @@ $messagesErreur = [
                         </div>
                         <div class="profile-header-stats">
                             <div class="stat-item">
-                                <strong>-</strong>
+                                <strong><?php echo $recipesCount; ?></strong>
                                 <span>Recettes</span>
                             </div>
                             <div class="stat-item">
-                                <strong>-</strong>
-                                <span>Followers</span>
+                                <strong><?php echo $followingCount; ?></strong>
+                                <span>Following</span>
                             </div>
                         </div>
+                        <?php if (!$isOwnProfile): ?>
+                            <div style="margin-left: auto;">
+                                <button class="follow-btn<?php echo $isFollowing ? ' following' : ''; ?>" data-user-id="<?php echo $viewedProfile['id']; ?>" type="button">
+                                    <?php echo $isFollowing ? '✓ Suivi' : 'Suivre'; ?>
+                                </button>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </section>
 
@@ -132,7 +196,7 @@ $messagesErreur = [
                         <!-- Informations Personnelles -->
                         <section class="panel profile-section">
                             <h2>📋 Informations Personnelles</h2>
-                            <form class="profile-edit-form" method="POST" action="../CONTROLLER/AuthController.php?action=update_profile">
+                            <form class="profile-edit-form" method="POST" action="../CONTROLLER/AuthController.php?action=update_profile" enctype="multipart/form-data">
                                 <div class="profile-grid">
                                     <div class="profile-field">
                                         <label for="nom">Nom</label>
@@ -156,6 +220,13 @@ $messagesErreur = [
                                     <div class="profile-field">
                                         <label for="taille">Taille (cm)</label>
                                         <input id="taille" name="taille" type="number" min="1" step="0.1" value="<?php echo htmlspecialchars((string) ($profilUtilisateur['taille'] ?? '')); ?>">
+                                    </div>
+                                </div>
+
+                                <div class="profile-grid">
+                                    <div class="profile-field">
+                                        <label for="avatar">Photo de profil</label>
+                                        <input id="avatar" name="avatar" type="file" accept="image/*">
                                     </div>
                                 </div>
 
@@ -195,6 +266,8 @@ $messagesErreur = [
 
                     <!-- Colonne droite: Certifications -->
                     <div class="profile-column-right">
+
+
                         <!-- Certifications et Réalisations -->
                         <section class="panel profile-section">
                             <h2>⭐ Certifications & Réalisations</h2>
@@ -202,6 +275,69 @@ $messagesErreur = [
                                 <p>Aucune certification disponible pour ce compte.</p>
                             </div>
                         </section>
+
+                        <?php if ($isOwnProfile): ?>
+                        <!-- Comptes que je suis (Following) -->
+                        <section class="panel profile-section">
+                            <h2>👤 Comptes que je suis (<?php echo $followingCount; ?>)</h2>
+                            <div class="followers-list">
+                                <?php
+                                    $followedAccounts = $recetteController->getFollowedAccounts($utilisateurConnecte['id']);
+                                    if (!empty($followedAccounts)):
+                                        foreach (array_slice($followedAccounts, 0, 5) as $followed):
+                                ?>
+                                        <div class="follower-item">
+                                            <div class="follower-info">
+                                                <strong class="username-clickable" data-user-id="<?php echo (int) $followed['id']; ?>" style="cursor: pointer;">
+                                                    <?php echo htmlspecialchars($followed['nom']); ?>
+                                                </strong>
+                                                <small><?php echo htmlspecialchars($followed['email']); ?></small>
+                                            </div>
+                                            <div class="follower-actions">
+                                                <button class="btn-secondary btn-unfollow" data-user-id="<?php echo (int) $followed['id']; ?>" type="button">Ne plus suivre</button>
+                                            </div>
+                                        </div>
+                                <?php
+                                        endforeach;
+                                        if ($followingCount > 5):
+                                ?>
+                                    <p style="text-align: center; margin-top: 10px; color: #999; font-size: 0.9rem;">
+                                        +<?php echo $followingCount - 5; ?> other accounts
+                                    </p>
+                                <?php
+                                        endif;
+                                    else:
+                                ?>
+                                    <p>Vous ne suivez aucun compte pour le moment.</p>
+                                <?php
+                                    endif;
+                                ?>
+                            </div>
+                        </section>
+
+                        <!-- Comptes bloqués -->
+                        <section class="panel profile-section">
+                            <h2>🚫 Comptes bloqués</h2>
+                            <?php if (!empty($blockedUsers)): ?>
+                                <div class="followers-list">
+                                    <?php foreach ($blockedUsers as $blockedUser): ?>
+                                        <div class="follower-item">
+                                            <div class="follower-info">
+                                                <strong><?php echo htmlspecialchars($blockedUser['nom']); ?></strong>
+                                                <small><?php echo htmlspecialchars($blockedUser['email']); ?></small>
+                                            </div>
+                                            <button class="btn-secondary btn-unblock" data-user-id="<?php echo (int) $blockedUser['id']; ?>" type="button">
+                                                Débloquer
+                                            </button>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php else: ?>
+                                <p class="profile-subtitle">Vous n'avez bloqué aucun compte.</p>
+                            <?php endif; ?>
+                        </section>
+
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -209,10 +345,14 @@ $messagesErreur = [
     </div>
     </section>
 
+    <?php include __DIR__ . '/includes/user-action-modal.php'; ?>
+
     <footer class="footer">
         <div class="footer-content">
             <p>&copy; 2026 Kool Healthy. Mangez mieux, preservez la planete.</p>
         </div>
     </footer>
+    <script src="/Recettes/JS/follow-system.js?v=20260506"></script>
+    <script src="/Recettes/JS/user-modal.js?v=20260506"></script>
 </body>
 </html>

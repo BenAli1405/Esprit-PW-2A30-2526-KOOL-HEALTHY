@@ -9,11 +9,11 @@ class config
     private static $password = '';
     private static $database = 'projetweb';
 
-    // Optional local fallback values; keep secrets out of the repository.
+    // Keep secrets out of the repository; read them from the environment when available.
     private static $googleClientId = '';
     private static $googleClientSecret = '';
     private static $googleRedirectUri = 'http://localhost:8080/Recettes/CONTROLLER/AuthController.php?action=google_callback';
-    private static $mailFrom = 'no-reply@koolhealthy.local';
+    private static $mailFrom = 'omarzehift52@gmail.com';
 
     public static function getConnexion()
     {
@@ -25,7 +25,8 @@ class config
                     self::$password,
                     [
                         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+                        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                        PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
                     ]
                 );
             } catch (Exception $e) {
@@ -56,4 +57,6 @@ class config
         return trim((string) (getenv('MAIL_FROM') ?: self::$mailFrom));
     }
 }
+
+
 ?>

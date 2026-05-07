@@ -66,6 +66,8 @@ if (isset($_FILES['image']) && ($_FILES['image']['error'] ?? UPLOAD_ERR_NO_FILE)
     $image = 'data:' . $imgType . ';base64,' . $imgData;
 }
 
+$hashtags = trim((string) ($_POST['hashtags'] ?? ''));
+
 if ($action === 'update') {
     $recetteId = (int) ($_POST['id'] ?? 0);
     if ($recetteId <= 0) {
@@ -85,6 +87,12 @@ if ($action === 'update') {
 
     $recette = new Recette($titre, $tempsPrep, $ingredients, $etapes, $image, $auteurConnecte);
     $controller->modifierRecette($recette, $recetteId);
+    
+    // Clear old hashtags and add new ones
+    $db = config::getConnexion();
+    $db->prepare("DELETE FROM recette_hashtags WHERE recette_id = ?")->execute([$recetteId]);
+    $controller->addHashtagsToRecette($recetteId, $hashtags);
+    
     header('Location: ../VIEW/mes-recettes.php?success=recipe_updated');
     exit();
 }
@@ -93,6 +101,7 @@ $recette = new Recette($titre, $tempsPrep, $ingredients, $etapes, $image, $auteu
 $result = $controller->ajouterRecette($recette);
 
 if ($result) {
+    $controller->addHashtagsToRecette((int)$result, $hashtags);
     header('Location: ../VIEW/mes-recettes.php?success=recipe_created');
     exit();
 }
