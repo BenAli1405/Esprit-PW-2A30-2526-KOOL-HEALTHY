@@ -37,6 +37,24 @@ class config
         return self::$pdo;
     }
 
+    public static function getSettings()
+    {
+        return [
+            'appName' => 'Kool Healthy',
+            'defaultPage' => 'plan-nutritionnel',
+        ];
+    }
+
+    public static function getDbConfig()
+    {
+        return [
+            'host' => self::$host,
+            'username' => self::$user,
+            'password' => self::$password,
+            'database' => self::$database,
+        ];
+    }
+
     public static function getGoogleClientId()
     {
         return trim((string) (getenv('GOOGLE_CLIENT_ID') ?: self::$googleClientId));

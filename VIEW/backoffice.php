@@ -60,6 +60,7 @@ $tabFromQuery = $_GET['tab'] ?? 'dashboard';
                     <p>Vue d'ensemble de la plateforme · IA & nutrition durable</p>
                 </div>
                 <div class="header-actions">
+                    <a class="btn-outline" href="../index.php?page=plan-nutritionnel">Module plans</a>
                     <a class="btn-outline" href="../CONTROLLER/AuthController.php?action=logout">Se deconnecter</a>
                 </div>
             </div>
