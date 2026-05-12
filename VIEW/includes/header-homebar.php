@@ -28,6 +28,7 @@ if (!isset($utilisateurConnecte)) {
         <a href="frontoffice.html">Recettes</a>
         <a class="disabled-control" href="home.php#impact">Impact</a>
         <a href="fil-recettes.php">Partage</a>
+        <a href="../plan.php?page=plan-nutritionnel">Plan</a>
     </nav>
 
     <div class="topbar-tools">

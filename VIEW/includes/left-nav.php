@@ -22,5 +22,6 @@ $emailAffichage = $utilisateurConnecte['email'] ?? '';
         <a class="<?php echo $currentPage === 'mes-recettes.php' ? 'active' : ''; ?>" href="mes-recettes.php">Mes recettes</a>
         <a class="<?php echo $currentPage === 'favoris.php' ? 'active' : ''; ?>" href="favoris.php">Favoris</a>
         <a class="<?php echo $currentPage === 'comptes-suivis.php' ? 'active' : ''; ?>" href="comptes-suivis.php">Comptes suivis</a>
+        <a href="../plan.php?page=plan-nutritionnel">Plan nutritionnel</a>
     </nav>
 </aside>

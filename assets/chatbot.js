@@ -21,6 +21,7 @@
 
     // ── Initialisation ──
     function init(planId) {
+        ensureCss();
         PLAN_ID = parseInt(planId, 10);
         if (!PLAN_ID || PLAN_ID <= 0) return;
         injectHTML();
@@ -28,7 +29,24 @@
         loadHistorique();
     }
 
+    // Expose init to global scope so pages can initialize the chatbot
+    window.ChatbotCoach = {
+        init: init
+    };
+
     // ── Injection du DOM ──
+
+    function ensureCss() {
+        try {
+            if (document.getElementById('chatbot-css')) return;
+            var link = document.createElement('link');
+            link.id = 'chatbot-css';
+            link.rel = 'stylesheet';
+            link.href = '/integweb/Assets/chatbot.css';
+            document.head.appendChild(link);
+        } catch (e) { console.warn('Impossible d\'ajouter le CSS du chatbot', e); }
+    }
+
     function injectHTML() {
         // Bulle flottante
         const bubble = document.createElement('button');

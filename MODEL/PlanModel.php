@@ -17,6 +17,13 @@ class PlanModel
         return $stmt->fetchAll();
     }
 
+    public function allByUser(int $userId)
+    {
+        $stmt = $this->pdo->prepare('SELECT * FROM plan WHERE utilisateur_id = ? ORDER BY id DESC');
+        $stmt->execute([$userId]);
+        return $stmt->fetchAll();
+    }
+
     public function find(int $id)
     {
         $stmt = $this->pdo->prepare('SELECT * FROM plan WHERE id = ?');
@@ -31,17 +38,29 @@ class PlanModel
 
     public function create(array $data)
     {
-        $stmt = $this->pdo->prepare(
-            'INSERT INTO plan (nom, objectif, utilisateur_id, duree, preference, allergies) VALUES (?, ?, ?, ?, ?, ?)'
-        );
-        return $stmt->execute([
-            $data['nom'],
-            $data['objectif'],
-            $data['utilisateur_id'],
-            $data['duree'],
-            $data['preference'],
-            $data['allergies'],
-        ]);
+        try {
+            $stmt = $this->pdo->prepare(
+                'INSERT INTO plan (nom, objectif, utilisateur_id, duree, preference, allergies) VALUES (?, ?, ?, ?, ?, ?)'
+            );
+            $ok = $stmt->execute([
+                $data['nom'],
+                $data['objectif'],
+                $data['utilisateur_id'],
+                $data['duree'],
+                $data['preference'],
+                $data['allergies'],
+            ]);
+            return $ok;
+        } catch (PDOException $e) {
+            // Store last error for higher-level handling
+            $this->lastError = $e->getMessage();
+            return false;
+        }
+    }
+
+    public function getLastError(): ?string
+    {
+        return $this->lastError ?? null;
     }
 
     public function update(int $id, array $data)
