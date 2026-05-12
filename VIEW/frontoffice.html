@@ -6,24 +6,11 @@
   <title>Kool Healthy | Front Office - Recettes & Ingrédients</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <link rel="stylesheet" href="<?php echo isset($baseUrl) ? $baseUrl : ''; ?>VIEW/css/frontoffice.css">
+  <link rel="stylesheet" href="css/frontoffice.css">
 </head>
 <body>
 
-  <!-- Navigation -->
-  <nav class="navbar">
-    <div class="logo">
-      <i class="fas fa-seedling"></i>
-      <h1>Kool Healthy</h1>
-    </div>
-    <div class="user-badge">
-      <div class="user-avatar"><i class="fas fa-user"></i></div>
-      <div class="user-info">
-        <span class="user-name"><?php echo isset($user) ? htmlspecialchars($user['nom']) : 'Visiteur'; ?></span>
-        <small class="user-status">Membre</small>
-      </div>
-    </div>
-  </nav>
+  <?php include __DIR__ . '/includes/topbar.php'; ?>
 
   <!-- Hero -->
   <section class="hero-recettes">
@@ -98,6 +85,9 @@
       <button id="openCalculatorBtn" class="btn-primary">
         <i class="fas fa-calculator"></i> Calculateur nutritionnel
       </button>
+      <button id="historyBtn" class="btn-primary">
+        <i class="fas fa-history"></i> Historique
+      </button>
     </div>
 
     <!-- Recipe grid -->
@@ -142,6 +132,6 @@
     <span id="toastMessage">Avis envoyé !</span>
   </div>
 
-  <script src="<?php echo isset($baseUrl) ? $baseUrl : ''; ?>VIEW/js/frontoffice.js"></script>
+  <script src="js/frontoffice.js"></script>
 </body>
 </html>

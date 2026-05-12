@@ -1761,3 +1761,206 @@ body {
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
+
+/* ========== HISTORIQUE DES REPAS ========== */
+.history-modal-body {
+    max-height: 65vh;
+    overflow-y: auto;
+    padding: 1.5rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--vert-kool) var(--gris-moyen);
+}
+.history-modal-body::-webkit-scrollbar { width: 6px; }
+.history-modal-body::-webkit-scrollbar-track { background: var(--gris-moyen); border-radius: 3px; }
+.history-modal-body::-webkit-scrollbar-thumb { background: var(--vert-kool); border-radius: 3px; }
+
+/* Bandeau stats */
+.history-stats-banner {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.history-stat-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1rem 0.5rem;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(76,175,80,0.12);
+    border-top: 3px solid var(--vert-kool);
+}
+
+.history-stat-card .stat-emoji {
+    font-size: 1.6rem;
+    display: block;
+    margin-bottom: 0.3rem;
+    line-height: 1;
+}
+
+.history-stat-card .stat-number {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--vert-kool-dark);
+    display: block;
+    line-height: 1.1;
+}
+
+.history-stat-card .stat-desc {
+    font-size: 0.65rem;
+    color: var(--gris-texte);
+    display: block;
+    margin-top: 0.2rem;
+}
+
+/* Liste des repas */
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.history-item {
+    background: white;
+    border-radius: 16px;
+    border: 1px solid var(--gris-moyen);
+    border-left: 4px solid var(--vert-kool);
+    overflow: hidden;
+    transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.history-item:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    transform: translateY(-1px);
+}
+
+.history-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.6rem 0.9rem;
+    background: var(--vert-kool-light);
+    border-bottom: 1px solid var(--gris-moyen);
+}
+
+.history-date {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--vert-kool-dark);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.history-date i { color: var(--vert-kool); }
+
+.history-time {
+    font-size: 0.7rem;
+    color: var(--gris-texte);
+    font-weight: 400;
+    margin-left: 0.3rem;
+}
+
+.history-delete {
+    background: none;
+    border: none;
+    color: #e53935;
+    cursor: pointer;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, transform 0.2s;
+    font-size: 0.85rem;
+}
+
+.history-delete:hover {
+    background: #ffebee;
+    transform: scale(1.15);
+}
+
+.history-item-content { padding: 0.75rem 0.9rem; }
+
+/* Badges nutritionnels */
+.history-nutrition {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.6rem;
+}
+
+.history-calories,
+.history-protein,
+.history-carbs,
+.history-fat {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0.25rem 0.75rem;
+    border-radius: 30px;
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+.history-calories { background: #fff3e0; color: #e65100; }
+.history-protein  { background: #e8f5e9; color: #2e7d32; }
+.history-carbs    { background: #e3f2fd; color: #1565c0; }
+.history-fat      { background: #fce4ec; color: #c62828; }
+
+/* Ingrédients */
+.history-ingredients { margin-top: 0.4rem; }
+
+.history-ingredients-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--vert-kool-dark);
+    margin-bottom: 0.4rem;
+    display: block;
+}
+
+.history-ingredients-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.history-ingredient {
+    background: var(--gris-clair);
+    border: 1px solid var(--gris-moyen);
+    padding: 0.2rem 0.65rem;
+    border-radius: 30px;
+    font-size: 0.65rem;
+    color: var(--gris-texte);
+}
+
+/* Footer */
+.history-footer {
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--gris-moyen);
+    text-align: center;
+}
+
+.btn-danger-outline {
+    background: transparent;
+    border: 1.5px solid #e53935;
+    color: #e53935;
+    padding: 0.55rem 1.4rem;
+    border-radius: 40px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.2s, color 0.2s;
+    font-family: inherit;
+}
+
+.btn-danger-outline:hover {
+    background: #e53935;
+    color: white;
+}

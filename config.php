@@ -8,7 +8,7 @@ if (!defined('DB_HOST')) {
 }
 
 if (!defined('DB_PORT')) {
-    define('DB_PORT', getenv('DB_PORT') ?: '3306');
+    define('DB_PORT', getenv('DB_PORT') ?: '3307');
 }
 
 if (!defined('DB_USER')) {
@@ -20,7 +20,7 @@ if (!defined('DB_PASS')) {
 }
 
 if (!defined('DB_NAME')) {
-    define('DB_NAME', getenv('DB_NAME') ?: 'kool_healthy');
+    define('DB_NAME', getenv('DB_NAME') ?: 'projetweb');
 }
 
 // Application constants
@@ -33,7 +33,32 @@ if (!defined('APP_VERSION')) {
 }
 
 if (!defined('BASE_URL')) {
-    define('BASE_URL', getenv('BASE_URL') ?: 'http://localhost/integweb/');
+    define('BASE_URL', getenv('BASE_URL') ?: 'http://localhost:8080/integweb/');
+}
+
+// SMTP / Mail settings (environment-aware)
+if (!defined('SMTP_HOST')) {
+    define('SMTP_HOST', getenv('SMTP_HOST') ?: 'smtp.mailtrap.io');
+}
+
+if (!defined('SMTP_PORT')) {
+    define('SMTP_PORT', getenv('SMTP_PORT') ?: '587');
+}
+
+if (!defined('SMTP_USER')) {
+    define('SMTP_USER', getenv('SMTP_USER') ?: '');
+}
+
+if (!defined('SMTP_PASS')) {
+    define('SMTP_PASS', getenv('SMTP_PASS') ?: '');
+}
+
+if (!defined('SMTP_SECURE')) {
+    define('SMTP_SECURE', getenv('SMTP_SECURE') ?: 'tls');
+}
+
+if (!defined('MAIL_FROM_NAME')) {
+    define('MAIL_FROM_NAME', getenv('MAIL_FROM_NAME') ?: 'Kool Healthy');
 }
 
 if (!defined('ROOT_PATH')) {
@@ -60,17 +85,24 @@ if (session_status() === PHP_SESSION_NONE) {
 class config
 {
     private static $pdo = null;
-    private static $host = DB_HOST;
-    private static $port = DB_PORT;
-    private static $user = DB_USER;
-    private static $password = DB_PASS;
-    private static $database = DB_NAME;
+    private static $host = '127.0.0.1';
+    private static $port = '3307';
+    private static $user = 'root';
+    private static $password = '';
+    private static $database = 'projetweb';
 
     // Google / mail settings (can be set via env vars)
     private static $googleClientId = '';
     private static $googleClientSecret = '';
-    private static $googleRedirectUri = '';
-    private static $mailFrom = '';
+    private static $googleRedirectUri = 'http://localhost:8080/integweb/CONTROLLER/AuthController.php?action=google_callback';
+    private static $mailFrom = 'omarzehift52@gmail.com';
+    // SMTP fields (will be initialized from env if empty)
+    private static $smtpHost = '';
+    private static $smtpPort = '';
+    private static $smtpUser = '';
+    private static $smtpPass = '';
+    private static $smtpSecure = '';
+    private static $mailFromName = '';
 
     private static function initSecrets()
     {
@@ -82,10 +114,30 @@ class config
             self::$googleClientSecret = getenv('GOOGLE_CLIENT_SECRET') ?: '';
         }
         if (self::$googleRedirectUri === '') {
-            self::$googleRedirectUri = getenv('GOOGLE_REDIRECT_URI') ?: 'http://localhost:8080/Recettes/CONTROLLER/AuthController.php?action=google_callback';
+            $defaultGoogleRedirect = (defined('BASE_URL') ? BASE_URL . 'CONTROLLER/AuthController.php?action=google_callback' : 'http://localhost/integweb/CONTROLLER/AuthController.php?action=google_callback');
+            self::$googleRedirectUri = getenv('GOOGLE_REDIRECT_URI') ?: $defaultGoogleRedirect;
         }
         if (self::$mailFrom === '') {
             self::$mailFrom = getenv('MAIL_FROM') ?: 'omarzehift52@gmail.com';
+        }
+        // Initialize SMTP settings from environment variables if not set
+        if (self::$smtpHost === '') {
+            self::$smtpHost = getenv('SMTP_HOST') ?: SMTP_HOST;
+        }
+        if (self::$smtpPort === '') {
+            self::$smtpPort = getenv('SMTP_PORT') ?: SMTP_PORT;
+        }
+        if (self::$smtpUser === '') {
+            self::$smtpUser = getenv('SMTP_USER') ?: SMTP_USER;
+        }
+        if (self::$smtpPass === '') {
+            self::$smtpPass = getenv('SMTP_PASS') ?: SMTP_PASS;
+        }
+        if (self::$smtpSecure === '') {
+            self::$smtpSecure = getenv('SMTP_SECURE') ?: SMTP_SECURE;
+        }
+        if (self::$mailFromName === '') {
+            self::$mailFromName = getenv('MAIL_FROM_NAME') ?: MAIL_FROM_NAME;
         }
     }
 
@@ -155,6 +207,25 @@ class config
     {
         self::initSecrets();
         return trim((string) self::$mailFrom);
+    }
+
+    /**
+     * Retourne la configuration SMTP (hôte, port, user, pass, secure)
+     * Utilisez ces valeurs pour initialiser PHPMailer ou une autre librairie.
+     * @return array
+     */
+    public static function getSmtpConfig()
+    {
+        self::initSecrets();
+        return [
+            'host' => (string) self::$smtpHost,
+            'port' => (int) self::$smtpPort,
+            'username' => (string) self::$smtpUser,
+            'password' => (string) self::$smtpPass,
+            'secure' => (string) self::$smtpSecure,
+            'from' => (string) self::$mailFrom,
+            'from_name' => (string) self::$mailFromName,
+        ];
     }
 }
 

@@ -90,8 +90,10 @@ body {
     transition: 0.2s;
 }
 
-.top-nav a:hover {
-    color: var(--bleu-tech-dark);
+.top-nav a:hover,
+.top-nav a.active {
+    color: var(--vert-kool);
+    font-weight: 700;
 }
 
 .disabled-control {
@@ -522,6 +524,13 @@ body {
 
 .btn:hover {
     background: var(--vert-kool-dark);
+}
+
+.main-col {
+    min-width: 0;
+    display: grid;
+    gap: 14px;
+    align-content: start;
 }
 
 .feed {

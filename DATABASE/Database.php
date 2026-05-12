@@ -1,14 +1,19 @@
 <?php
 // ========== DATABASE CONNECTION CLASS ==========
+require_once __DIR__ . '/../config.php';
+
 class Database {
     private $host;
+    private $port;
     private $db_name;
     private $user;
     private $pass;
     private $conn;
 
     public function __construct() {
+        // Use constants from config.php
         $this->host = DB_HOST;
+        $this->port = DB_PORT;
         $this->db_name = DB_NAME;
         $this->user = DB_USER;
         $this->pass = DB_PASS;
@@ -20,7 +25,7 @@ class Database {
 
         try {
             $this->conn = new PDO(
-                'mysql:host=' . $this->host . ';dbname=' . $this->db_name . ';charset=utf8mb4',
+                'mysql:host=' . $this->host . ';port=' . $this->port . ';dbname=' . $this->db_name . ';charset=utf8mb4',
                 $this->user,
                 $this->pass,
                 [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]

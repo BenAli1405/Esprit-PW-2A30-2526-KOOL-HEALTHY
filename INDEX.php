@@ -111,6 +111,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ));
                 exit;
 
+            case 'updateReview':
+                echo json_encode(RecipeC::updateReview(
+                    $_POST['id']          ?? 0,
+                    $_POST['note']        ?? 0,
+                    $_POST['commentaire'] ?? ''
+                ));
+                exit;
+
             case 'deleteReview':
                 echo json_encode(RecipeC::deleteReview(
                     $_POST['recipeId'] ?? 0,
@@ -188,7 +196,7 @@ switch ($view) {
         break;
     case 'frontoffice':
     default:
-        require VIEW_PATH . 'frontoffice.html';
+        require VIEW_PATH . 'frontoffice.php';
         break;
 }
 ?>

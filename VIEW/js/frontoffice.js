@@ -33,7 +33,7 @@ function savePrefs() { localStorage.setItem('kool_prefs', JSON.stringify(userPre
 // ========== DATA LOADING ==========
 async function loadData() {
     try {
-        const res = await fetch('INDEX.php?action=getAllRecipes');
+        const res = await fetch('../INDEX.php?action=getAllRecipes');
         recipesDB = await res.json();
         recipesDB = recipesDB.map(r => ({ ...r, nutritionScore: calcNutritionScore(r) }));
         renderRecipes();
@@ -394,7 +394,7 @@ document.getElementById('submitReviewBtn')?.addEventListener('click', async () =
     fd.append('note', rating);
     fd.append('commentaire', comment);
     
-    const res = await fetch('INDEX.php', { method: 'POST', body: fd });
+    const res = await fetch('../INDEX.php', { method: 'POST', body: fd });
     const result = await res.json();
     if (result.success) {
         showToast('Avis envoyé !');
@@ -470,7 +470,7 @@ let ingredientsDBForCalc = [];
 function openCalculatorModal() {
     selectedIngredients = [];
     
-    fetch('INDEX.php?action=getAllIngredients')
+    fetch('../INDEX.php?action=getAllIngredients')
         .then(res => res.json())
         .then(data => {
             ingredientsDBForCalc = data;
@@ -813,3 +813,126 @@ window.removeIngredientFromMealModal = removeIngredientFromMealModal;
 
 // Add button listener
 document.getElementById('openCalculatorBtn')?.addEventListener('click', openCalculatorModal);
+
+// ========== HISTORIQUE DES REPAS SAUVEGARDÉS ==========
+
+function showMealHistory() {
+    const savedMeals = JSON.parse(localStorage.getItem('savedMeals') || '[]');
+
+    if (savedMeals.length === 0) {
+        showToast('Aucun repas sauvegardé pour le moment', true);
+        return;
+    }
+
+    let totalCalories = 0, totalProtein = 0;
+    savedMeals.forEach(meal => {
+        totalCalories += meal.totals.calories;
+        totalProtein += meal.totals.protein;
+    });
+    const totalMeals = savedMeals.length;
+    const avgCalories = Math.round(totalCalories / totalMeals);
+    const avgProtein = Math.round(totalProtein / totalMeals);
+
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'flex';
+    modal.id = 'historyModal';
+    modal.innerHTML = `
+        <div class="modal-content modal-large" style="max-width:660px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-history"></i> Historique de mes repas</h3>
+                <span class="close-modal" id="closeHistoryModal">&times;</span>
+            </div>
+            <div class="modal-body history-modal-body">
+
+                <div class="history-stats-banner">
+                    <div class="history-stat-card">
+                        <span class="stat-emoji">📊</span>
+                        <span class="stat-number">${totalMeals}</span>
+                        <span class="stat-desc">repas sauvegardés</span>
+                    </div>
+                    <div class="history-stat-card">
+                        <span class="stat-emoji">🔥</span>
+                        <span class="stat-number">${avgCalories}</span>
+                        <span class="stat-desc">kcal / repas (moy.)</span>
+                    </div>
+                    <div class="history-stat-card">
+                        <span class="stat-emoji">💪</span>
+                        <span class="stat-number">${avgProtein}g</span>
+                        <span class="stat-desc">protéines / repas (moy.)</span>
+                    </div>
+                </div>
+
+                <div class="history-list">
+                    ${savedMeals.map((meal, index) => `
+                        <div class="history-item">
+                            <div class="history-item-header">
+                                <div class="history-date">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    ${new Date(meal.date).toLocaleDateString('fr-FR')}
+                                    <span class="history-time">${new Date(meal.date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
+                                </div>
+                                <button class="history-delete" onclick="deleteSavedMeal(${index})" title="Supprimer ce repas">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                            <div class="history-item-content">
+                                <div class="history-nutrition">
+                                    <span class="history-calories">🔥 ${meal.totals.calories} kcal</span>
+                                    <span class="history-protein">💪 ${meal.totals.protein}g prot.</span>
+                                    ${meal.totals.carbs ? `<span class="history-carbs">🍚 ${meal.totals.carbs}g glucides</span>` : ''}
+                                    ${meal.totals.fat ? `<span class="history-fat">🥑 ${meal.totals.fat}g lipides</span>` : ''}
+                                </div>
+                                <div class="history-ingredients">
+                                    <span class="history-ingredients-label"><i class="fas fa-carrot"></i> Ingrédients</span>
+                                    <div class="history-ingredients-list">
+                                        ${meal.ingredients.map(ing =>
+                                            `<span class="history-ingredient">${escapeHtml(ing.name)} · ${Math.round(ing.quantity)}g</span>`
+                                        ).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="history-footer">
+                    <button id="clearAllHistoryBtn" class="btn-danger-outline">
+                        <i class="fas fa-trash-alt"></i> Tout effacer
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    modal.querySelector('#closeHistoryModal').onclick = () => modal.remove();
+    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+
+    modal.querySelector('#clearAllHistoryBtn').onclick = () => {
+        if (confirm('Êtes-vous sûr de vouloir supprimer TOUS vos repas sauvegardés ?')) {
+            localStorage.setItem('savedMeals', '[]');
+            showToast('Tous les repas ont été supprimés');
+            modal.remove();
+        }
+    };
+}
+
+function deleteSavedMeal(index) {
+    const savedMeals = JSON.parse(localStorage.getItem('savedMeals') || '[]');
+    const mealName = savedMeals[index].ingredients.map(i => i.name).join(', ').substring(0, 50);
+
+    if (confirm(`Supprimer ce repas ?\n${mealName}...`)) {
+        savedMeals.splice(index, 1);
+        localStorage.setItem('savedMeals', JSON.stringify(savedMeals));
+        showToast('Repas supprimé !');
+        document.getElementById('historyModal')?.remove();
+        if (savedMeals.length > 0) showMealHistory();
+    }
+}
+
+window.deleteSavedMeal = deleteSavedMeal;
+
+document.getElementById('historyBtn')?.addEventListener('click', showMealHistory);

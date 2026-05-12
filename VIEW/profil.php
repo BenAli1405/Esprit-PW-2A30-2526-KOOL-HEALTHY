@@ -54,9 +54,9 @@ if ($isOwnProfile) {
     $blockedUsers = $recetteController->getBlockedUsers((int) $utilisateurConnecte['id']);
 }
 
-// Get recipes count
+// Get recipes count (publications table)
 $db = config::getConnexion();
-$sql = "SELECT COUNT(*) FROM recettes WHERE auteur = :auteur";
+$sql = "SELECT COUNT(*) FROM publication WHERE auteur = :auteur";
 $req = $db->prepare($sql);
 $req->execute(['auteur' => $viewedProfile['nom']]);
 $recipesCount = (int) $req->fetchColumn();
@@ -90,48 +90,10 @@ $messagesErreur = [
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mon Profil - Kool Healthy</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/Recettes/CSS/styles.css">
+    <link rel="stylesheet" href="../CSS/styles.css">
 </head>
 <body>
-    <header class="topbar">
-        <a class="brand" href="home.php" aria-label="Kool Healthy">
-            <img class="brand-logo" src="../assets/logo-kool-healthy.png" alt="Kool Healthy" onerror="this.onerror=null;this.src='../assets/logo-kh.svg';">
-        </a>
-
-        <nav class="top-nav" aria-label="Navigation principale">
-            <a href="home.php">Accueil</a>
-            <a class="disabled-control" href="home.php#features">Fonctionnalites</a>
-            <a class="disabled-control" href="fil-recettes.php">Recettes</a>
-            <a class="disabled-control" href="home.php#impact">Impact</a>
-            <a href="fil-recettes.php">Partage</a>
-        </nav>
-
-        <div class="topbar-tools">
-            <?php if ($utilisateurConnecte): ?>
-                <details class="profile-menu">
-                    <summary class="profile-menu-trigger" aria-label="Menu profil">
-                        <?php if (!empty($utilisateurConnecte['avatar'])): ?>
-                            <img src="<?php echo htmlspecialchars($utilisateurConnecte['avatar']); ?>" alt="Mon avatar" class="profile-avatar-img-tiny">
-                        <?php else: ?>
-                            <span class="profile-avatar"><?php echo strtoupper(substr($utilisateurConnecte['nom'] ?? 'U', 0, 1)); ?></span>
-                        <?php endif; ?>
-                    </summary>
-                        <div class="profile-menu-user">
-                            <strong><?php echo htmlspecialchars($utilisateurConnecte['nom'] ?? 'Utilisateur'); ?></strong>
-                            <small><?php echo htmlspecialchars($utilisateurConnecte['email'] ?? ''); ?></small>
-                        </div>
-                        <a href="profil.php">Mon profil</a>
-                        <?php if (($utilisateurConnecte['role'] ?? '') === 'admin'): ?>
-                            <a href="backoffice.php">Backoffice</a>
-                        <?php endif; ?>
-                        <a class="danger" href="../CONTROLLER/AuthController.php?action=logout">Se deconnecter</a>
-                    </div>
-                </details>
-            <?php else: ?>
-                <a class="auth-link" href="auth.php">Connexion</a>
-            <?php endif; ?>
-        </div>
-    </header>
+    <?php include __DIR__ . '/includes/header-homebar.php'; ?>
 
     <section class="section-wrap recipes-section">
     <div class="profile-full-wrapper">
@@ -352,7 +314,7 @@ $messagesErreur = [
             <p>&copy; 2026 Kool Healthy. Mangez mieux, preservez la planete.</p>
         </div>
     </footer>
-    <script src="/Recettes/JS/follow-system.js?v=20260506"></script>
-    <script src="/Recettes/JS/user-modal.js?v=20260506"></script>
+    <script src="../JS/follow-system.js?v=20260506"></script>
+    <script src="../JS/user-modal.js?v=20260506"></script>
 </body>
 </html>

@@ -292,6 +292,15 @@ class Recipe {
         ]);
     }
 
+    public function updateReview($reviewId, $note, $commentaire) {
+        $sql = "UPDATE avis SET note = :note, commentaire = :commentaire WHERE id = :id";
+        return $this->db->execute($sql, [
+            ':id'          => $reviewId,
+            ':note'        => $note,
+            ':commentaire' => $commentaire,
+        ]);
+    }
+
     public function deleteReview($recipeId, $reviewId) {
         $sql = "DELETE FROM avis WHERE id = :id AND recette_id = :recette_id";
         return $this->db->execute($sql, [

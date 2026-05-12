@@ -24,41 +24,10 @@ $favorisIds = $recetteController->recupererIdsFavoris((int) $utilisateurConnecte
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Comptes suivis - Kool Healthy</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/Recettes/CSS/styles.css?v=20260506.2">
+    <link rel="stylesheet" href="../CSS/styles.css?v=20260506.2">
 </head>
 <body>
-    <header class="topbar">
-        <a class="brand" href="home.php" aria-label="Kool Healthy">
-            <img class="brand-logo" src="../assets/logo-kool-healthy.png" alt="Kool Healthy" onerror="this.onerror=null;this.src='../assets/logo-kh.svg';">
-        </a>
-
-        <nav class="top-nav" aria-label="Navigation principale">
-            <a href="home.php">Accueil</a>
-            <a class="disabled-control" href="home.php#features">Fonctionnalites</a>
-            <a class="disabled-control" href="fil-recettes.php">Recettes</a>
-            <a class="disabled-control" href="home.php#impact">Impact</a>
-            <a href="fil-recettes.php">Partage</a>
-        </nav>
-
-        <div class="topbar-tools">
-            <details class="profile-menu">
-                <summary class="profile-menu-trigger" aria-label="Menu profil">
-                    <span class="profile-avatar"><?php echo strtoupper(substr($utilisateurConnecte['nom'] ?? 'U', 0, 1)); ?></span>
-                </summary>
-                <div class="profile-menu-dropdown">
-                    <div class="profile-menu-user">
-                        <strong><?php echo htmlspecialchars($utilisateurConnecte['nom'] ?? 'Utilisateur'); ?></strong>
-                        <small><?php echo htmlspecialchars($utilisateurConnecte['email'] ?? ''); ?></small>
-                    </div>
-                    <a href="profil.php">Mon profil</a>
-                    <?php if (($utilisateurConnecte['role'] ?? '') === 'admin'): ?>
-                        <a href="backoffice.php">Backoffice</a>
-                    <?php endif; ?>
-                    <a class="danger" href="../CONTROLLER/AuthController.php?action=logout">Se deconnecter</a>
-                </div>
-            </details>
-        </div>
-    </header>
+    <?php include __DIR__ . '/includes/topbar.php'; ?>
 
     <section class="section-wrap recipes-section">
     <div class="layout">
@@ -113,36 +82,83 @@ $favorisIds = $recetteController->recupererIdsFavoris((int) $utilisateurConnecte
 
                                 <?php $estFavori = in_array((int) ($recette['id'] ?? 0), $favorisIds, true); ?>
                                 <div class="actions">
-                                    <form method="POST" action="../CONTROLLER/RecetteController.php?action=toggle_favori&format=json" class="inline-action-form js-favori-form">
+                                    <form method="POST" action="../CONTROLLER/FavoriController.php" class="inline-action-form js-favori-form">
                                         <input type="hidden" name="recette_id" value="<?php echo (int) ($recette['id'] ?? 0); ?>">
-                                        <input type="hidden" name="return_to" value="../VIEW/comptes-suivis.php">
-                                        <button class="action-btn like <?php echo $estFavori ? 'active' : ''; ?>" type="submit">
-                                            <?php echo $estFavori ? '❤ Aime' : '❤ J\'aime'; ?>
+                                        <input type="hidden" name="action" value="toggle">
+                                        <button type="submit" class="action-btn favorite <?php echo $estFavori ? 'active' : ''; ?>">
+                                            ❤ <?php echo $estFavori ? 'Aime' : "J'aime"; ?>
                                         </button>
                                     </form>
-                                    <button class="action-btn" data-action="comment" data-recipe-title="<?php echo htmlspecialchars($recette['titre']); ?>">💬 Commenter</button>
-                                    <button class="action-btn" data-action="share" data-recipe-title="<?php echo htmlspecialchars($recette['titre']); ?>">📤 Partager</button>
+                                    <button class="action-btn" data-action="share" data-recipe-title="<?php echo htmlspecialchars($recette['titre'] ?? ''); ?>">&#8679; Partager</button>
                                 </div>
                             </article>
                         <?php endforeach; ?>
                     </div>
                 <?php else: ?>
-                    <div class="empty-state">
-                        <p>Aucune publication pour le moment sur les comptes suivis.</p>
-                        <a href="fil-recettes.php" class="follow-btn" style="display:inline-flex; margin-top:12px; text-decoration:none;">Découvrir des recettes</a>
-                    </div>
+                    <p class="empty-state">Aucune publication de vos comptes suivis pour le moment.</p>
                 <?php endif; ?>
             </section>
         </main>
 
-        <!-- Right Sidebar -->
         <?php include __DIR__ . '/includes/right-sidebar.php'; ?>
     </div>
     </section>
 
-    <?php include __DIR__ . '/includes/user-action-modal.php'; ?>
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2026 Kool Healthy. Mangez mieux, preservez la planete.</p>
+        </div>
+    </footer>
 
-    <script src="/Recettes/JS/follow-system.js?v=20260506.1"></script>
-    <script src="/Recettes/JS/user-modal.js?v=20260506.1"></script>
+    <script>
+        document.querySelectorAll('.action-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                const action = this.dataset.action;
+                const recipeTitle = this.dataset.recipeTitle;
+                if (action === 'share') {
+                    if (navigator.share) {
+                        navigator.share({ title: 'Kool Healthy', text: 'Regarde cette recette: ' + recipeTitle, url: window.location.href });
+                    } else {
+                        const shareText = 'Regarde cette recette: ' + recipeTitle + ' - ' + window.location.href;
+                        navigator.clipboard.writeText(shareText).then(() => {
+                            alert('Lien copie dans le presse-papiers !');
+                        });
+                    }
+                }
+            });
+        });
+
+        document.querySelectorAll('.js-favori-form').forEach(form => {
+            form.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                const button = form.querySelector('button[type="submit"]');
+                if (!button) return;
+                const formData = new FormData(form);
+                button.disabled = true;
+                try {
+                    const response = await fetch(form.action, {
+                        method: 'POST', body: formData,
+                        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+                    });
+                    const data = await response.json();
+                    if (!response.ok || !data.success) throw new Error('Erreur favoris');
+                    if (data.is_favorite) {
+                        button.classList.add('active');
+                        button.textContent = '❤ Aime';
+                    } else {
+                        button.classList.remove('active');
+                        button.textContent = "❤ J'aime";
+                    }
+                } catch (e) {
+                    alert('Impossible de mettre a jour le favori pour le moment.');
+                } finally {
+                    button.disabled = false;
+                }
+            });
+        });
+    </script>
+    <script src="../JS/follow-system.js?v=20260506"></script>
+    <script src="../JS/user-modal.js?v=20260506"></script>
+    <?php include __DIR__ . '/includes/user-action-modal.php'; ?>
 </body>
 </html>

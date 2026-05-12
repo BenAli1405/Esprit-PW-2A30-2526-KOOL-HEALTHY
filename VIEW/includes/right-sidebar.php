@@ -56,7 +56,7 @@ $userId = $utilisateurConnecte['id'] ?? 0;
                             (COUNT(DISTINCT f.id) + COUNT(DISTINCT r.id)) as activity_score
                         FROM utilisateurs u 
                         LEFT JOIN follows f ON u.id = f.following_id
-                        LEFT JOIN recettes r ON u.nom = r.auteur
+                        LEFT JOIN publication r ON u.nom = r.auteur
                         WHERE u.role != 'admin' 
                         AND u.id != :user_id 
                         AND u.id NOT IN (SELECT following_id FROM follows WHERE follower_id = :user_id)
@@ -96,7 +96,7 @@ $userId = $utilisateurConnecte['id'] ?? 0;
                             (COUNT(DISTINCT f.id) + COUNT(DISTINCT r.id)) as activity_score
                         FROM utilisateurs u 
                         LEFT JOIN follows f ON u.id = f.following_id
-                        LEFT JOIN recettes r ON u.nom = r.auteur
+                        LEFT JOIN publication r ON u.nom = r.auteur
                         WHERE u.role != 'admin' 
                         GROUP BY u.id, u.nom
                         HAVING activity_score > 0

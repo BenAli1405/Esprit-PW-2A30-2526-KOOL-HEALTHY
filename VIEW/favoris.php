@@ -25,46 +25,10 @@ $titre_page = 'Mes Favoris';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mes Favoris - Kool Healthy</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/Recettes/CSS/styles.css">
+    <link rel="stylesheet" href="../CSS/styles.css">
 </head>
 <body>
-    <header class="topbar">
-        <a class="brand" href="home.php" aria-label="Kool Healthy">
-            <img class="brand-logo" src="../assets/logo-kool-healthy.png" alt="Kool Healthy" onerror="this.onerror=null;this.src='../assets/logo-kh.svg';">
-        </a>
-
-        <nav class="top-nav" aria-label="Navigation principale">
-            <a href="home.php">Accueil</a>
-            <a class="disabled-control" href="home.php#features">Fonctionnalites</a>
-            <a class="disabled-control" href="fil-recettes.php">Recettes</a>
-            <a class="disabled-control" href="home.php#impact">Impact</a>
-            <a href="fil-recettes.php">Partage</a>
-        </nav>
-
-        <div class="topbar-tools">
-            <?php if ($utilisateurConnecte): ?>
-                <details class="profile-menu">
-                    <summary class="profile-menu-trigger" aria-label="Menu profil">
-                        <span class="profile-avatar"><?php echo strtoupper(substr($utilisateurConnecte['nom'] ?? 'U', 0, 1)); ?></span>
-                    </summary>
-                    <div class="profile-menu-dropdown">
-                        <div class="profile-menu-user">
-                            <strong><?php echo htmlspecialchars($utilisateurConnecte['nom'] ?? 'Utilisateur'); ?></strong>
-                            <small><?php echo htmlspecialchars($utilisateurConnecte['email'] ?? ''); ?></small>
-                        </div>
-                        <a href="profil.php">Mon profil</a>
-                        <?php if (($utilisateurConnecte['role'] ?? '') === 'admin'): ?>
-                            <a href="backoffice.php">Backoffice</a>
-                        <?php endif; ?>
-                        <a class="danger" href="../CONTROLLER/AuthController.php?action=logout">Se deconnecter</a>
-                    </div>
-                </details>
-            <?php else: ?>
-                <a class="auth-link" href="auth.php">Connexion</a>
-            <?php endif; ?>
-        </div>
-    </header>
-
+    <?php include __DIR__ . '/includes/topbar.php'; ?>
     <section class="section-wrap recipes-section">
     <div class="layout">
         <?php include __DIR__ . '/includes/left-nav.php'; ?>
@@ -79,46 +43,51 @@ $titre_page = 'Mes Favoris';
                 <section class="panel social-feedback success">Recette retiree des favoris.</section>
             <?php endif; ?>
 
-            <section class="feed">
+            <div class="feed">
                 <?php if (empty($recettes)): ?>
-                    <article class="panel post">
-                        <p>Vous n'avez pas encore de favoris. <a href="fil-recettes.php">Découvrez des recettes</a> et ajoutez-les en favoris!</p>
-                    </article>
+                    <article class="panel post"><p>Vous n'avez pas encore de favoris. <a href="frontoffice.php">Decouvrez des recettes</a> et ajoutez-les en favoris !</p></article>
                 <?php else: ?>
                     <?php foreach ($recettes as $recette): ?>
                     <article class="panel post">
-                        <div class="user-info">
-                            <div class="user-avatar"><?php echo strtoupper(substr($recette['nom'] ?? 'U', 0, 1)); ?></div>
-                            <div>
-                                <strong><?php echo htmlspecialchars($recette['nom'] ?? 'Utilisateur'); ?></strong>
-                                <small><?php echo htmlspecialchars($recette['email'] ?? ''); ?></small>
+                        <div class="post-top">
+                            <div class="user">
+                                <div class="avatar"><?php echo strtoupper(substr($recette['nom'] ?? 'A', 0, 1)); ?></div>
+                                <div class="user-info">
+                                    <strong><?php echo htmlspecialchars($recette['nom'] ?? 'Anonyme'); ?></strong>
+                                    <small><?php echo htmlspecialchars($recette['date_creation'] ?? ''); ?></small>
+                                </div>
                             </div>
                         </div>
-                        <?php if ($recette['image']): ?>
-                            <img src="<?php echo htmlspecialchars($recette['image']); ?>" alt="<?php echo htmlspecialchars($recette['titre']); ?>" class="recipe-photo">
+
+                        <h3 class="recipe-title"><?php echo htmlspecialchars($recette['titre'] ?? ''); ?></h3>
+
+                        <?php if (!empty($recette['temps_prep'])): ?>
+                            <div class="recipe-meta"><span class="meta-pill">⏱ <?php echo (int)$recette['temps_prep']; ?> min</span></div>
                         <?php endif; ?>
-                        <h3 class="recipe-title"><?php echo htmlspecialchars($recette['titre']); ?></h3>
-                        <div class="recipe-meta">
-                            <span class="meta-pill">⏱ <?php echo htmlspecialchars($recette['temps_prep'] ?? 'N/A'); ?> min</span>
-                        </div>
-                        <div class="recipe-block">
-                            <strong>Ingredients:</strong>
-                            <p><?php echo htmlspecialchars($recette['ingredients']); ?></p>
-                        </div>
-                        <p><?php echo htmlspecialchars($recette['etapes']); ?></p>
+
+                        <?php if (!empty($recette['ingredients'])): ?>
+                            <div class="recipe-block">
+                                <strong>Ingredients</strong>
+                                <p><?php echo htmlspecialchars($recette['ingredients']); ?></p>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if (!empty($recette['etapes'])): ?>
+                            <p><?php echo nl2br(htmlspecialchars($recette['etapes'])); ?></p>
+                        <?php endif; ?>
+
                         <div class="actions">
-                            <form method="POST" action="../CONTROLLER/RecetteController.php?action=toggle_favori&format=json" class="inline-action-form js-favori-form">
-                                <input type="hidden" name="recette_id" value="<?php echo (int) ($recette['id'] ?? 0); ?>">
-                                <input type="hidden" name="return_to" value="../VIEW/favoris.php">
-                                <button class="action-btn like active" type="submit">❤ Aime</button>
+                            <form method="POST" action="../CONTROLLER/FavoriController.php" class="inline-action-form js-favori-form">
+                                <input type="hidden" name="recette_id" value="<?php echo (int)($recette['id'] ?? 0); ?>">
+                                <input type="hidden" name="action" value="toggle">
+                                <button type="submit" class="action-btn favorite active">❤ Aime</button>
                             </form>
-                            <button class="action-btn" data-action="comment" data-recipe-title="<?php echo htmlspecialchars($recette['titre']); ?>">💬 Commenter</button>
-                            <button class="action-btn" data-action="share" data-recipe-title="<?php echo htmlspecialchars($recette['titre']); ?>">📤 Partager</button>
+                            <button class="action-btn" data-action="share" data-recipe-title="<?php echo htmlspecialchars($recette['titre'] ?? ''); ?>">&#8679; Partager</button>
                         </div>
                     </article>
                     <?php endforeach; ?>
                 <?php endif; ?>
-            </section>
+            </div>
         </main>
 
         <?php include __DIR__ . '/includes/right-sidebar.php'; ?>
@@ -161,19 +130,6 @@ $titre_page = 'Mes Favoris';
             });
         });
 
-        // Boutons de suivi
-        document.querySelectorAll('.follow-btn').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                if (this.textContent.includes('Suivre')) {
-                    this.textContent = 'Suivi ✓';
-                    this.style.background = 'var(--vert-kool-dark)';
-                } else {
-                    this.textContent = 'Suivre';
-                    this.style.background = 'var(--vert-kool)';
-                }
-            });
-        });
 
         document.querySelectorAll('.js-favori-form').forEach(form => {
             form.addEventListener('submit', async function (event) {
@@ -212,7 +168,7 @@ $titre_page = 'Mes Favoris';
                         if (feed && feed.querySelectorAll('.post').length === 0) {
                             const empty = document.createElement('article');
                             empty.className = 'panel post';
-                            empty.innerHTML = '<p>Vous n\'avez pas encore de favoris. <a href="fil-recettes.php">Decouvrez des recettes</a> et ajoutez-les en favoris!</p>';
+                            empty.innerHTML = '<p>Vous n\'avez pas encore de favoris. <a href="<?php echo defined('BASE_URL') ? BASE_URL : 'http://localhost/integweb/'; ?>VIEW/frontoffice.html">Decouvrez des recettes</a> et ajoutez-les en favoris!</p>';
                             feed.appendChild(empty);
                         }
                     }
@@ -224,6 +180,6 @@ $titre_page = 'Mes Favoris';
             });
         });
     </script>
-    <script src="/Recettes/JS/follow-system.js?v=20260506"></script>
+    <script src="../JS/follow-system.js?v=20260506"></script>
 </body>
 </html>
