@@ -9,16 +9,15 @@
   <link rel="stylesheet" href="<?php echo isset($baseUrl) ? $baseUrl : ''; ?>VIEW/css/frontoffice.css">
 </head>
 <body>
-  <!-- Navigation Utilisateur -->
+
+  <!-- Navigation -->
   <nav class="navbar">
     <div class="logo">
       <i class="fas fa-seedling"></i>
       <h1>Kool Healthy</h1>
     </div>
     <div class="user-badge">
-      <div class="user-avatar">
-        <i class="fas fa-user"></i>
-      </div>
+      <div class="user-avatar"><i class="fas fa-user"></i></div>
       <div class="user-info">
         <span class="user-name"><?php echo isset($user) ? htmlspecialchars($user['nom']) : 'Visiteur'; ?></span>
         <small class="user-status">Membre</small>
@@ -26,15 +25,42 @@
     </div>
   </nav>
 
-  <!-- Hero Section -->
+  <!-- Hero -->
   <section class="hero-recettes">
     <h1><i class="fas fa-utensils"></i> Découvrez nos recettes durables</h1>
-    <p>Consultez, recherchez, filtrez et donnez votre avis sur les recettes</p>
+    <p>Valeurs nutritionnelles calculées automatiquement · Filtrez par objectif santé</p>
   </section>
 
-  <!-- Module Principal -->
+  <!-- Objective Selector -->
+  <div class="goal-selector-wrapper">
+    <div class="goal-selector">
+      <button class="goal-btn" data-goal="perte_de_poids">
+        <i class="fas fa-weight-scale"></i>
+        <span>Perte de poids</span>
+        <small>&lt; 600 kcal</small>
+      </button>
+      <button class="goal-btn" data-goal="musculation">
+        <i class="fas fa-dumbbell"></i>
+        <span>Musculation</span>
+        <small>&gt; 20g protéines</small>
+      </button>
+      <button class="goal-btn" data-goal="equilibre">
+        <i class="fas fa-chart-line"></i>
+        <span>Équilibre</span>
+        <small>600–800 kcal</small>
+      </button>
+      <button class="goal-btn" data-goal="prise_de_poids">
+        <i class="fas fa-chart-simple"></i>
+        <span>Prendre du poids</span>
+        <small>&gt; 800 kcal</small>
+      </button>
+    </div>
+    <div class="goal-feedback" id="goalFeedback"></div>
+  </div>
+
+  <!-- Main Module -->
   <div class="module-container">
-    <!-- Barre de recherche et filtres -->
+    <!-- Filter bar -->
     <div class="filter-bar">
       <div class="search-group">
         <i class="fas fa-search"></i>
@@ -63,13 +89,22 @@
       <button id="resetFiltersBtn" class="btn-outline"><i class="fas fa-undo"></i> Réinitialiser</button>
     </div>
 
-    <!-- Grille des recettes -->
-    <div id="recipesContainer" class="recipes-grid">
-      <!-- Les recettes seront injectées ici par JavaScript -->
+    <!-- AI Controls with Weekly Plan and Calculator buttons -->
+    <div class="ai-controls">
+      <div class="ai-stats" id="aiStats"></div>
+      <button id="generatePlanBtn" class="btn-primary">
+        <i class="fas fa-calendar-week"></i> Plan de repas IA
+      </button>
+      <button id="openCalculatorBtn" class="btn-primary">
+        <i class="fas fa-calculator"></i> Calculateur nutritionnel
+      </button>
     </div>
+
+    <!-- Recipe grid -->
+    <div id="recipesContainer" class="recipes-grid"></div>
   </div>
 
-  <!-- Modal Avis (Note + Commentaire) -->
+  <!-- Review Modal -->
   <div id="reviewModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -101,7 +136,7 @@
     </div>
   </div>
 
-  <!-- Toast notification -->
+  <!-- Toast -->
   <div id="toast" class="toast">
     <i class="fas fa-check-circle"></i>
     <span id="toastMessage">Avis envoyé !</span>
