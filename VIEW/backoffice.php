@@ -23,7 +23,7 @@ $tabFromQuery = $_GET['tab'] ?? 'dashboard';
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="../CSS/backoffice.css">
+    <link rel="stylesheet" href="css/backoffice.css?v=20260512">
 </head>
 <body>
     <div class="app-wrapper">
@@ -38,7 +38,9 @@ $tabFromQuery = $_GET['tab'] ?? 'dashboard';
             <div class="nav-menu">
                 <div class="nav-item active" data-tab="dashboard"><i class="fas fa-chart-pie"></i><span>Dashboard</span></div>
                 <div class="nav-item" data-tab="users"><i class="fas fa-users"></i><span>Utilisateurs</span></div>
-                <div class="nav-item" data-tab="food"><i class="fas fa-apple-alt"></i><span>Aliments</span></div>
+                <div class="nav-item" data-tab="recipes"><i class="fas fa-utensils"></i><span>Recettes</span></div>
+                <div class="nav-item" data-tab="ingredients"><i class="fas fa-apple-alt"></i><span>Ingrédients</span></div>
+                <div class="nav-item" data-tab="reviews"><i class="fas fa-star"></i><span>Avis</span></div>
                 <div class="nav-item" data-tab="analytics"><i class="fas fa-chart-line"></i><span>Analytics IA</span></div>
             </div>
 
@@ -60,7 +62,7 @@ $tabFromQuery = $_GET['tab'] ?? 'dashboard';
                     <p>Vue d'ensemble de la plateforme · IA & nutrition durable</p>
                 </div>
                 <div class="header-actions">
-                    <a class="btn-outline" href="../CONTROLLER/AuthController.php?action=logout">Se deconnecter</a>
+                    <a class="btn-outline" href="../CONTROLLER/AuthController.php?action=logout">Se déconnecter</a>
                 </div>
             </div>
 
@@ -96,6 +98,21 @@ $tabFromQuery = $_GET['tab'] ?? 'dashboard';
                         <div class="stat-value"><?php echo (int) $stats['total_normaux']; ?></div>
                         <div class="stat-trend">Utilisateurs standards</div>
                     </div>
+                    <div class="stat-card">
+                        <div class="stat-title">Total Recettes</div>
+                        <div class="stat-value" id="statRecettes">—</div>
+                        <div class="stat-trend"><i class="fas fa-utensils"></i> créées</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">Total Ingrédients</div>
+                        <div class="stat-value" id="statIngredients">—</div>
+                        <div class="stat-trend"><i class="fas fa-apple-alt"></i> référencés</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">Avis totaux</div>
+                        <div class="stat-value" id="statReviews">—</div>
+                        <div class="stat-trend"><i class="fas fa-star"></i> commentaires</div>
+                    </div>
                 </div>
 
                 <div class="two-columns">
@@ -114,6 +131,31 @@ $tabFromQuery = $_GET['tab'] ?? 'dashboard';
                         </div>
                         <canvas id="rolesChart" height="180"></canvas>
                     </div>
+                </div>
+
+                <div class="two-columns">
+                    <div class="card-panel">
+                        <div class="panel-header">
+                            <h3><i class="fas fa-ranking-star"></i> Top Recettes</h3>
+                            <div class="badge-eco">par note</div>
+                        </div>
+                        <div id="topRecipesList" class="top-list"></div>
+                    </div>
+                    <div class="card-panel">
+                        <div class="panel-header">
+                            <h3><i class="fas fa-chart-bar"></i> Top Ingrédients</h3>
+                            <div class="badge-tech">les plus utilisés</div>
+                        </div>
+                        <div id="topIngredientsList" class="top-list"></div>
+                    </div>
+                </div>
+
+                <div class="card-panel">
+                    <div class="panel-header">
+                        <h3><i class="fas fa-chart-bar"></i> Activité récente</h3>
+                        <div class="badge-tech">derniers avis</div>
+                    </div>
+                    <div id="recentActivityList" class="activity-list"></div>
                 </div>
 
                 <div class="card-panel">
@@ -312,8 +354,250 @@ $tabFromQuery = $_GET['tab'] ?? 'dashboard';
                     </p>
                 </div>
             </section>
+
+            <!-- RECETTES TAB -->
+            <section id="recipesContent" class="dashboard-container tab-content">
+
+                <!-- Calendrier des publications -->
+                <div class="card-panel">
+                    <div class="panel-header">
+                        <h3><i class="fas fa-calendar-alt"></i> Calendrier des publications</h3>
+                        <div class="calendar-nav">
+                            <button id="recCalPrevBtn" class="btn-outline"><i class="fas fa-chevron-left"></i></button>
+                            <span id="recCalMonthLabel"></span>
+                            <button id="recCalNextBtn" class="btn-outline"><i class="fas fa-chevron-right"></i></button>
+                            <button id="recCalViewToggle" class="btn-outline cal-toggle-btn">Vue mois</button>
+                        </div>
+                    </div>
+                    <div id="recipeCalendar" class="review-calendar"></div>
+                </div>
+
+                <!-- CRUD Table -->
+                <div class="card-panel">
+                    <div class="panel-header">
+                        <h3><i class="fas fa-database"></i> Gestion des recettes</h3>
+                        <button class="btn-primary" id="addRecipeBtn"><i class="fas fa-plus"></i> Ajouter une recette</button>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table" id="recipesTable">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Titre</th>
+                                    <th>Difficulté</th>
+                                    <th>Temps</th>
+                                    <th>Eco</th>
+                                    <th>Calories</th>
+                                    <th>Avis</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recipesTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- INGREDIENTS TAB -->
+            <section id="ingredientsContent" class="dashboard-container tab-content">
+                <div class="card-panel">
+                    <div class="panel-header">
+                        <h3><i class="fas fa-apple-alt"></i> Gestion des ingrédients</h3>
+                        <button class="btn-primary" id="addIngredientBtn"><i class="fas fa-plus"></i> Ajouter un ingrédient</button>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table" id="ingredientsTable">
+                            <thead>
+                                <tr>
+                                    <th>Nom</th>
+                                    <th>Calories</th>
+                                    <th>Eco</th>
+                                    <th>Protéines</th>
+                                    <th>Glucides</th>
+                                    <th>Lipides</th>
+                                    <th>Utilisations</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ingredientsTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- AVIS TAB -->
+            <section id="reviewsContent" class="dashboard-container tab-content">
+
+                <!-- CRUD Table -->
+                <div class="card-panel">
+                    <div class="panel-header">
+                        <h3><i class="fas fa-star"></i> Gestion des avis</h3>
+                        <button class="btn-primary" id="addReviewBtn"><i class="fas fa-plus"></i> Ajouter un avis</button>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table" id="reviewsTable">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Utilisateur</th>
+                                    <th>Recette</th>
+                                    <th>Note</th>
+                                    <th>Commentaire</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reviewsTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
+
+    <!-- MODAL RECETTE -->
+    <div id="recipeModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3 id="recipeModalTitle"><i class="fas fa-carrot"></i> Ajouter une recette</h3>
+                <span class="close-modal" id="closeRecipeModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="recipeForm">
+                    <input type="hidden" id="recipeId">
+                    <div class="form-group">
+                        <label>Titre *</label>
+                        <input type="text" id="recipeTitle" required placeholder="Ex: Buddha Bowl protéiné">
+                    </div>
+                    <div class="form-group">
+                        <label>Instructions</label>
+                        <textarea id="recipeInstructions" rows="3" placeholder="Détails de la préparation..."></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Temps (min)</label>
+                            <input type="number" id="recipeTime" value="30">
+                        </div>
+                        <div class="form-group">
+                            <label>Difficulté</label>
+                            <select id="recipeDifficulty">
+                                <option>Facile</option><option>Moyen</option><option>Difficile</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Eco-Score</label>
+                            <select id="recipeEcoScore">
+                                <option>A+</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Ingrédients</label>
+                        <div id="ingredientsListContainer"></div>
+                        <button type="button" id="addIngredientRowBtn" class="btn-small"><i class="fas fa-plus"></i> Ajouter un ingrédient</button>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="submit" class="btn-primary">Sauvegarder</button>
+                        <button type="button" class="btn-outline" id="cancelRecipeBtn">Annuler</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL INGREDIENT -->
+    <div id="ingredientModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3 id="ingredientModalTitle"><i class="fas fa-apple-alt"></i> Ajouter un ingrédient</h3>
+                <span class="close-modal" id="closeIngredientModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="ingredientForm">
+                    <input type="hidden" id="ingredientId">
+                    <div class="form-row">
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label>Nom *</label>
+                            <input type="text" id="ingredientName" required placeholder="Ex: Quinoa">
+                        </div>
+                        <div class="form-group">
+                            <label>Eco-Score</label>
+                            <select id="ingredientEcoScore">
+                                <option>A+</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Calories <small style="color:#888;">(ex: 120kcal/100g)</small></label>
+                        <input type="text" id="ingredientCalories" placeholder="Ex: 120kcal/100g">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Protéines (g/100g)</label>
+                            <input type="number" id="ingredientProteines" value="0" min="0" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label>Glucides (g/100g)</label>
+                            <input type="number" id="ingredientGlucides" value="0" min="0" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label>Lipides (g/100g)</label>
+                            <input type="number" id="ingredientLipides" value="0" min="0" step="0.1">
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="submit" class="btn-primary">Sauvegarder</button>
+                        <button type="button" class="btn-outline" id="cancelIngredientBtn">Annuler</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL AVIS -->
+    <div id="reviewModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="reviewModalTitle"><i class="fas fa-star"></i> Ajouter un avis</h3>
+                <span class="close-modal" id="closeReviewModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="reviewForm">
+                    <input type="hidden" id="reviewId">
+                    <input type="hidden" id="reviewRecipeId">
+                    <div class="form-group" id="reviewRecipeGroup">
+                        <label>Recette *</label>
+                        <select id="reviewRecipeSelect" required></select>
+                    </div>
+                    <div class="form-group" id="reviewUtilisateurGroup">
+                        <label>Utilisateur *</label>
+                        <input type="text" id="reviewUtilisateur" required placeholder="Nom de l'utilisateur">
+                    </div>
+                    <div class="form-group">
+                        <label>Note *</label>
+                        <div class="star-rating-input" id="starRatingInput">
+                            <i class="fas fa-star star-input" data-value="1"></i>
+                            <i class="fas fa-star star-input" data-value="2"></i>
+                            <i class="fas fa-star star-input" data-value="3"></i>
+                            <i class="fas fa-star star-input" data-value="4"></i>
+                            <i class="fas fa-star star-input" data-value="5"></i>
+                        </div>
+                        <input type="hidden" id="reviewNote" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Commentaire</label>
+                        <textarea id="reviewCommentaire" rows="3" placeholder="Votre avis..."></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="submit" class="btn-primary">Sauvegarder</button>
+                        <button type="button" class="btn-outline" id="cancelReviewBtn">Annuler</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" class="toast"><i class="fas fa-check-circle"></i><span id="toastMessage">Action réussie</span></div>
 
     <script>
         const navItems = document.querySelectorAll('.nav-item');
@@ -321,12 +605,15 @@ $tabFromQuery = $_GET['tab'] ?? 'dashboard';
             dashboard: document.getElementById('dashboardContent'),
             users: document.getElementById('usersContent'),
             food: document.getElementById('foodContent'),
+            recipes: document.getElementById('recipesContent'),
+            ingredients: document.getElementById('ingredientsContent'),
+            reviews: document.getElementById('reviewsContent'),
             analytics: document.getElementById('analyticsContent')
         };
 
         function showTab(tab) {
             Object.keys(tabs).forEach((key) => {
-                tabs[key].classList.toggle('active', key === tab);
+                if (tabs[key]) tabs[key].classList.toggle('active', key === tab);
             });
             navItems.forEach((item) => {
                 item.classList.toggle('active', item.getAttribute('data-tab') === tab);
@@ -337,7 +624,7 @@ $tabFromQuery = $_GET['tab'] ?? 'dashboard';
             item.addEventListener('click', () => showTab(item.getAttribute('data-tab')));
         });
 
-        showTab('<?php echo in_array($tabFromQuery, ['dashboard', 'users', 'food', 'analytics'], true) ? $tabFromQuery : 'dashboard'; ?>');
+        showTab('<?php echo in_array($tabFromQuery, ['dashboard', 'users', 'food', 'recipes', 'ingredients', 'reviews', 'analytics'], true) ? $tabFromQuery : 'dashboard'; ?>');
 
         const usersLabels = <?php echo json_encode($seriesUsers['labels']); ?>;
         const usersValues = <?php echo json_encode($seriesUsers['values']); ?>;
@@ -461,5 +748,6 @@ $tabFromQuery = $_GET['tab'] ?? 'dashboard';
             });
         }
     </script>
+    <script src="js/backoffice.js"></script>
 </body>
 </html>

@@ -34,45 +34,10 @@ $messagesError = [
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mes Recettes - Kool Healthy</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/Recettes/CSS/styles.css">
+    <link rel="stylesheet" href="../CSS/styles.css">
 </head>
 <body>
-    <header class="topbar">
-        <a class="brand" href="home.php" aria-label="Kool Healthy">
-            <img class="brand-logo" src="../assets/logo-kool-healthy.png" alt="Kool Healthy" onerror="this.onerror=null;this.src='../assets/logo-kh.svg';">
-        </a>
-
-        <nav class="top-nav" aria-label="Navigation principale">
-            <a href="home.php">Accueil</a>
-            <a class="disabled-control" href="home.php#features">Fonctionnalites</a>
-            <a class="disabled-control" href="fil-recettes.php">Recettes</a>
-            <a class="disabled-control" href="home.php#impact">Impact</a>
-            <a href="fil-recettes.php">Partage</a>
-        </nav>
-
-        <div class="topbar-tools">
-            <?php if ($utilisateurConnecte): ?>
-                <details class="profile-menu">
-                    <summary class="profile-menu-trigger" aria-label="Menu profil">
-                        <span class="profile-avatar"><?php echo strtoupper(substr($utilisateurConnecte['nom'] ?? 'U', 0, 1)); ?></span>
-                    </summary>
-                    <div class="profile-menu-dropdown">
-                        <div class="profile-menu-user">
-                            <strong><?php echo htmlspecialchars($utilisateurConnecte['nom'] ?? 'Utilisateur'); ?></strong>
-                            <small><?php echo htmlspecialchars($utilisateurConnecte['email'] ?? ''); ?></small>
-                        </div>
-                        <a href="profil.php">Mon profil</a>
-                        <?php if (($utilisateurConnecte['role'] ?? '') === 'admin'): ?>
-                            <a href="backoffice.php">Backoffice</a>
-                        <?php endif; ?>
-                        <a class="danger" href="../CONTROLLER/AuthController.php?action=logout">Se deconnecter</a>
-                    </div>
-                </details>
-            <?php else: ?>
-                <a class="auth-link" href="auth.php">Connexion</a>
-            <?php endif; ?>
-        </div>
-    </header>
+    <?php include __DIR__ . '/includes/topbar.php'; ?>
 
     <section class="section-wrap recipes-section">
     <div class="layout">
@@ -92,42 +57,36 @@ $messagesError = [
                 <div class="panel social-feedback error"><?php echo htmlspecialchars($messagesError[$error]); ?></div>
             <?php endif; ?>
 
-            <section class="feed">
+            <div class="feed">
                 <?php if (empty($recettes)): ?>
-                    <article class="panel post">
-                        <p>Vous n'avez pas encore partagé de recettes. <a href="fil-recettes.php">Partager une recette</a></p>
-                    </article>
+                    <article class="panel post"><p>Vous n'avez pas encore publie de recettes.</p></article>
                 <?php else: ?>
                     <?php foreach ($recettes as $recette): ?>
                     <article class="panel post">
-                        <div class="user-info">
-                            <div class="user-avatar"><?php echo strtoupper(substr($recette['nom'] ?? 'U', 0, 1)); ?></div>
-                            <div>
-                                <strong><?php echo htmlspecialchars((string) ($recette['auteur'] ?? ($recette['nom'] ?? 'Utilisateur'))); ?></strong>
-                                <small><?php echo htmlspecialchars($utilisateurConnecte['email'] ?? ''); ?></small>
-                            </div>
-                        </div>
-                        <?php if ($recette['image']): ?>
-                            <img src="<?php echo htmlspecialchars($recette['image']); ?>" alt="<?php echo htmlspecialchars($recette['titre']); ?>" class="recipe-photo">
-                        <?php endif; ?>
-                        <h3 class="recipe-title"><?php echo htmlspecialchars($recette['titre']); ?></h3>
-                        <div class="recipe-meta">
-                            <span class="meta-pill">⏱ <?php echo htmlspecialchars($recette['temps_prep'] ?? 'N/A'); ?> min</span>
-                        </div>
-                        <div class="recipe-block">
-                            <strong>Ingredients:</strong>
-                            <p><?php echo htmlspecialchars($recette['ingredients']); ?></p>
-                        </div>
-                        <p><?php echo htmlspecialchars($recette['etapes']); ?></p>
+                        <h3 class="recipe-title"><?php echo htmlspecialchars($recette['titre'] ?? ''); ?></h3>
 
-                        <form class="recipe-edit-form" method="POST" action="../CONTROLLER/addRecette.php?action=update" enctype="multipart/form-data">
-                            <h4>Modifier cette recette</h4>
+                        <?php if (!empty($recette['temps_prep'])): ?>
+                            <div class="recipe-meta"><span class="meta-pill">⏱ <?php echo (int)$recette['temps_prep']; ?> min</span></div>
+                        <?php endif; ?>
+
+                        <?php if (!empty($recette['ingredients'])): ?>
+                            <div class="recipe-block">
+                                <strong>Ingredients</strong>
+                                <p><?php echo htmlspecialchars($recette['ingredients']); ?></p>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if (!empty($recette['etapes'])): ?>
+                            <p><?php echo nl2br(htmlspecialchars($recette['etapes'])); ?></p>
+                        <?php endif; ?>
+
+                        <form method="POST" action="../CONTROLLER/addRecette.php?action=update" enctype="multipart/form-data" class="recipe-edit-form">
                             <input type="hidden" name="id" value="<?php echo (int) ($recette['id'] ?? 0); ?>">
-                            <input type="text" name="titre" value="<?php echo htmlspecialchars((string) ($recette['titre'] ?? '')); ?>" required>
-                            <input type="number" name="temps_prep" min="1" value="<?php echo htmlspecialchars((string) ($recette['temps_prep'] ?? '1')); ?>" required>
-                            <input type="text" name="ingredients" value="<?php echo htmlspecialchars((string) ($recette['ingredients'] ?? '')); ?>" required>
-                            <textarea name="etapes" rows="3"><?php echo htmlspecialchars((string) ($recette['etapes'] ?? '')); ?></textarea>
-                            <?php 
+                            <input type="text" name="titre" value="<?php echo htmlspecialchars($recette['titre'] ?? ''); ?>" placeholder="Titre de la recette">
+                            <input type="number" name="temps_prep" value="<?php echo (int) ($recette['temps_prep'] ?? 0); ?>" placeholder="Temps de preparation (minutes)">
+                            <input type="text" name="ingredients" value="<?php echo htmlspecialchars($recette['ingredients'] ?? ''); ?>" placeholder="Ingredients">
+                            <textarea name="etapes" placeholder="Etapes de preparation..."><?php echo htmlspecialchars($recette['etapes'] ?? ''); ?></textarea>
+                            <?php
                                 $currentHashtags = $controller->getRecetteHashtags($recette['id'] ?? 0);
                                 $hashtagsStr = !empty($currentHashtags) ? '#' . implode(' #', $currentHashtags) : '';
                             ?>
@@ -153,7 +112,7 @@ $messagesError = [
                     </article>
                     <?php endforeach; ?>
                 <?php endif; ?>
-            </section>
+            </div>
         </main>
 
         <?php include __DIR__ . '/includes/right-sidebar.php'; ?>
@@ -196,20 +155,7 @@ $messagesError = [
             });
         });
 
-        // Boutons de suivi
-        document.querySelectorAll('.follow-btn').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                if (this.textContent.includes('Suivre')) {
-                    this.textContent = 'Suivi ✓';
-                    this.style.background = 'var(--vert-kool-dark)';
-                } else {
-                    this.textContent = 'Suivre';
-                    this.style.background = 'var(--vert-kool)';
-                }
-            });
-        });
     </script>
-    <script src="/Recettes/JS/follow-system.js?v=20260506"></script>
+    <script src="../JS/follow-system.js?v=20260506"></script>
 </body>
 </html>

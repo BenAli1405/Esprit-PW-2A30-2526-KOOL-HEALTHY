@@ -54,7 +54,7 @@ class RecetteController
             UNIQUE KEY `unique_recette_hashtag` (`recette_id`, `hashtag_id`),
             INDEX `idx_recette` (`recette_id`),
             INDEX `idx_hashtag` (`hashtag_id`),
-            CONSTRAINT `fk_recette_hashtag_recette` FOREIGN KEY (`recette_id`) REFERENCES `recettes` (`id`) ON DELETE CASCADE,
+            CONSTRAINT `fk_recette_hashtag_recette` FOREIGN KEY (`recette_id`) REFERENCES `publication` (`id`) ON DELETE CASCADE,
             CONSTRAINT `fk_recette_hashtag_hashtag` FOREIGN KEY (`hashtag_id`) REFERENCES `hashtags` (`id`) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     }
@@ -99,7 +99,7 @@ class RecetteController
 
             if ((int) $current_user_id > 0) {
                 $sql = "SELECT r.*, u.id AS user_id, u.nom AS nom, u.email AS email
-                        FROM recettes r
+                            FROM publication r
                         LEFT JOIN utilisateurs u ON r.auteur = u.nom
                         WHERE (u.id IS NULL OR u.id != :current_user_id)
                           AND (u.id IS NULL OR u.id NOT IN (SELECT blocked_user_id FROM blocks WHERE user_id = :current_user_id))
@@ -112,7 +112,7 @@ class RecetteController
             }
 
             $liste = $db->query("SELECT r.*, u.id AS user_id, u.nom AS nom, u.email AS email
-                                  FROM recettes r
+                                  FROM publication r
                                   LEFT JOIN utilisateurs u ON r.auteur = u.nom
                                   ORDER BY r.date_creation DESC");
             return $liste->fetchAll();
@@ -125,7 +125,7 @@ class RecetteController
     {
         $db = config::getConnexion();
         try {
-            $sql = "SELECT * FROM recettes WHERE auteur = :auteur ORDER BY date_creation DESC";
+            $sql = "SELECT * FROM publication WHERE auteur = :auteur ORDER BY date_creation DESC";
             $req = $db->prepare($sql);
             $req->execute(['auteur' => $auteur]);
             return $req->fetchAll();
@@ -142,8 +142,8 @@ class RecetteController
 
             $this->initialiserTableBlocks();
 
-            $sql = "SELECT r.*, u.id AS user_id, u.nom AS nom, u.email AS email
-                    FROM recettes r
+                $sql = "SELECT r.*, u.id AS user_id, u.nom AS nom, u.email AS email
+                    FROM publication r
                     INNER JOIN favoris f ON r.id = f.recette_id
                     LEFT JOIN utilisateurs u ON r.auteur = u.nom
                     WHERE f.user_id = :user_id
@@ -162,7 +162,7 @@ class RecetteController
     public function ajouterRecette($recette)
     {
         $db = config::getConnexion();
-        $sql = "INSERT INTO recettes (titre, temps_prep, ingredients, etapes, image, auteur, date_creation) 
+            $sql = "INSERT INTO publication (titre, temps_prep, ingredients, etapes, image, auteur, date_creation) 
                 VALUES (:titre, :temps_prep, :ingredients, :etapes, :image, :auteur, :date_creation)";
         try {
             $req = $db->prepare($sql);
@@ -184,7 +184,7 @@ class RecetteController
     public function modifierRecette($recette, $id)
     {
         $db = config::getConnexion();
-        $sql = "UPDATE recettes SET titre=:titre, temps_prep=:temps_prep, ingredients=:ingredients, 
+        $sql = "UPDATE publication SET titre=:titre, temps_prep=:temps_prep, ingredients=:ingredients, 
                 etapes=:etapes, image=:image, auteur=:auteur WHERE id=:id";
         try {
             $req = $db->prepare($sql);
@@ -205,7 +205,7 @@ class RecetteController
     public function supprimerRecette($id)
     {
         $db = config::getConnexion();
-        $sql = "DELETE FROM recettes WHERE id = :id";
+        $sql = "DELETE FROM publication WHERE id = :id";
         try {
             $req = $db->prepare($sql);
             $req->execute(['id' => $id]);
@@ -218,7 +218,7 @@ class RecetteController
     {
         $db = config::getConnexion();
         try {
-            $sql = "SELECT * FROM recettes WHERE id = :id";
+            $sql = "SELECT * FROM publication WHERE id = :id";
             $req = $db->prepare($sql);
             $req->execute(['id' => $id]);
             return $req->fetch();
@@ -400,10 +400,10 @@ class RecetteController
                 $hashtag_id = $req->fetchColumn();
 
                 if ($hashtag_id) {
-                    // Link hashtag to recipe
-                    $sql = "INSERT IGNORE INTO recette_hashtags (recette_id, hashtag_id) VALUES (:recette_id, :hashtag_id)";
-                    $req = $db->prepare($sql);
-                    $req->execute(['recette_id' => $recette_id, 'hashtag_id' => $hashtag_id]);
+                        // Link hashtag to recette
+                        $sql = "INSERT IGNORE INTO recette_hashtags (recette_id, hashtag_id) VALUES (:recette_id, :hashtag_id)";
+                        $req = $db->prepare($sql);
+                        $req->execute(['recette_id' => $recette_id, 'hashtag_id' => $hashtag_id]);
                 }
             } catch (Exception $e) {
                 continue;
@@ -418,9 +418,9 @@ class RecetteController
         $this->initialiserTableHashtags();
 
         $sql = "SELECT h.nom FROM hashtags h 
-                INNER JOIN recette_hashtags rh ON h.id = rh.hashtag_id 
-                WHERE rh.recette_id = :recette_id 
-                ORDER BY h.nom ASC";
+            INNER JOIN recette_hashtags rh ON h.id = rh.hashtag_id 
+            WHERE rh.recette_id = :recette_id 
+            ORDER BY h.nom ASC";
         try {
             $req = $db->prepare($sql);
             $req->execute(['recette_id' => $recette_id]);
@@ -438,20 +438,20 @@ class RecetteController
         $hashtag = strtolower(ltrim($hashtag, '#'));
         
         if ((int) $current_user_id > 0) {
-            $sql = "SELECT r.*, u.id AS user_id, u.nom AS nom, u.email AS email
-                    FROM recettes r
-                    INNER JOIN recette_hashtags rh ON r.id = rh.recette_id
-                    INNER JOIN hashtags h ON rh.hashtag_id = h.id
+                $sql = "SELECT r.*, u.id AS user_id, u.nom AS nom, u.email AS email
+                                FROM publication r
+                                INNER JOIN recette_hashtags rh ON r.id = rh.recette_id
+                                INNER JOIN hashtags h ON rh.hashtag_id = h.id
                     LEFT JOIN utilisateurs u ON (r.auteur = u.nom OR r.auteur = CAST(u.id AS CHAR))
                     WHERE h.nom = :hashtag
                       AND (u.id IS NULL OR u.id NOT IN (SELECT blocked_user_id FROM blocks WHERE user_id = :current_user_id))
                       AND (u.id IS NULL OR u.id NOT IN (SELECT user_id FROM blocks WHERE blocked_user_id = :current_user_id))
                     ORDER BY r.date_creation DESC";
         } else {
-            $sql = "SELECT r.*, u.id AS user_id, u.nom AS auteur_nom, u.email AS auteur_email
-                    FROM recettes r
-                    INNER JOIN recette_hashtags rh ON r.id = rh.recette_id
-                    INNER JOIN hashtags h ON rh.hashtag_id = h.id
+                $sql = "SELECT r.*, u.id AS user_id, u.nom AS auteur_nom, u.email AS auteur_email
+                    FROM publication r
+                                INNER JOIN recette_hashtags rh ON r.id = rh.recette_id
+                                INNER JOIN hashtags h ON rh.hashtag_id = h.id
                     LEFT JOIN utilisateurs u ON (r.auteur = u.nom OR r.auteur = CAST(u.id AS CHAR))
                     WHERE h.nom = :hashtag
                     ORDER BY r.date_creation DESC";
@@ -475,7 +475,7 @@ class RecetteController
         $this->initialiserTableHashtags();
 
         $sql = "SELECT h.nom, COUNT(rh.id) as count FROM hashtags h 
-                LEFT JOIN recette_hashtags rh ON h.id = rh.hashtag_id 
+            LEFT JOIN recette_hashtags rh ON h.id = rh.hashtag_id 
                 GROUP BY h.id, h.nom 
                 HAVING count > 0
                 ORDER BY count DESC 
@@ -555,7 +555,7 @@ class RecetteController
                         u.email,
                         {$avatarSelect}
                         (SELECT COUNT(*) FROM follows ff WHERE ff.following_id = u.id) AS followers_count,
-                        (SELECT COUNT(*) FROM recettes rr WHERE rr.auteur = u.nom) AS recipes_count
+                        (SELECT COUNT(*) FROM publication rr WHERE rr.auteur = u.nom) AS recipes_count
                     FROM follows f
                     INNER JOIN utilisateurs u ON u.id = f.following_id
                     WHERE f.follower_id = :user_id
@@ -601,8 +601,8 @@ class RecetteController
             $inList = implode(',', $placeholders);
 
             $sql = "SELECT r.*, u.id AS user_id, u.nom AS auteur_nom, u.email AS auteur_email, {$avatarSelect}
-                    FROM recettes r
-                    INNER JOIN utilisateurs u ON (r.auteur = u.nom OR r.auteur = CAST(u.id AS CHAR))
+                    FROM publication r
+                    INNER JOIN utilisateurs u ON r.auteur = u.nom
                     WHERE u.id IN ($inList)
                       AND u.id != :user_id
                       AND u.id NOT IN (SELECT blocked_user_id FROM blocks WHERE user_id = :user_id_b1)
@@ -637,7 +637,7 @@ class RecetteController
                         u.email,
                         {$avatarSelect}
                         (SELECT COUNT(*) FROM follows ff WHERE ff.following_id = u.id) AS followers_count,
-                        (SELECT COUNT(*) FROM recettes rr WHERE rr.auteur = u.nom) AS recipes_count
+                        (SELECT COUNT(*) FROM publication rr WHERE rr.auteur = u.nom) AS recipes_count
                     FROM blocks b
                     INNER JOIN utilisateurs u ON u.id = b.blocked_user_id
                     WHERE b.user_id = :user_id
@@ -673,7 +673,7 @@ class RecetteController
                     u.email,
                     {$avatarSelect}
                     (SELECT COUNT(*) FROM follows WHERE following_id = u.id) as followers_count,
-                    (SELECT COUNT(*) FROM recettes WHERE auteur = u.nom) as recipes_count
+                    (SELECT COUNT(*) FROM publication WHERE auteur = u.nom) as recipes_count
                 FROM utilisateurs u 
                 WHERE u.role != 'admin' 
                 AND u.id != :user_id 

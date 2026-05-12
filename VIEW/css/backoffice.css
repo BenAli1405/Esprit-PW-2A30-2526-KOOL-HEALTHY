@@ -47,9 +47,26 @@ body {
 }
 
 .logo-area {
-  padding: 28px 24px;
+  padding: 16px 20px;
   border-bottom: 1px solid var(--gris-moyen);
   margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.logo-link {
+  display: inline-block;
+}
+
+.logo-area img {
+  max-width: 140px;
+  max-height: 52px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
 }
 
 .logo-area h2 {
@@ -171,6 +188,14 @@ body {
   color: var(--gris-texte);
   font-size: 0.85rem;
   margin-top: 4px;
+}
+
+.tab-content {
+  display: none !important;
+}
+
+.tab-content.active {
+  display: block !important;
 }
 
 .dashboard-container {
@@ -706,4 +731,399 @@ body {
   .data-table td {
     padding: 8px 6px;
   }
+}
+
+/* ========== SECTION UTILISATEURS ========== */
+.users-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.users-stat-card {
+  background: var(--blanc);
+  border-radius: 16px;
+  padding: 18px 20px;
+  border: 1px solid var(--gris-moyen);
+  box-shadow: var(--ombre-legere);
+}
+
+.users-stat-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--gris-texte);
+  margin-bottom: 8px;
+}
+
+.users-stat-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--vert-kool);
+}
+
+.management-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.management-card {
+  background: var(--gris-clair);
+  border-radius: 14px;
+  padding: 18px;
+  border: 1px solid var(--gris-moyen);
+}
+
+.management-card h4 {
+  font-size: 0.9rem;
+  color: var(--vert-kool-dark);
+  margin-bottom: 12px;
+  font-weight: 700;
+}
+
+.management-form {
+  display: grid;
+  gap: 8px;
+}
+
+.management-form input,
+.management-form select {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--gris-moyen);
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.88rem;
+  background: var(--blanc);
+}
+
+.management-form input:focus,
+.management-form select:focus {
+  outline: none;
+  border-color: var(--vert-kool);
+  box-shadow: 0 0 0 2px var(--vert-kool-light);
+}
+
+.mini-btn {
+  background: var(--vert-kool);
+  color: white;
+  border: none;
+  padding: 9px 16px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: 0.2s;
+  justify-self: start;
+}
+
+.mini-btn:hover { background: var(--vert-kool-dark); }
+
+.mini-btn.danger {
+  background: var(--danger);
+}
+
+.mini-btn.danger:hover { background: #c62828; }
+
+.users-table-wrap {
+  overflow-x: auto;
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--gris-moyen);
+}
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  min-width: 900px;
+}
+
+.users-table th {
+  background: var(--vert-kool-light);
+  color: var(--vert-kool-dark);
+  padding: 12px 14px;
+  text-align: left;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.users-table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid #EFEFEF;
+  vertical-align: middle;
+}
+
+.users-table tr:last-child td { border-bottom: none; }
+.users-table tr:hover td { background: #f9fcf9; }
+
+.feedback {
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.feedback.success {
+  background: #e6f5e7;
+  color: #2f6b33;
+  border: 1px solid #c6e4c8;
+}
+
+.feedback.error {
+  background: #fde9e8;
+  color: #a6403c;
+  border: 1px solid #f0c4c2;
+}
+
+/* ========== SECTION ALIMENTS ========== */
+.progress-item {
+  margin-bottom: 20px;
+}
+
+.progress-label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--gris-texte);
+  margin-bottom: 8px;
+}
+
+.progress-bar-bg {
+  width: 100%;
+  height: 12px;
+  background: var(--gris-moyen);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--vert-kool), var(--vert-kool-dark));
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.progress-fill-blue {
+  background: linear-gradient(90deg, var(--bleu-tech), var(--bleu-tech-dark));
+}
+
+@media (max-width: 768px) {
+  .management-grid { grid-template-columns: 1fr; }
+}
+
+/* ========== CALENDAR ========== */
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.calendar-nav span {
+  font-weight: 600;
+  font-size: 0.95rem;
+  min-width: 130px;
+  text-align: center;
+}
+
+.review-calendar {
+  padding: 8px 0 4px;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.cal-header-cell {
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #888;
+  padding: 6px 0;
+  text-transform: uppercase;
+}
+
+.cal-day {
+  min-height: 52px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: #f8f8f8;
+  border: 1px solid transparent;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.cal-day.empty {
+  background: transparent;
+  border: none;
+}
+
+.cal-day.has-reviews {
+  background: #e8f5e9;
+  border-color: #a5d6a7;
+  cursor: pointer;
+}
+
+.cal-day.has-reviews:hover {
+  background: #c8e6c9;
+  border-color: #4CAF50;
+}
+
+.cal-day.active-filter {
+  background: #4CAF50 !important;
+  border-color: #388E3C !important;
+}
+
+.cal-day.active-filter .cal-day-num,
+.cal-day.active-filter .cal-dot {
+  color: #fff !important;
+}
+
+.cal-day-num {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #555;
+}
+
+.cal-dot {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #4CAF50;
+  background: #fff;
+  border-radius: 999px;
+  padding: 1px 5px;
+  line-height: 1.4;
+}
+
+/* ========== CALENDAR WEEK VIEW ========== */
+.cal-week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+  padding: 10px 0 4px;
+}
+
+.cal-week-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 16px 6px 12px;
+  border-radius: 14px;
+  background: #f5f5f5;
+  border: 2px solid transparent;
+  min-height: 100px;
+  transition: background 0.15s, border-color 0.15s;
+  text-align: center;
+}
+
+.cal-week-day.has-reviews {
+  background: #e8f5e9;
+  border-color: #a5d6a7;
+  cursor: pointer;
+}
+
+.cal-week-day.has-reviews:hover {
+  background: #c8e6c9;
+  border-color: #4CAF50;
+}
+
+.cal-week-day.active-filter {
+  background: #4CAF50 !important;
+  border-color: #388E3C !important;
+}
+
+.cal-week-day.today {
+  border-color: #29B6F6 !important;
+}
+
+.cal-week-day.today .cal-week-date {
+  color: #29B6F6;
+}
+
+.cal-week-day.active-filter .cal-week-dayname,
+.cal-week-day.active-filter .cal-week-date,
+.cal-week-day.active-filter .cal-week-month,
+.cal-week-day.active-filter .cal-week-dot,
+.cal-week-day.active-filter .cal-week-empty {
+  color: #fff !important;
+}
+
+.cal-week-dayname {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #999;
+  letter-spacing: 0.5px;
+}
+
+.cal-week-date {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #2C3E2F;
+  line-height: 1;
+}
+
+.cal-week-month {
+  font-size: 0.7rem;
+  color: #aaa;
+  font-weight: 500;
+}
+
+.cal-week-dot {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #fff;
+  background: #4CAF50;
+  border-radius: 999px;
+  padding: 2px 8px;
+  margin-top: 2px;
+}
+
+.cal-week-empty {
+  font-size: 0.75rem;
+  color: #ccc;
+  margin-top: 2px;
+}
+
+.cal-toggle-btn {
+  font-size: 0.78rem;
+  padding: 4px 12px;
+  margin-left: 6px;
+}
+
+/* Today highlight in month view */
+.cal-day.today {
+  border: 2px solid #29B6F6 !important;
+}
+
+.cal-day.today .cal-day-num {
+  color: #29B6F6;
+  font-weight: 700;
+}
+
+/* ========== STAR RATING INPUT ========== */
+.star-rating-input {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.star-input {
+  font-size: 1.6rem;
+  color: #ddd;
+  cursor: pointer;
+  transition: color 0.1s;
 }

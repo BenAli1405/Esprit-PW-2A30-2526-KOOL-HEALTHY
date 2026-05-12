@@ -41,7 +41,7 @@ function handleFollowClick(event) {
     button.disabled = true;
     button.textContent = '⏳';
     
-    const url = '/Recettes/CONTROLLER/UserController.php?action=' + action + '&format=json';
+    const url = '/integweb/CONTROLLER/UserController.php?action=' + action + '&format=json';
     
     fetch(url, {
         method: 'POST',

@@ -68,7 +68,7 @@ async function openUserActionModal(userId, userName, userAvatar = '') {
     
     // Récupérer les infos utilisateur
     try {
-        const response = await fetch(`/Recettes/CONTROLLER/UserController.php?action=get_user&user_id=${userId}&format=json`);
+        const response = await fetch(`/integweb/CONTROLLER/UserController.php?action=get_user&user_id=${userId}&format=json`);
         if (response.ok) {
             const data = await response.json();
             configureModalState(data, userId);
@@ -155,7 +155,7 @@ async function handleFollowAction(userId) {
     console.log('Follow action for user:', userId);
     
     try {
-        const response = await fetch(`/Recettes/CONTROLLER/UserController.php?action=toggle_follow&format=json`, {
+        const response = await fetch(`/integweb/CONTROLLER/UserController.php?action=toggle_follow&format=json`, {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded'},
             body: `user_id=${userId}`
@@ -189,7 +189,7 @@ async function handleBlockAction(userId) {
     console.log('Block action for user:', userId);
     
     try {
-        const response = await fetch(`/Recettes/CONTROLLER/UserController.php?action=toggle_block&format=json`, {
+        const response = await fetch(`/integweb/CONTROLLER/UserController.php?action=toggle_block&format=json`, {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded'},
             body: `user_id=${userId}`
@@ -240,7 +240,7 @@ async function handleDirectUnfollow(button) {
     if (!userId) return;
 
     try {
-        const response = await fetch('/Recettes/CONTROLLER/UserController.php?action=unfollow&format=json', {
+        const response = await fetch('/integweb/CONTROLLER/UserController.php?action=unfollow&format=json', {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded'},
             body: 'user_id=' + encodeURIComponent(userId)
@@ -277,7 +277,7 @@ async function handleDirectUnblock(button) {
     if (!userId) return;
 
     try {
-        const response = await fetch('/Recettes/CONTROLLER/UserController.php?action=unblock&format=json', {
+        const response = await fetch('/integweb/CONTROLLER/UserController.php?action=unblock&format=json', {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded'},
             body: 'user_id=' + encodeURIComponent(userId)

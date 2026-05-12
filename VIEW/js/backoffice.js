@@ -3,12 +3,27 @@ console.log('Backoffice.js loaded!');
 let ingredientsDB = [];
 let recettesDB = [];
 
+// Recettes calendar state
+let recCalYear = new Date().getFullYear();
+let recCalMonth = new Date().getMonth();
+let recCalFilterDate = null;
+let recCalView = 'week';
+let recCalWeekStart = getMonday(new Date());
+
+function getMonday(d) {
+  const date = new Date(d);
+  const day = date.getDay();
+  date.setDate(date.getDate() + (day === 0 ? -6 : 1 - day));
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
 // ========== FETCH DATA ==========
 async function loadData() {
   try {
     console.log('Loading data...');
     
-    const recipesResponse = await fetch('INDEX.php?action=getAllRecipes');
+    const recipesResponse = await fetch('../INDEX.php?action=getAllRecipes');
     if (!recipesResponse.ok) {
       throw new Error(`HTTP ${recipesResponse.status}`);
     }
@@ -23,7 +38,7 @@ async function loadData() {
       return;
     }
     
-    const ingredientsResponse = await fetch('INDEX.php?action=getAllIngredients');
+    const ingredientsResponse = await fetch('../INDEX.php?action=getAllIngredients');
     if (!ingredientsResponse.ok) {
       throw new Error(`HTTP ${ingredientsResponse.status}`);
     }
@@ -40,6 +55,7 @@ async function loadData() {
     
     updateDashboard();
     renderRecipesTable();
+    renderRecipeCalendar();
     renderIngredientsTable();
     renderReviewsTable();
     
@@ -278,25 +294,30 @@ function updateDashboard() {
 function renderRecipesTable() {
   const tbody = document.getElementById('recipesTableBody');
   if (!tbody) return;
-  
-  if (recettesDB.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Aucune recette trouvée</td></tr>';
+
+  let list = recettesDB;
+  if (recCalFilterDate) {
+    list = list.filter(r => r.date_creation && String(r.date_creation).substring(0, 10) === recCalFilterDate);
+  }
+
+  if (list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;">${recCalFilterDate ? 'Aucune recette ce jour' : 'Aucune recette trouvée'}</td></tr>`;
     return;
   }
-  
-  tbody.innerHTML = recettesDB.map(rec => {
+
+  tbody.innerHTML = list.map(rec => {
+    const date = rec.date_creation ? String(rec.date_creation).substring(0, 10) : '-';
     const calories = rec.nutrition ? Math.round(rec.nutrition.calories || 0) : 'N/A';
-    const proteines = rec.nutrition ? Math.round(rec.nutrition.proteines || 0) : 'N/A';
     const avisCount = rec.avis ? rec.avis.length : (rec.nombre_avis || 0);
-    
+
     return `
       <tr>
+        <td>${date}</td>
         <td>${escapeHtml(rec.titre)}</td>
         <td>${rec.difficulte || 'N/A'}</td>
         <td>${rec.temps_preparation || 0} min</td>
         <td>${rec.eco_score || 'A'}</td>
         <td>${calories}</td>
-        <td>${proteines}</td>
         <td>${avisCount}</td>
         <td class="action-icons">
           <i class="fas fa-edit edit-icon" onclick="openRecipeModal(${rec.id})" style="cursor:pointer; color:#29B6F6; margin:0 5px;"></i>
@@ -305,6 +326,91 @@ function renderRecipesTable() {
       </tr>
     `;
   }).join('');
+}
+
+function renderRecipeCalendar() {
+  const recipeDates = {};
+  recettesDB.forEach(r => {
+    if (r.date_creation) {
+      const d = String(r.date_creation).substring(0, 10);
+      recipeDates[d] = (recipeDates[d] || 0) + 1;
+    }
+  });
+
+  const monthNames = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const dayNames = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+  const todayStr = new Date().toISOString().substring(0, 10);
+
+  const label = document.getElementById('recCalMonthLabel');
+  const toggleBtn = document.getElementById('recCalViewToggle');
+  const cal = document.getElementById('recipeCalendar');
+  if (!cal) return;
+
+  let html = '';
+
+  if (recCalView === 'week') {
+    // Label: "5 – 11 Mai 2026"
+    const weekEnd = new Date(recCalWeekStart);
+    weekEnd.setDate(weekEnd.getDate() + 6);
+    const s = recCalWeekStart, e = weekEnd;
+    if (s.getMonth() === e.getMonth()) {
+      if (label) label.textContent = `${s.getDate()} – ${e.getDate()} ${monthNames[s.getMonth()]} ${e.getFullYear()}`;
+    } else {
+      if (label) label.textContent = `${s.getDate()} ${monthNames[s.getMonth()]} – ${e.getDate()} ${monthNames[e.getMonth()]} ${e.getFullYear()}`;
+    }
+    if (toggleBtn) toggleBtn.textContent = 'Vue mois';
+
+    html = '<div class="cal-week-grid">';
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(recCalWeekStart);
+      d.setDate(d.getDate() + i);
+      const dateStr = d.toISOString().substring(0, 10);
+      const count = recipeDates[dateStr] || 0;
+      const isActive = recCalFilterDate === dateStr;
+      const isToday = dateStr === todayStr;
+      html += `<div class="cal-week-day${count ? ' has-reviews' : ''}${isActive ? ' active-filter' : ''}${isToday ? ' today' : ''}" data-date="${dateStr}">
+        <span class="cal-week-dayname">${dayNames[i]}</span>
+        <span class="cal-week-date">${d.getDate()}</span>
+        <span class="cal-week-month">${monthNames[d.getMonth()].substring(0,3)}</span>
+        ${count ? `<span class="cal-week-dot">${count} recette${count > 1 ? 's' : ''}</span>` : '<span class="cal-week-empty">–</span>'}
+      </div>`;
+    }
+    html += '</div>';
+
+  } else {
+    // Month view
+    if (label) label.textContent = `${monthNames[recCalMonth]} ${recCalYear}`;
+    if (toggleBtn) toggleBtn.textContent = 'Vue semaine';
+
+    const firstDay = new Date(recCalYear, recCalMonth, 1);
+    const daysInMonth = new Date(recCalYear, recCalMonth + 1, 0).getDate();
+    const startDow = (firstDay.getDay() + 6) % 7;
+
+    html = '<div class="cal-grid">';
+    dayNames.forEach(d => { html += `<div class="cal-header-cell">${d}</div>`; });
+    for (let i = 0; i < startDow; i++) html += '<div class="cal-day empty"></div>';
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateStr = `${recCalYear}-${String(recCalMonth + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      const count = recipeDates[dateStr] || 0;
+      const isActive = recCalFilterDate === dateStr;
+      const isToday = dateStr === todayStr;
+      html += `<div class="cal-day${count ? ' has-reviews' : ''}${isActive ? ' active-filter' : ''}${isToday ? ' today' : ''}" data-date="${dateStr}">
+        <span class="cal-day-num">${day}</span>
+        ${count ? `<span class="cal-dot">${count}</span>` : ''}
+      </div>`;
+    }
+    html += '</div>';
+  }
+
+  cal.innerHTML = html;
+
+  cal.querySelectorAll('[data-date].has-reviews').forEach(cell => {
+    cell.addEventListener('click', () => {
+      recCalFilterDate = recCalFilterDate === cell.dataset.date ? null : cell.dataset.date;
+      renderRecipeCalendar();
+      renderRecipesTable();
+    });
+  });
 }
 
 function openRecipeModal(recipeId = null) {
@@ -407,7 +513,7 @@ async function deleteRecipe(id) {
   formData.append('id', id);
   
   try {
-    const response = await fetch('INDEX.php', { method: 'POST', body: formData });
+    const response = await fetch('../INDEX.php', { method: 'POST', body: formData });
     const responseText = await response.text();
     
     let result;
@@ -536,7 +642,7 @@ async function deleteIngredient(id) {
   formData.append('id', id);
   
   try {
-    const response = await fetch('INDEX.php', { method: 'POST', body: formData });
+    const response = await fetch('../INDEX.php', { method: 'POST', body: formData });
     const responseText = await response.text();
     
     let result;
@@ -560,57 +666,121 @@ async function deleteIngredient(id) {
 }
 
 // ========== GESTION AVIS ==========
-function renderReviewsTable() {
-  const tbody = document.getElementById('reviewsTableBody');
-  if (!tbody) return;
-  
-  let allReviews = [];
-  
+
+function getAllReviews() {
+  const reviews = [];
   recettesDB.forEach(rec => {
     if (rec.avis && Array.isArray(rec.avis)) {
       rec.avis.forEach(avis => {
-        allReviews.push({
+        reviews.push({
           recipeId: rec.id,
+          recipeTitle: rec.titre,
           reviewId: avis.id,
           utilisateur: avis.utilisateur_nom || avis.utilisateur || 'Anonyme',
-          recette: rec.titre,
           note: avis.note,
-          commentaire: avis.commentaire || ''
+          commentaire: avis.commentaire || '',
+          date: avis.date_creation ? String(avis.date_creation).substring(0, 10) : null
         });
       });
     }
   });
-  
+  return reviews;
+}
+
+function renderReviewsTable() {
+  const tbody = document.getElementById('reviewsTableBody');
+  if (!tbody) return;
+
+  const allReviews = getAllReviews();
+
   if (allReviews.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Aucun avis trouvé</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Aucun avis trouvé</td></tr>';
     return;
   }
-  
+
   tbody.innerHTML = allReviews.map(avis => `
     <tr>
+      <td>${avis.date || '-'}</td>
       <td>${escapeHtml(avis.utilisateur)}</td>
-      <td>${escapeHtml(avis.recette)}</td>
+      <td>${escapeHtml(avis.recipeTitle)}</td>
       <td>${renderStars(avis.note)}</td>
       <td>${escapeHtml(avis.commentaire)}</td>
       <td class="action-icons">
+        <i class="fas fa-edit edit-icon" onclick="openReviewModal(${avis.reviewId}, ${avis.recipeId})" style="cursor:pointer; color:#29B6F6; margin:0 5px;"></i>
         <i class="fas fa-trash delete-icon" onclick="deleteReview(${avis.recipeId}, ${avis.reviewId})" style="cursor:pointer; color:#ef5350; margin:0 5px;"></i>
-       </td>
+      </td>
     </tr>
   `).join('');
 }
 
+function openReviewModal(reviewId = null, recipeId = null) {
+  const modal = document.getElementById('reviewModal');
+  if (!modal) return;
+
+  const recipeSelect = document.getElementById('reviewRecipeSelect');
+  const recipeGroup = document.getElementById('reviewRecipeGroup');
+  const utilisateurGroup = document.getElementById('reviewUtilisateurGroup');
+
+  recipeSelect.innerHTML = '<option value="">Sélectionner une recette</option>' +
+    recettesDB.map(r => `<option value="${r.id}">${escapeHtml(r.titre)}</option>`).join('');
+
+  if (reviewId) {
+    let foundReview = null;
+    let foundRecipeId = recipeId;
+    recettesDB.forEach(rec => {
+      if (rec.avis) {
+        const found = rec.avis.find(a => a.id == reviewId);
+        if (found) { foundReview = found; foundRecipeId = rec.id; }
+      }
+    });
+    if (!foundReview) { showToast('Avis non trouvé', true); return; }
+
+    document.getElementById('reviewModalTitle').innerHTML = '<i class="fas fa-star"></i> Modifier un avis';
+    document.getElementById('reviewId').value = reviewId;
+    document.getElementById('reviewRecipeId').value = foundRecipeId;
+    document.getElementById('reviewUtilisateur').value = foundReview.utilisateur_nom || foundReview.utilisateur || '';
+    document.getElementById('reviewNote').value = foundReview.note || 0;
+    document.getElementById('reviewCommentaire').value = foundReview.commentaire || '';
+    recipeSelect.value = foundRecipeId;
+    recipeSelect.disabled = true;
+    recipeGroup.style.opacity = '0.6';
+    utilisateurGroup.style.opacity = '0.6';
+    document.getElementById('reviewUtilisateur').disabled = true;
+    updateStarUI(foundReview.note || 0);
+  } else {
+    document.getElementById('reviewModalTitle').innerHTML = '<i class="fas fa-star"></i> Ajouter un avis';
+    document.getElementById('reviewId').value = '';
+    document.getElementById('reviewRecipeId').value = '';
+    document.getElementById('reviewUtilisateur').value = '';
+    document.getElementById('reviewNote').value = '0';
+    document.getElementById('reviewCommentaire').value = '';
+    recipeSelect.disabled = false;
+    recipeGroup.style.opacity = '1';
+    utilisateurGroup.style.opacity = '1';
+    document.getElementById('reviewUtilisateur').disabled = false;
+    updateStarUI(0);
+  }
+
+  modal.style.display = 'flex';
+}
+
+function updateStarUI(rating) {
+  document.querySelectorAll('#starRatingInput .star-input').forEach(star => {
+    star.style.color = parseInt(star.dataset.value) <= rating ? '#ffc107' : '#ddd';
+  });
+}
+
 async function deleteReview(recipeId, reviewId) {
   if (!confirm('Êtes-vous sûr de vouloir supprimer cet avis ?')) return;
-  
+
   const formData = new FormData();
   formData.append('action', 'deleteReview');
   formData.append('recipeId', recipeId);
   formData.append('id', reviewId);
-  
+
   try {
-    const response = await fetch('INDEX.php', { method: 'POST', body: formData });
+    const response = await fetch('../INDEX.php', { method: 'POST', body: formData });
     const result = await response.json();
-    
     if (result.success) {
       showToast(result.message || 'Avis supprimé');
       loadData();
@@ -626,16 +796,21 @@ async function deleteReview(recipeId, reviewId) {
 // ========== NAVIGATION TABS ==========
 const contents = {
   dashboard: document.getElementById('dashboardContent'),
+  users: document.getElementById('usersContent'),
+  food: document.getElementById('foodContent'),
   recipes: document.getElementById('recipesContent'),
   ingredients: document.getElementById('ingredientsContent'),
-  reviews: document.getElementById('reviewsContent')
+  reviews: document.getElementById('reviewsContent'),
+  analytics: document.getElementById('analyticsContent')
 };
 
 function showTab(tabId) {
-  Object.values(contents).forEach(content => {
-    if (content) content.style.display = 'none';
+  Object.keys(contents).forEach(key => {
+    if (contents[key]) contents[key].classList.toggle('active', key === tabId);
   });
-  if (contents[tabId]) contents[tabId].style.display = 'block';
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.classList.toggle('active', item.getAttribute('data-tab') === tabId);
+  });
 }
 
 // ========== FORM SUBMISSION HANDLERS ==========
@@ -727,7 +902,7 @@ document.getElementById('recipeForm').addEventListener('submit', async (e) => {
   }
   
   try {
-    const response = await fetch('INDEX.php', { method: 'POST', body: formData });
+    const response = await fetch('../INDEX.php', { method: 'POST', body: formData });
     const responseText = await response.text();
     
     let result;
@@ -798,7 +973,7 @@ document.getElementById('ingredientForm').addEventListener('submit', async (e) =
   }
   
   try {
-    const response = await fetch('INDEX.php', { method: 'POST', body: formData });
+    const response = await fetch('../INDEX.php', { method: 'POST', body: formData });
     const responseText = await response.text();
     
     let result;
@@ -822,11 +997,75 @@ document.getElementById('ingredientForm').addEventListener('submit', async (e) =
   }
 });
 
+document.getElementById('reviewForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const reviewId = document.getElementById('reviewId').value;
+  const recipeId = reviewId
+    ? document.getElementById('reviewRecipeId').value
+    : document.getElementById('reviewRecipeSelect').value;
+  const utilisateur = document.getElementById('reviewUtilisateur').value.trim();
+  const note = parseInt(document.getElementById('reviewNote').value) || 0;
+  const commentaire = document.getElementById('reviewCommentaire').value.trim();
+
+  if (!recipeId) { showToast('Veuillez sélectionner une recette', true); return; }
+  if (!utilisateur) { showToast('Le nom de l\'utilisateur est requis', true); return; }
+  if (note < 1 || note > 5) { showToast('Veuillez donner une note entre 1 et 5', true); return; }
+
+  const formData = new FormData();
+  formData.append('note', note);
+  formData.append('commentaire', commentaire);
+
+  if (reviewId) {
+    formData.append('action', 'updateReview');
+    formData.append('id', reviewId);
+  } else {
+    formData.append('action', 'addReview');
+    formData.append('recipeId', recipeId);
+    formData.append('utilisateur', utilisateur);
+  }
+
+  try {
+    const response = await fetch('../INDEX.php', { method: 'POST', body: formData });
+    const result = await response.json();
+    if (result.success) {
+      showToast(reviewId ? 'Avis modifié' : 'Avis ajouté');
+      document.getElementById('reviewModal').style.display = 'none';
+      loadData();
+    } else {
+      showToast(result.message || 'Erreur', true);
+    }
+  } catch (error) {
+    showToast('Erreur lors de la sauvegarde', true);
+  }
+});
+
+// Star rating interaction
+document.querySelectorAll('#starRatingInput .star-input').forEach(star => {
+  star.style.cursor = 'pointer';
+  star.addEventListener('click', () => {
+    const val = parseInt(star.dataset.value);
+    document.getElementById('reviewNote').value = val;
+    updateStarUI(val);
+  });
+  star.addEventListener('mouseenter', () => {
+    const val = parseInt(star.dataset.value);
+    document.querySelectorAll('#starRatingInput .star-input').forEach(s => {
+      s.style.color = parseInt(s.dataset.value) <= val ? '#ffc107' : '#ddd';
+    });
+  });
+  star.addEventListener('mouseleave', () => {
+    updateStarUI(parseInt(document.getElementById('reviewNote').value) || 0);
+  });
+});
+
 // ========== MODAL CLOSE & WINDOW CLICK ==========
 document.getElementById('closeRecipeModal').onclick = () => document.getElementById('recipeModal').style.display = 'none';
 document.getElementById('closeIngredientModal').onclick = () => document.getElementById('ingredientModal').style.display = 'none';
 document.getElementById('cancelRecipeBtn').onclick = () => document.getElementById('recipeModal').style.display = 'none';
 document.getElementById('cancelIngredientBtn').onclick = () => document.getElementById('ingredientModal').style.display = 'none';
+document.getElementById('closeReviewModal').onclick = () => document.getElementById('reviewModal').style.display = 'none';
+document.getElementById('cancelReviewBtn').onclick = () => document.getElementById('reviewModal').style.display = 'none';
 
 document.getElementById('addIngredientRowBtn').addEventListener('click', (e) => {
   e.preventDefault();
@@ -861,29 +1100,57 @@ document.addEventListener('click', (e) => {
 window.onclick = (e) => {
   const recipeModal = document.getElementById('recipeModal');
   const ingredientModal = document.getElementById('ingredientModal');
+  const reviewModal = document.getElementById('reviewModal');
   if (e.target === recipeModal) recipeModal.style.display = 'none';
   if (e.target === ingredientModal) ingredientModal.style.display = 'none';
+  if (e.target === reviewModal) reviewModal.style.display = 'none';
 };
 
 // ========== INITIALIZATION ==========
 document.addEventListener('DOMContentLoaded', () => {
   console.log('DOM loaded, initializing...');
   loadData();
-  showTab('dashboard');
-  
+
   const addRecipeBtn = document.getElementById('addRecipeBtn');
   const addIngredientBtn = document.getElementById('addIngredientBtn');
   const globalAddBtn = document.getElementById('globalAddBtn');
-  
+
   if (addRecipeBtn) addRecipeBtn.addEventListener('click', () => openRecipeModal());
   if (addIngredientBtn) addIngredientBtn.addEventListener('click', () => openIngredientModal());
   if (globalAddBtn) globalAddBtn.addEventListener('click', () => openRecipeModal());
-  
-  document.querySelectorAll('.nav-item').forEach(item => {
-    item.addEventListener('click', function() {
-      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-      this.classList.add('active');
-      showTab(this.dataset.tab);
-    });
+
+  const addReviewBtn = document.getElementById('addReviewBtn');
+  if (addReviewBtn) addReviewBtn.addEventListener('click', () => openReviewModal());
+
+  const recCalPrevBtn = document.getElementById('recCalPrevBtn');
+  const recCalNextBtn = document.getElementById('recCalNextBtn');
+  const recCalViewToggle = document.getElementById('recCalViewToggle');
+
+  if (recCalPrevBtn) recCalPrevBtn.addEventListener('click', () => {
+    if (recCalView === 'week') {
+      recCalWeekStart.setDate(recCalWeekStart.getDate() - 7);
+    } else {
+      recCalMonth--; if (recCalMonth < 0) { recCalMonth = 11; recCalYear--; }
+    }
+    renderRecipeCalendar();
+  });
+  if (recCalNextBtn) recCalNextBtn.addEventListener('click', () => {
+    if (recCalView === 'week') {
+      recCalWeekStart.setDate(recCalWeekStart.getDate() + 7);
+    } else {
+      recCalMonth++; if (recCalMonth > 11) { recCalMonth = 0; recCalYear++; }
+    }
+    renderRecipeCalendar();
+  });
+  if (recCalViewToggle) recCalViewToggle.addEventListener('click', () => {
+    if (recCalView === 'week') {
+      recCalView = 'month';
+      recCalMonth = recCalWeekStart.getMonth();
+      recCalYear = recCalWeekStart.getFullYear();
+    } else {
+      recCalView = 'week';
+      recCalWeekStart = getMonday(new Date(recCalYear, recCalMonth, 1));
+    }
+    renderRecipeCalendar();
   });
 });
