@@ -147,6 +147,7 @@ body {
   flex: 1;
   background: var(--gris-clair);
   overflow-x: auto;
+  overflow-y: auto;
 }
 
 .top-bar {
@@ -263,34 +264,82 @@ body {
   margin-bottom: 24px;
 }
 
-/* ========== TABLES ========== */
+/* ========== TABLES - FIXED VERSION ========== */
 .table-wrapper {
   overflow-x: auto;
+  width: 100%;
 }
 
 .data-table {
   width: 100%;
   border-collapse: collapse;
+  font-size: 0.85rem;
+  min-width: 600px;
 }
 
 .data-table th {
   text-align: left;
-  padding: 12px 8px;
+  padding: 14px 12px;
   font-weight: 600;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: var(--gris-texte);
-  border-bottom: 1px solid var(--gris-moyen);
+  border-bottom: 2px solid var(--gris-moyen);
   text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: #FAFAFA;
 }
 
 .data-table td {
-  padding: 12px 8px;
+  padding: 12px 12px;
   border-bottom: 1px solid #EFEFEF;
   font-size: 0.85rem;
+  vertical-align: middle;
 }
 
 .data-table tr:hover {
   background: var(--gris-clair);
+}
+
+/* Table column widths */
+.data-table th:first-child,
+.data-table td:first-child {
+  padding-left: 16px;
+}
+
+.data-table th:last-child,
+.data-table td:last-child {
+  padding-right: 16px;
+}
+
+/* Action icons */
+.action-icons {
+  white-space: nowrap;
+  text-align: center;
+}
+
+.action-icons i {
+  margin: 0 6px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: 0.2s;
+}
+
+.action-icons .edit-icon {
+  color: var(--bleu-tech);
+}
+
+.action-icons .edit-icon:hover {
+  color: var(--bleu-tech-dark);
+  transform: scale(1.1);
+}
+
+.action-icons .delete-icon {
+  color: var(--danger);
+}
+
+.action-icons .delete-icon:hover {
+  color: #c62828;
+  transform: scale(1.1);
 }
 
 .status-active {
@@ -311,33 +360,6 @@ body {
   font-size: 0.7rem;
   font-weight: 600;
   display: inline-block;
-}
-
-.action-icons i {
-  margin: 0 6px;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: 0.2s;
-}
-
-.action-icons .edit-icon {
-  color: var(--bleu-tech);
-}
-
-.action-icons .edit-icon:hover {
-  color: var(--bleu-tech-dark);
-}
-
-.action-icons .delete-icon {
-  color: var(--danger);
-}
-
-.action-icons .delete-icon:hover {
-  color: #c62828;
-}
-
-.action-icons .block-icon {
-  color: var(--warning);
 }
 
 /* ========== BOUTONS ========== */
@@ -464,6 +486,7 @@ body {
   display: flex;
   gap: 1rem;
   justify-content: flex-end;
+  margin-top: 1.5rem;
 }
 
 /* ========== FORMULAIRES ========== */
@@ -490,6 +513,14 @@ body {
   font-size: 0.9rem;
 }
 
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--vert-kool);
+  box-shadow: 0 0 0 2px var(--vert-kool-light);
+}
+
 .form-row {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -501,7 +532,7 @@ body {
   grid-template-columns: 2fr 1fr 1fr auto;
   gap: 0.8rem;
   margin-bottom: 0.8rem;
-  align-items: flex-end;
+  align-items: center;
 }
 
 .ingredient-row select,
@@ -519,6 +550,11 @@ body {
   border: none;
   border-radius: 8px;
   cursor: pointer;
+  font-size: 1.1rem;
+}
+
+.ingredient-row button:hover {
+  background: #c62828;
 }
 
 /* ========== LISTES DASHBOARD ========== */
@@ -615,6 +651,13 @@ body {
   opacity: 1;
 }
 
+/* ========== ERROR STYLES ========== */
+.error-message {
+  color: #d32f2f;
+  font-size: 0.7rem;
+  margin-top: 4px;
+}
+
 /* ========== RESPONSIVE ========== */
 @media (max-width: 900px) {
   .app-wrapper {
@@ -636,9 +679,13 @@ body {
   .form-row {
     grid-template-columns: 1fr;
   }
+  
+  .ingredient-row {
+    grid-template-columns: 1fr;
+  }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .dashboard-container {
     padding: 16px;
   }
@@ -650,8 +697,13 @@ body {
   .modal-content {
     width: 95%;
   }
-
-  .ingredient-row {
-    grid-template-columns: 1fr;
+  
+  .data-table {
+    font-size: 0.75rem;
+  }
+  
+  .data-table th,
+  .data-table td {
+    padding: 8px 6px;
   }
 }
