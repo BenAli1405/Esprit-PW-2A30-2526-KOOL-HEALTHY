@@ -1,0 +1,132 @@
+/* Styles for Jumeau Nutritionnel (twin-*) */
+.twin-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(140px, 1fr));
+    gap: 12px;
+}
+
+.twin-grid-2 {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+}
+
+.twin-card {
+    background: #ffffff;
+    border: 1px solid #e7edf0;
+    border-radius: 12px;
+    padding: 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.twin-card-trend {
+    background: linear-gradient(135deg, #f0faf7, #ffffff);
+}
+
+.twin-card-icon {
+    font-size: 20px;
+    margin-bottom: 6px;
+}
+
+.twin-card-title {
+    font-size: 12px;
+    color: #64727a;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.twin-card-value {
+    margin-top: 6px;
+    font-size: 21px;
+    color: #1d3342;
+    font-weight: 800;
+}
+
+.twin-card-sub {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #6f7f88;
+}
+
+.twin-preds {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.twin-pred {
+    background: #f7fafc;
+    border: 1px solid #e5edf2;
+    border-radius: 8px;
+    padding: 8px;
+    min-width: 74px;
+    text-align: center;
+}
+
+.twin-pred-label {
+    font-size: 11px;
+    color: #60727d;
+    font-weight: 700;
+}
+
+.twin-pred-value {
+    font-size: 13px;
+    color: #213b48;
+    font-weight: 800;
+    margin-top: 2px;
+}
+
+.twin-conseil {
+    background: #eef8f4;
+    border: 1px solid #cae8d8;
+    border-left: 4px solid #55a77e;
+    border-radius: 10px;
+    padding: 12px;
+    margin-top: 12px;
+    color: #285a43;
+    font-size: 13px;
+}
+
+.twin-btn {
+    background: #2e7d32;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.twin-btn-secondary {
+    background: #4f6b7a;
+}
+
+.twin-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(12, 19, 24, 0.55);
+    z-index: 9998;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+}
+
+.twin-modal-content {
+    width: 100%;
+    max-width: 420px;
+    background: #fff;
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.25);
+}
+
+@media (max-width: 900px) {
+    .twin-grid {
+        grid-template-columns: repeat(2, minmax(140px, 1fr));
+    }
+
+    .twin-grid-2 {
+        grid-template-columns: 1fr;
+    }
+}

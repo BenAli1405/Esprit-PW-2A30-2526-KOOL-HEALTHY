@@ -96,7 +96,15 @@ class MultiObjectiveModel
                 ($weights['ecologie'] ?? 0) * $scoreEco
             ) / $wSum;
 
+            $scoreComposite = (int)round($weighted * 100);
+            $scorePertePoids100 = (int)round($scorePertePoids * 100);
+            $scorePlaisir100 = (int)round($scorePlaisir * 100);
+            $scoreBudget100 = (int)round($scoreBudget * 100);
+            $scoreRapidite100 = (int)round($scoreRapidite * 100);
+            $scoreEco100 = (int)round($scoreEco * 100);
+
             $results[] = array_merge($r, [
+                // Legacy/compat
                 'multi_score' => round($weighted, 4),
                 'computed' => [
                     'calories' => $cal,
@@ -104,6 +112,22 @@ class MultiObjectiveModel
                     'temps' => $temps,
                     'eco_numeric' => $eco,
                     'note_plaisir' => $plaisir
+                ],
+                // Fields expected by Assets/multi-objective.js
+                'score_composite' => $scoreComposite,
+                '_scores' => [
+                    'perte_poids' => $scorePertePoids100,
+                    'plaisir' => $scorePlaisir100,
+                    'budget' => $scoreBudget100,
+                    'rapidite' => $scoreRapidite100,
+                    'ecologie' => $scoreEco100,
+                ],
+                '_simulations' => [
+                    'calories' => $cal,
+                    'prix' => round($prix, 2),
+                    'temps' => $temps,
+                    'eco' => strtoupper((string)($crit['eco_score'] ?? 'C')),
+                    'plaisir' => $plaisir,
                 ]
             ]);
         }

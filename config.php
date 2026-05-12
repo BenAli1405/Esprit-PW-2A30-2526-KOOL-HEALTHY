@@ -209,4 +209,15 @@ class config
             'from_name' => (string) self::$mailFromName,
         ];
     }
+
+    public static function getOpenRouterApiKey()
+    {
+        $key = getenv('OPENROUTER_API_KEY');
+        if ($key !== false && trim((string)$key) !== '') {
+            return trim((string)$key);
+        }
+
+        // Local fallback for environments without env vars.
+        return 'YOUR_OPENROUTER_API_KEY';
+    }
 }

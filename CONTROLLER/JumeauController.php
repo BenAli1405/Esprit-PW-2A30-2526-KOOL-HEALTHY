@@ -67,8 +67,10 @@ class JumeauController
         if ($nbJours < 1) $nbJours = 1;
         if ($nbJours > 90) $nbJours = 90;
 
-        $stats = $this->jumeauModel->getFullStats($plan);
-        $this->sendJson(true, 'OK', 200, ['forecast' => $stats['forecast'], 'predictions' => $stats['predictions']]);
+        $stats = $this->jumeauModel->getFullStats($plan, $nbJours);
+        $forecastTotal = isset($stats['forecast_total']) ? (float)$stats['forecast_total'] : 0.0;
+        $predictions = $stats['predictions_legacy'] ?? [];
+        $this->sendJson(true, 'OK', 200, ['forecast' => $forecastTotal, 'predictions' => $predictions]);
     }
 
     private function handleSimulateEcart(array $data): void
