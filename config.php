@@ -1,13 +1,63 @@
 <?php
+// ========== KOOL HEALTHY - CONFIGURATION ==========
+// Shared configuration for legacy and newer branches.
+
+if (!defined('DB_HOST')) {
+    define('DB_HOST', 'localhost');
+}
+
+if (!defined('DB_USER')) {
+    define('DB_USER', 'root');
+}
+
+if (!defined('DB_PASS')) {
+    define('DB_PASS', '');
+}
+
+if (!defined('DB_NAME')) {
+    define('DB_NAME', 'kool_healthy');
+}
+
+if (!defined('APP_NAME')) {
+    define('APP_NAME', 'Kool Healthy');
+}
+
+if (!defined('APP_VERSION')) {
+    define('APP_VERSION', '1.0.0');
+}
+
+if (!defined('BASE_URL')) {
+    define('BASE_URL', 'http://localhost/integweb/');
+}
+
+if (!defined('ROOT_PATH')) {
+    define('ROOT_PATH', dirname(__FILE__) . '/');
+}
+
+if (!defined('MODEL_PATH')) {
+    define('MODEL_PATH', ROOT_PATH . 'MODEL/');
+}
+
+if (!defined('CONTROLLER_PATH')) {
+    define('CONTROLLER_PATH', ROOT_PATH . 'CONTROLLER/');
+}
+
+if (!defined('VIEW_PATH')) {
+    define('VIEW_PATH', ROOT_PATH . 'VIEW/');
+}
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 class config
 {
     private static $pdo = null;
-    private static $host = '127.0.0.1';
+    private static $host = DB_HOST;
     private static $port = '3306';
-    private static $user = 'root';
-    private static $password = '';
-    private static $database = 'kool_healthy';
+    private static $user = DB_USER;
+    private static $password = DB_PASS;
+    private static $database = DB_NAME;
 
     public static function getConnexion()
     {
