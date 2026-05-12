@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 <?php
 // ========== KOOL HEALTHY - CONFIGURATION ==========
 // Shared configuration for legacy and newer branches.
@@ -50,21 +51,41 @@ if (!defined('VIEW_PATH')) {
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+=======
+<?php
+>>>>>>> origin/module1-profil
 
 class config
 {
     private static $pdo = null;
+<<<<<<< HEAD
     private static $host = DB_HOST;
     private static $port = '3306';
     private static $user = DB_USER;
     private static $password = DB_PASS;
     private static $database = DB_NAME;
+=======
+    private static $host = '127.0.0.1';
+    private static $port = '3307';
+    private static $user = 'root';
+    private static $password = '';
+    private static $database = 'projetweb';
+
+    // Keep secrets out of the repository; read them from the environment when available.
+    private static $googleClientId = '';
+    private static $googleClientSecret = '';
+    private static $googleRedirectUri = 'http://localhost:8080/Recettes/CONTROLLER/AuthController.php?action=google_callback';
+    private static $mailFrom = 'omarzehift52@gmail.com';
+>>>>>>> origin/module1-profil
 
     public static function getConnexion()
     {
         if (!isset(self::$pdo)) {
             try {
+<<<<<<< HEAD
                 self::initialiserBaseDeDonnees();
+=======
+>>>>>>> origin/module1-profil
                 self::$pdo = new PDO(
                     'mysql:host=' . self::$host . ';port=' . self::$port . ';dbname=' . self::$database . ';charset=utf8mb4',
                     self::$user,
@@ -72,7 +93,11 @@ class config
                     [
                         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+<<<<<<< HEAD
                         PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8mb4'
+=======
+                        PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
+>>>>>>> origin/module1-profil
                     ]
                 );
             } catch (Exception $e) {
@@ -83,6 +108,7 @@ class config
         return self::$pdo;
     }
 
+<<<<<<< HEAD
     private static function initialiserBaseDeDonnees()
     {
         $pdo = new PDO(
@@ -198,3 +224,28 @@ define('VIEW_PATH', ROOT_PATH . 'VIEW/');
 session_start();
 ?>
 >>>>>>> origin/module--6
+=======
+    public static function getGoogleClientId()
+    {
+        return trim((string) (getenv('GOOGLE_CLIENT_ID') ?: self::$googleClientId));
+    }
+
+    public static function getGoogleClientSecret()
+    {
+        return trim((string) (getenv('GOOGLE_CLIENT_SECRET') ?: self::$googleClientSecret));
+    }
+
+    public static function getGoogleRedirectUri()
+    {
+        return trim((string) (getenv('GOOGLE_REDIRECT_URI') ?: self::$googleRedirectUri));
+    }
+
+    public static function getMailFrom()
+    {
+        return trim((string) (getenv('MAIL_FROM') ?: self::$mailFrom));
+    }
+}
+
+
+?>
+>>>>>>> origin/module1-profil
