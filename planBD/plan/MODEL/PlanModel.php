@@ -24,10 +24,15 @@ class PlanModel
         return $stmt->fetch();
     }
 
+    public function getLastInsertId()
+    {
+        return $this->pdo->lastInsertId();
+    }
+
     public function create(array $data)
     {
         $stmt = $this->pdo->prepare(
-            'INSERT INTO plan (nom, objectif, utilisateur_id, duree, preference, allergies) VALUES (?, ?, ?, ?, ?, ?)'
+            'INSERT INTO plan (nom, objectif, utilisateur_id, duree, preference, allergies, age, poids, taille, sexe, niveau_activite) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
         return $stmt->execute([
             $data['nom'],
@@ -36,13 +41,18 @@ class PlanModel
             $data['duree'],
             $data['preference'],
             $data['allergies'],
+            $data['age'] ?? 30,
+            $data['poids'] ?? 70,
+            $data['taille'] ?? 170,
+            $data['sexe'] ?? 'homme',
+            $data['niveau_activite'] ?? 'modere',
         ]);
     }
 
     public function update(int $id, array $data)
     {
         $stmt = $this->pdo->prepare(
-            'UPDATE plan SET nom = ?, objectif = ?, utilisateur_id = ?, duree = ?, preference = ?, allergies = ? WHERE id = ?'
+            'UPDATE plan SET nom = ?, objectif = ?, utilisateur_id = ?, duree = ?, preference = ?, allergies = ?, age = ?, poids = ?, taille = ?, sexe = ?, niveau_activite = ? WHERE id = ?'
         );
         return $stmt->execute([
             $data['nom'],
@@ -51,6 +61,11 @@ class PlanModel
             $data['duree'],
             $data['preference'],
             $data['allergies'],
+            $data['age'] ?? 30,
+            $data['poids'] ?? 70,
+            $data['taille'] ?? 170,
+            $data['sexe'] ?? 'homme',
+            $data['niveau_activite'] ?? 'modere',
             $id,
         ]);
     }

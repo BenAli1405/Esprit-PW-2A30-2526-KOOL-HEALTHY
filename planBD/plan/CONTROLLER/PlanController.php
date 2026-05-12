@@ -103,11 +103,22 @@ class PlanController
                     'duree' => trim($_POST['duree'] ?? ''),
                     'preference' => trim($_POST['preference'] ?? ''),
                     'allergies' => trim($_POST['allergies'] ?? ''),
+                    'age' => trim($_POST['age'] ?? '30'),
+                    'poids' => trim($_POST['poids'] ?? '70'),
+                    'taille' => trim($_POST['taille'] ?? '170'),
+                    'sexe' => trim($_POST['sexe'] ?? 'homme'),
+                    'niveau_activite' => trim($_POST['niveau_activite'] ?? 'modere'),
                 ];
 
                 if ($action === 'delete' && $id > 0) {
                     if ($this->model->delete($id)) {
-                        $this->message = 'Plan supprimé avec succès.';
+                        $currentPage = $_GET['page'] ?? 'plan-nutritionnel';
+                        if ($currentPage === 'backoffice') {
+                            header('Location: index.php?page=backoffice');
+                        } else {
+                            header('Location: index.php?page=plan-nutritionnel');
+                        }
+                        exit;
                     } else {
                         $this->message = 'Impossible de supprimer le plan.';
                         $this->messageType = 'error';
@@ -120,14 +131,17 @@ class PlanController
                     } else {
                         if ($action === 'create') {
                             if ($this->model->create($planData)) {
-                                $this->message = 'Plan ajouté avec succès.';
+                                $newId = $this->model->getLastInsertId();
+                                header('Location: index.php?page=plan-adapte&id=' . $newId);
+                                exit;
                             } else {
                                 $this->message = 'Impossible d\'ajouter le plan.';
                                 $this->messageType = 'error';
                             }
                         } elseif ($action === 'update' && $id > 0) {
                             if ($this->model->update($id, $planData)) {
-                                $this->message = 'Plan mis à jour avec succès.';
+                                header('Location: index.php?page=plan-adapte&id=' . $id);
+                                exit;
                             } else {
                                 $this->message = 'Impossible de mettre à jour le plan.';
                                 $this->messageType = 'error';
@@ -216,6 +230,12 @@ class PlanController
         $duree = $planData['duree'];
         $preference = $planData['preference'];
         $allergies = $planData['allergies'];
+        
+        $age = $planData['age'] ?? '30';
+        $poids = $planData['poids'] ?? '70';
+        $taille = $planData['taille'] ?? '170';
+        $sexe = $planData['sexe'] ?? 'homme';
+        $niveauActivite = $planData['niveau_activite'] ?? 'modere';
 
         if (empty($nom) || strlen($nom) < 3 || strlen($nom) > 200) {
             $errors[] = 'Le nom du plan doit contenir entre 3 et 200 caractères.';
@@ -260,6 +280,22 @@ class PlanController
             }
         }
 
+        if (!ctype_digit((string)$age) || (int)$age < 15 || (int)$age > 120) {
+            $errors[] = "L'âge doit être un entier entre 15 et 120.";
+        }
+        if (!is_numeric($poids) || (float)$poids < 30 || (float)$poids > 300) {
+            $errors[] = "Le poids doit être un nombre entre 30 et 300 kg.";
+        }
+        if (!is_numeric($taille) || (float)$taille < 100 || (float)$taille > 250) {
+            $errors[] = "La taille doit être un nombre entre 100 et 250 cm.";
+        }
+        if (!in_array($sexe, ['homme', 'femme'], true)) {
+            $errors[] = "Le sexe doit être 'homme' ou 'femme'.";
+        }
+        if (!in_array($niveauActivite, ['sedentaire', 'leger', 'modere', 'actif'], true)) {
+            $errors[] = "Le niveau d'activité est invalide.";
+        }
+
         return $errors;
     }
 
@@ -276,6 +312,36 @@ class PlanController
         $repasList = $this->repasList;
         $message = $this->message;
         $messageType = $this->messageType;
+
+        // ── Logique spécifique à plan-adapte ──
+        $currentPlan = null;
+        $repasForFront = [];
+
+        if ($slug === 'plan-adapte') {
+            $planId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+
+            if ($planId > 0) {
+                // Charger un plan existant par son ID
+                $currentPlan = $this->model->find($planId);
+                if ($currentPlan) {
+                    $repasForFront = $this->repasModel->getByPlanId($planId);
+                }
+            }
+        } else {
+            // Pour les autres pages (backoffice), garder le comportement existant
+            $firstPlanId = !empty($plans) ? $plans[0]['id'] : 0;
+            $repasForFront = $firstPlanId > 0 ? $this->repasModel->getByPlanId($firstPlanId) : [];
+        }
+
+        // ── Logique spécifique à plan-nutritionnel ──
+        if ($slug === 'plan-nutritionnel') {
+            $maxUserId = 0;
+            foreach ($plans as $p) {
+                $uid = (int)$p['utilisateur_id'];
+                if ($uid > $maxUserId) $maxUserId = $uid;
+            }
+            $nextUserId = $maxUserId + 1;
+        }
 
         include __DIR__ . '/../VIEW/' . $page->getViewFile() . '.php';
     }

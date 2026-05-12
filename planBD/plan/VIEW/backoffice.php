@@ -265,7 +265,18 @@ function getObjectifLabel($value)
         <div class="card-panel">
           <div class="panel-header">
             <h3><i class="fas fa-table"></i> Tableau des plans</h3>
-            <span class="badge-tech">modifier / supprimer</span>
+            <span class="badge-tech">gestion admin</span>
+          </div>
+          <p style="color:#5b6f5f; font-size:0.88rem; margin-bottom:14px;">La création et modification des plans se fait depuis le <a href="index.php?page=plan-nutritionnel" style="color:#29B6F6;font-weight:600;">module plan</a>.</p>
+          <div style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+              <input type="text" id="searchPlanInput" placeholder="🔍 Rechercher par nom ou ID utilisateur..." style="flex:2; padding: 10px 12px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
+              <select id="filterObjectif" style="padding: 10px 12px; border: 1px solid #e0e0e0; border-radius: 8px; background: white;">
+                  <option value="all">📊 Tous les objectifs</option>
+                  <option value="perte-poids">🎯 Perte de poids</option>
+                  <option value="maintien">⚖️ Maintien</option>
+                  <option value="prise-muscle">💪 Prise de muscle</option>
+              </select>
+              <button type="button" id="resetPlanFilters" style="padding: 10px 16px; background: #f5f5f5; border: 1px solid #e0e0e0; border-radius: 8px; cursor: pointer;">🔄 Réinitialiser</button>
           </div>
           <div class="data-table-wrap">
             <table class="data-table" id="plansTable">
@@ -283,7 +294,7 @@ function getObjectifLabel($value)
               </thead>
               <tbody>
                 <?php foreach ($plans as $plan) : ?>
-                  <tr onclick="selectRow(this, <?= $plan['id'] ?>)">
+                  <tr>
                     <td><?= h($plan['id']) ?></td>
                     <td><?= h($plan['nom']) ?></td>
                     <td><?= h(getObjectifLabel($plan['objectif'])) ?></td>
@@ -292,59 +303,18 @@ function getObjectifLabel($value)
                     <td><?= h($plan['preference']) ?></td>
                     <td><?= h($plan['allergies']) ?></td>
                     <td>
-                      <form method="post" style="display:inline-block; margin:0;" onsubmit="return confirmDelete();">
+                      <form method="post" style="display:inline-block; margin:0;" onsubmit="return confirmDeletePlan();">
                         <input type="hidden" name="action" value="delete">
                         <input type="hidden" name="id" value="<?= h($plan['id']) ?>">
-                        <button type="submit" class="mini-btn danger">Supprimer</button>
+                        <button type="submit" class="mini-btn danger" style="padding:6px 12px; font-size:0.75rem;">
+                          <i class="fas fa-trash"></i> Supprimer
+                        </button>
                       </form>
                     </td>
                   </tr>
                 <?php endforeach; ?>
               </tbody>
             </table>
-          </div>
-        </div>
-
-        <div class="card-panel">
-          <div class="panel-header">
-            <h3><i class="fas fa-pen"></i> Edition / création</h3>
-            <span class="badge-tech">validation JS</span>
-          </div>
-
-          <div class="crud-grid">
-<form class="crud-form" id="planForm" method="post" onsubmit="return validatePlanForm(this);">
-  <input type="hidden" name="action" id="formActionInput" value="create">
-  <input type="hidden" name="id" value="">
-
-  <input class="full" type="text" name="nom" placeholder="Nom du plan">
-  <select name="objectif">
-    <option value="">Choisir un objectif</option>
-    <option value="perte-poids">Perte de poids</option>
-    <option value="maintien">Maintien</option>
-    <option value="prise-muscle">Prise de muscle</option>
-  </select>
-  <input type="text" name="utilisateur_id" placeholder="ID utilisateur">
-  <input type="text" name="duree" placeholder="Durée (jours)">
-  <input class="full" type="text" name="preference" placeholder="Préférence alimentaire">
-  <textarea class="full" name="allergies" rows="3" placeholder="Allergies ou Aucune"></textarea>
-
-  <div id="formErrors"></div>
-  <div class="btn-row full">
-    <button class="mini-btn" type="submit" onclick="
-      document.getElementById('formActionInput').value = 'create';
-      document.getElementById('planForm').elements['id'].value = '';
-    ">Ajouter le plan</button>
-
-    <button class="mini-btn secondary" style="background-color: #29B6F6; color: white;" type="button" onclick="
-      if (document.querySelector('#planForm [name=id]').value === '') {
-        alert('Veuillez sélectionner un plan dans le tableau avant de modifier.');
-        return;
-      }
-      document.getElementById('formActionInput').value = 'update';
-      document.getElementById('planForm').submit();
-    ">Modifier</button>
-  </div>
-</form>
           </div>
         </div>
       </section>
@@ -413,12 +383,69 @@ function getObjectifLabel($value)
               </form>
             </div>
           </div>
+          <?php
+          // Calcul des statistiques des repas
+          $totalCaloriesConsommees = 0;
+          $totalCaloriesPrevues = 0;
+          $totalRepasConsommes = 0;
+          $totalRepasAnnules = 0;
+          $totalRepasStats = count($repasList ?? []);
+
+          if (!empty($repasList)) {
+              foreach ($repasList as $r) {
+                  if ($r['statut'] === 'consomme') {
+                      $totalCaloriesConsommees += (int)($r['calories_consommees'] ?? 0);
+                      $totalRepasConsommes++;
+                  } elseif ($r['statut'] === 'prevu') {
+                      $totalCaloriesPrevues += (int)($r['calories_consommees'] ?? 0);
+                  } elseif ($r['statut'] === 'annule') {
+                      $totalRepasAnnules++;
+                  }
+              }
+          }
+          $pourcentageConsommation = $totalRepasStats > 0 ? round(($totalRepasConsommes / $totalRepasStats) * 100) : 0;
+          ?>
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px;">
+              <div style="background: #e8f5e9; padding: 15px; border-radius: 12px; text-align: center;">
+                  <div style="font-size: 28px; font-weight: bold; color: #2e7d32;"><?= $totalCaloriesConsommees ?></div>
+                  <div style="font-size: 12px; color: #555;">kcal consommées</div>
+              </div>
+              <div style="background: #fff3e0; padding: 15px; border-radius: 12px; text-align: center;">
+                  <div style="font-size: 28px; font-weight: bold; color: #e65100;"><?= $totalCaloriesPrevues ?></div>
+                  <div style="font-size: 12px; color: #555;">kcal prévues</div>
+              </div>
+              <div style="background: #e3f2fd; padding: 15px; border-radius: 12px; text-align: center;">
+                  <div style="font-size: 28px; font-weight: bold; color: #1565c0;"><?= $totalRepasConsommes ?> / <?= $totalRepasStats ?></div>
+                  <div style="font-size: 12px; color: #555;">repas consommés</div>
+              </div>
+              <div style="background: #fce4ec; padding: 15px; border-radius: 12px; text-align: center;">
+                  <div style="font-size: 28px; font-weight: bold; color: #c62828;"><?= $pourcentageConsommation ?>%</div>
+                  <div style="font-size: 12px; color: #555;">taux de complétion</div>
+              </div>
+          </div>
+          <div style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+              <input type="text" id="searchRepasInput" placeholder="🔍 Rechercher par recette ou plan..." style="flex:2; padding: 10px 12px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
+              <select id="filterTypeRepas" style="padding: 10px 12px; border: 1px solid #e0e0e0; border-radius: 8px; background: white;">
+                  <option value="all">🍽️ Tous les types</option>
+                  <option value="petit_dejeuner">🍳 Petit-déjeuner</option>
+                  <option value="dejeuner">🍲 Déjeuner</option>
+                  <option value="diner">🍝 Dîner</option>
+                  <option value="collation">🍎 Collation</option>
+              </select>
+              <select id="filterStatutRepas" style="padding: 10px 12px; border: 1px solid #e0e0e0; border-radius: 8px; background: white;">
+                  <option value="all">📊 Tous les statuts</option>
+                  <option value="prevu">⏳ Prévu</option>
+                  <option value="consomme">✅ Consommé</option>
+                  <option value="annule">❌ Annulé</option>
+              </select>
+              <button type="button" id="resetRepasFilters" style="padding: 10px 16px; background: #f5f5f5; border: 1px solid #e0e0e0; border-radius: 8px; cursor: pointer;">🔄 Réinitialiser</button>
+          </div>
           <div class="data-table-wrap">
             <table class="data-table" id="repasTable">
               <thead>
                 <tr>
                   <th>ID</th>
-                  <th>Plan ID</th>
+                  <th>Plan</th>
                   <th>Nom recette</th>
                   <th>Date</th>
                   <th>Type repas</th>
@@ -446,7 +473,7 @@ function getObjectifLabel($value)
                 <tr onclick="selectRepasRow(this, <?= (int)$repas['id'] ?>)"
                     data-repas='<?= htmlspecialchars(json_encode($repas, JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8') ?>'>
                   <td><?= h($repas['id']) ?></td>
-                  <td><?= h($repas['plan_id']) ?></td>
+                  <td><?= h($repas['plan_nom'] ?? 'Plan #' . $repas['plan_id']) ?></td>
                   <td><?= h($repas['nom_recette'] ?? '—') ?></td>
                   <td><?= h($repas['date']) ?></td>
                   <td><?= h($typeRepasLabels[$repas['type_repas']] ?? $repas['type_repas']) ?></td>
@@ -469,6 +496,11 @@ function getObjectifLabel($value)
           <div style="background:#fff; border-radius:18px; padding:28px; width:100%; max-width:580px; box-shadow:0 8px 40px rgba(0,0,0,0.18); position:relative; margin:auto; max-height:90vh; overflow-y:auto; top:50%; transform:translateY(-50%);">
             <h3 style="color:var(--vert-kool-dark); margin-bottom:18px;" id="repasModalTitle"><i class="fas fa-utensils"></i> Ajouter un repas</h3>
             <form method="post" id="repasForm" onsubmit="return validateRepasFormJS(this);">
+              <?php if ($message && $messageType === 'error' && str_contains($message, 'repas')) : ?>
+                <div class="form-message error" style="margin-bottom: 15px;">
+                  <?= h($message) ?>
+                </div>
+              <?php endif; ?>
               <input type="hidden" name="action_type" value="repas">
               <input type="hidden" name="action" id="repasActionInput" value="create">
               <input type="hidden" name="id" id="repasIdInput" value="">
@@ -489,7 +521,7 @@ function getObjectifLabel($value)
                 </div>
                 <div>
                   <label style="font-size:0.82rem;font-weight:600;color:#3e5d45;">Date <span style="color:red">*</span></label>
-                  <input type="date" name="date" id="r_date" style="width:100%;border:1px solid var(--gris-moyen);border-radius:10px;padding:10px;font:inherit;">
+                  <input type="text" name="date" id="r_date" placeholder="AAAA-MM-JJ" style="width:100%;border:1px solid var(--gris-moyen);border-radius:10px;padding:10px;font:inherit;">
                 </div>
                 <div>
                   <label style="font-size:0.82rem;font-weight:600;color:#3e5d45;">Type de repas <span style="color:red">*</span></label>
@@ -511,15 +543,15 @@ function getObjectifLabel($value)
                 </div>
                 <div>
                   <label style="font-size:0.82rem;font-weight:600;color:#3e5d45;">Calories consommées (min 1400)</label>
-                  <input type="number" name="calories_consommees" id="r_calories" placeholder="Min 1400" min="1400" style="width:100%;border:1px solid var(--gris-moyen);border-radius:10px;padding:10px;font:inherit;">
+                  <input type="text" name="calories_consommees" id="r_calories" placeholder="ex: 1800" style="width:100%;border:1px solid var(--gris-moyen);border-radius:10px;padding:10px;font:inherit;">
                 </div>
                 <div>
                   <label style="font-size:0.82rem;font-weight:600;color:#3e5d45;">Heure prévue (optionnel)</label>
-                  <input type="time" name="heure_prevue" id="r_heure_prevue" style="width:100%;border:1px solid var(--gris-moyen);border-radius:10px;padding:10px;font:inherit;">
+                  <input type="text" name="heure_prevue" id="r_heure_prevue" placeholder="HH:MM" style="width:100%;border:1px solid var(--gris-moyen);border-radius:10px;padding:10px;font:inherit;">
                 </div>
                 <div>
                   <label style="font-size:0.82rem;font-weight:600;color:#3e5d45;">Heure réelle (optionnel)</label>
-                  <input type="time" name="heure_reelle" id="r_heure_reelle" style="width:100%;border:1px solid var(--gris-moyen);border-radius:10px;padding:10px;font:inherit;">
+                  <input type="text" name="heure_reelle" id="r_heure_reelle" placeholder="HH:MM" style="width:100%;border:1px solid var(--gris-moyen);border-radius:10px;padding:10px;font:inherit;">
                 </div>
                 <div style="grid-column:span 2;">
                   <label style="font-size:0.82rem;font-weight:600;color:#3e5d45;">Notes (max 1000 caractères)</label>
@@ -532,6 +564,49 @@ function getObjectifLabel($value)
               <div class="btn-row" style="margin-top:16px;">
                 <button type="submit" class="mini-btn" id="repasSubmitBtn">Enregistrer</button>
                 <button type="button" class="mini-btn secondary" onclick="closeRepasModal()">Annuler</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Modal Critères Multi-Objectifs -->
+        <div id="criteresModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:9999; align-items:center; justify-content:center;">
+          <div style="background:#fff; border-radius:18px; padding:28px; width:100%; max-width:500px; box-shadow:0 8px 40px rgba(0,0,0,0.18); position:relative; margin:auto; max-height:90vh; overflow-y:auto; top:50%; transform:translateY(-50%);">
+            <h3 style="color:#8e24aa; margin-bottom:18px;" id="criteresModalTitle"><i class="fas fa-cog"></i> Critères du repas</h3>
+            <p style="font-size:0.85rem; color:#666; margin-bottom:16px;">Ces critères sont utilisés par l'Orchestrateur Multi-Objectifs pour vous recommander les meilleurs repas.</p>
+            <form id="criteresForm" onsubmit="return submitCriteres(event);">
+              <input type="hidden" name="repas_id" id="crit_repas_id" value="">
+              
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <div>
+                  <label style="font-size:0.82rem;font-weight:600;color:#3e5d45;">Prix estimé (€)</label>
+                  <input type="number" step="0.1" min="0" max="50" name="prix" id="crit_prix" required style="width:100%;border:1px solid var(--gris-moyen);border-radius:10px;padding:10px;font:inherit;">
+                </div>
+                <div>
+                  <label style="font-size:0.82rem;font-weight:600;color:#3e5d45;">Temps de prép. (min)</label>
+                  <input type="number" min="1" max="180" name="temps_preparation" id="crit_temps" required style="width:100%;border:1px solid var(--gris-moyen);border-radius:10px;padding:10px;font:inherit;">
+                </div>
+                <div>
+                  <label style="font-size:0.82rem;font-weight:600;color:#3e5d45;">Éco-score (A-E)</label>
+                  <select name="eco_score" id="crit_eco" style="width:100%;border:1px solid var(--gris-moyen);border-radius:10px;padding:10px;font:inherit;background:white;">
+                    <option value="A">A (Très bon)</option>
+                    <option value="B">B (Bon)</option>
+                    <option value="C">C (Moyen)</option>
+                    <option value="D">D (Mauvais)</option>
+                    <option value="E">E (Très mauvais)</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size:0.82rem;font-weight:600;color:#3e5d45;">Plaisir gustatif (1-10)</label>
+                  <input type="number" min="1" max="10" name="note_plaisir" id="crit_plaisir" required style="width:100%;border:1px solid var(--gris-moyen);border-radius:10px;padding:10px;font:inherit;">
+                </div>
+              </div>
+
+              <div id="criteresFormMsg" style="display:none;margin-top:14px;padding:10px;border-radius:8px;font-size:0.9rem;font-weight:600;"></div>
+
+              <div class="btn-row" style="margin-top:20px;">
+                <button type="submit" class="mini-btn" style="background:#8e24aa;" id="critSubmitBtn">Mettre à jour</button>
+                <button type="button" class="mini-btn secondary" onclick="closeCriteresModal()">Fermer</button>
               </div>
             </form>
           </div>
@@ -571,18 +646,160 @@ function getObjectifLabel($value)
  <script>
     const plansData = <?= json_encode($plans, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
 
-    const mealData = [
-      { id: 1, day: 1, type: 'petit-dejeuner', title: 'Smoothie bowl', calories: 320, planned: '07:30', actual: '07:45', status: 'consomme', recipe: 'Bol fruité', progress: '100%', description: 'Yaourt grec, avoine, fraises et graines de chia.' },
-      { id: 2, day: 1, type: 'dejeuner', title: 'Salade quinoa', calories: 520, planned: '12:30', actual: '12:35', status: 'consomme', recipe: 'Quinoa et légumes', progress: '100%', description: 'Quinoa, pois chiches, avocat, carottes et vinaigrette citronnée.' },
-      { id: 3, day: 1, type: 'diner', title: 'Saumon grillé', calories: 610, planned: '19:00', actual: '', status: 'planifie', recipe: 'Saumon et brocoli', progress: '0%', description: 'Saumon, brocoli vapeur et patate douce.' },
-      { id: 4, day: 2, type: 'petit-dejeuner', title: 'Omelette verte', calories: 285, planned: '07:20', actual: '07:22', status: 'consomme', recipe: 'Omelette épinards', progress: '100%', description: 'Œufs, épinards, champignons et fromage léger.' },
-      { id: 5, day: 2, type: 'diner', title: 'Poulet grillé', calories: 580, planned: '19:15', actual: '', status: 'planifie', recipe: 'Poulet et quinoa', progress: '0%', description: 'Filet de poulet, quinoa et courgettes rôties.' },
-      { id: 6, day: 3, type: 'dejeuner', title: 'Wrap poulet', calories: 470, planned: '12:45', actual: '12:50', status: 'consomme', recipe: 'Wrap complet', progress: '100%', description: 'Wrap complet, légumes croquants et sauce légère.' },
-      { id: 7, day: 4, type: 'collation', title: 'Yaourt fruits', calories: 150, planned: '16:00', actual: '16:10', status: 'consomme', recipe: 'Yaourt et baies', progress: '100%', description: 'Yaourt nature, framboises et granola sans sucre.' },
-      { id: 8, day: 5, type: 'dejeuner', title: 'Buddha bowl', calories: 530, planned: '12:30', actual: '', status: 'planifie', recipe: 'Buddha bowl', progress: '0%', description: 'Lentilles, patate douce, avocat et légumes frais.' },
-      { id: 9, day: 6, type: 'diner', title: 'Pâtes légères', calories: 605, planned: '19:20', actual: '', status: 'saute', recipe: 'Pâtes complètes', progress: '0%', description: 'Pâtes complètes, sauce tomate maison et épinards.' },
-      { id: 10, day: 7, type: 'collation', title: 'Smoothie vert', calories: 180, planned: '16:30', actual: '', status: 'planifie', recipe: 'Smoothie vert', progress: '0%', description: 'Épinards, kiwi, pomme verte et lait d’amande.' },
-    ];
+    // Filtrage et recherche pour le tableau des plans
+    function filterPlansTable() {
+        const searchText = document.getElementById('searchPlanInput').value.toLowerCase();
+        const filterObjectif = document.getElementById('filterObjectif').value;
+        const rows = document.querySelectorAll('#plansTable tbody tr');
+        let visibleCount = 0;
+        
+        rows.forEach(row => {
+            const nom = row.cells[1]?.textContent.toLowerCase() || '';
+            const utilisateurId = row.cells[3]?.textContent.toLowerCase() || '';
+            const objectif = row.cells[2]?.textContent.toLowerCase() || '';
+            
+            let objectifValue = '';
+            if (objectif.includes('perte')) objectifValue = 'perte-poids';
+            else if (objectif.includes('maintien')) objectifValue = 'maintien';
+            else if (objectif.includes('prise')) objectifValue = 'prise-muscle';
+            
+            const matchSearch = searchText === '' || nom.includes(searchText) || utilisateurId.includes(searchText);
+            const matchObjectif = filterObjectif === 'all' || objectifValue === filterObjectif;
+            
+            row.style.display = (matchSearch && matchObjectif) ? '' : 'none';
+            if (matchSearch && matchObjectif) visibleCount++;
+        });
+        
+        // Afficher un message si aucun résultat
+        const tbody = document.querySelector('#plansTable tbody');
+        let noResultMsg = document.getElementById('noPlanResult');
+        if (!noResultMsg) {
+            noResultMsg = document.createElement('tr');
+            noResultMsg.id = 'noPlanResult';
+            noResultMsg.innerHTML = '<td colspan="8" style="text-align:center; padding:30px; color:#999;">Aucun plan trouvé</td>';
+            tbody.appendChild(noResultMsg);
+        }
+        noResultMsg.style.display = visibleCount === 0 ? '' : 'none';
+    }
+
+    document.getElementById('searchPlanInput').addEventListener('keyup', filterPlansTable);
+    document.getElementById('filterObjectif').addEventListener('change', filterPlansTable);
+    document.getElementById('resetPlanFilters').addEventListener('click', function() {
+        document.getElementById('searchPlanInput').value = '';
+        document.getElementById('filterObjectif').value = 'all';
+        filterPlansTable();
+    });
+
+    // Tri des colonnes du tableau des plans
+    let sortColumn = null;
+    let sortDirection = 'asc';
+
+    function sortPlansTable(columnIndex) {
+        const tbody = document.querySelector('#plansTable tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr:not(#noPlanResult)'));
+        const noResultMsg = document.getElementById('noPlanResult');
+        
+        if (sortColumn === columnIndex) {
+            sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            sortColumn = columnIndex;
+            sortDirection = 'asc';
+        }
+        
+        rows.sort((a, b) => {
+            let aVal = a.cells[columnIndex]?.textContent.trim() || '';
+            let bVal = b.cells[columnIndex]?.textContent.trim() || '';
+            
+            if (columnIndex === 0 || columnIndex === 4) { // ID ou Durée
+                aVal = parseInt(aVal) || 0;
+                bVal = parseInt(bVal) || 0;
+            } else {
+                aVal = aVal.toLowerCase();
+                bVal = bVal.toLowerCase();
+            }
+            
+            if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+            if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+            return 0;
+        });
+        
+        rows.forEach(row => tbody.appendChild(row));
+        if (noResultMsg) tbody.appendChild(noResultMsg);
+        
+        // Mettre à jour les icônes de tri
+        document.querySelectorAll('#plansTable th').forEach((th, idx) => {
+            th.style.cursor = 'pointer';
+            th.title = 'Cliquer pour trier';
+            th.innerHTML = th.innerHTML.replace(' ▲', '').replace(' ▼', '');
+            if (idx === columnIndex) {
+                th.innerHTML += sortDirection === 'asc' ? ' ▲' : ' ▼';
+            }
+        });
+    }
+
+    // Ajouter les écouteurs sur les en-têtes
+    document.querySelectorAll('#plansTable th').forEach((th, idx) => {
+        if (idx < 7) { // Pas de tri sur la colonne Actions
+            th.style.cursor = 'pointer';
+            th.addEventListener('click', () => sortPlansTable(idx));
+        }
+    });
+
+    // Filtrage pour le tableau des repas
+    function filterRepasTable() {
+        const searchText = document.getElementById('searchRepasInput').value.toLowerCase();
+        const filterType = document.getElementById('filterTypeRepas').value;
+        const filterStatut = document.getElementById('filterStatutRepas').value;
+        const rows = document.querySelectorAll('#repasTable tbody tr');
+        let visibleCount = 0;
+        
+        rows.forEach(row => {
+            const recette = row.cells[2]?.textContent.toLowerCase() || '';
+            const plan = row.cells[1]?.textContent.toLowerCase() || '';
+            const type = row.cells[4]?.getAttribute('data-type') || row.cells[4]?.textContent.toLowerCase() || '';
+            const statut = row.cells[5]?.textContent.toLowerCase() || '';
+            
+            let statutValue = '';
+            if (statut.includes('prévu')) statutValue = 'prevu';
+            else if (statut.includes('consommé')) statutValue = 'consomme';
+            else if (statut.includes('annulé')) statutValue = 'annule';
+            
+            let typeValue = '';
+            if (type.includes('petit')) typeValue = 'petit_dejeuner';
+            else if (type.includes('déjeuner')) typeValue = 'dejeuner';
+            else if (type.includes('dîner')) typeValue = 'diner';
+            else if (type.includes('collation')) typeValue = 'collation';
+            
+            const matchSearch = searchText === '' || recette.includes(searchText) || plan.includes(searchText);
+            const matchType = filterType === 'all' || typeValue === filterType;
+            const matchStatut = filterStatut === 'all' || statutValue === filterStatut;
+            
+            row.style.display = (matchSearch && matchType && matchStatut) ? '' : 'none';
+            if (matchSearch && matchType && matchStatut) visibleCount++;
+        });
+        
+        let noResultMsg = document.getElementById('noRepasResult');
+        if (!noResultMsg) {
+            noResultMsg = document.createElement('tr');
+            noResultMsg.id = 'noRepasResult';
+            noResultMsg.innerHTML = '<td colspan="10" style="text-align:center; padding:30px; color:#999;">Aucun repas trouvé</td>';
+            document.querySelector('#repasTable tbody').appendChild(noResultMsg);
+        }
+        noResultMsg.style.display = visibleCount === 0 ? '' : 'none';
+    }
+
+    document.getElementById('searchRepasInput').addEventListener('keyup', filterRepasTable);
+    document.getElementById('filterTypeRepas').addEventListener('change', filterRepasTable);
+    document.getElementById('filterStatutRepas').addEventListener('change', filterRepasTable);
+    document.getElementById('resetRepasFilters').addEventListener('click', function() {
+        document.getElementById('searchRepasInput').value = '';
+        document.getElementById('filterTypeRepas').value = 'all';
+        document.getElementById('filterStatutRepas').value = 'all';
+        filterRepasTable();
+    });
+
+    // Utiliser les vrais repas de la base de données
+    const realRepasData = <?= json_encode($repasList ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
 
     const mealTypeMap = {
       'petit-dejeuner': { label: 'Petit-déj', badge: 'badge-yellow' },
@@ -615,51 +832,57 @@ function getObjectifLabel($value)
       return `Semaine du ${monday.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} au ${sunday.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}`;
     }
 
+    // Modifier la fonction renderCalendar() pour utiliser realRepasData
     function renderCalendar() {
-      const grid = document.getElementById('calendarGrid');
-      if (!grid) return;
-      grid.innerHTML = '';
-
-      for (let day = 1; day <= 7; day += 1) {
-        const column = document.createElement('div');
-        column.className = 'day-column';
-        column.innerHTML = `<div class="day-header">${weekNames[day - 1]}</div>`;
-
-        const dayMeals = mealData
-          .filter((meal) => meal.day === day && (currentFilter === 'all' || meal.type === currentFilter))
-          .sort((a, b) => a.planned.localeCompare(b.planned));
-
-        if (dayMeals.length === 0) {
-          const empty = document.createElement('div');
-          empty.style.color = '#73857a';
-          empty.style.fontSize = '0.92rem';
-          empty.style.marginTop = '10px';
-          empty.textContent = 'Aucun repas pour ce jour.';
-          column.appendChild(empty);
+        const grid = document.getElementById('calendarGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+        
+        // Calculer les dates de la semaine
+        const weekStart = new Date(weekStartBase);
+        weekStart.setDate(weekStartBase.getDate() + weekOffset * 7);
+        
+        for (let day = 0; day < 7; day++) {
+            const currentDate = new Date(weekStart);
+            currentDate.setDate(weekStart.getDate() + day);
+            const dateKey = currentDate.toISOString().split('T')[0];
+            
+            const column = document.createElement('div');
+            column.className = 'day-column';
+            column.innerHTML = `<div class="day-header">${weekNames[day]} ${currentDate.getDate()}/${currentDate.getMonth()+1}</div>`;
+            
+            const dayMeals = realRepasData
+                .filter(repas => repas.date === dateKey && (currentFilter === 'all' || repas.type_repas === currentFilter))
+                .sort((a, b) => (a.heure_prevue || '00:00').localeCompare(b.heure_prevue || '00:00'));
+            
+            if (dayMeals.length === 0) {
+                const empty = document.createElement('div');
+                empty.style.cssText = 'color:#73857a; font-size:0.92rem; margin-top:10px; text-align:center;';
+                empty.textContent = '📭 Aucun repas';
+                column.appendChild(empty);
+            }
+            
+            dayMeals.forEach(repas => {
+                const card = document.createElement('div');
+                card.className = 'meal-card';
+                card.dataset.mealid = repas.id;
+                
+                let repastype = repas.type_repas ? repas.type_repas.replace('_', '-') : '';
+                const typeMeta = mealTypeMap[repastype] || { label: 'Repas', badge: 'badge-yellow' };
+                const statutClass = repas.statut === 'consomme' ? 'consomme' : (repas.statut === 'annule' ? 'saute' : 'planifie');
+                const statutText = { 'prevu': 'Prévu', 'consomme': 'Consommé', 'annule': 'Annulé' }[repas.statut] || 'Prévu';
+                
+                card.innerHTML = `
+                    <div class="meal-badge"><span class="${typeMeta.badge}"></span>${typeMeta.label}</div>
+                    <div class="meal-title">${repas.nom_recette || 'Repas'}</div>
+                    <div class="meal-meta">${repas.calories_consommees || 0} kcal • ${repas.heure_prevue || '--:--'}</div>
+                    <div class="meal-meta"><span class="status-dot ${statutClass}"></span>${statutText}</div>
+                `;
+                card.addEventListener('click', () => selectMeal(repas.id));
+                column.appendChild(card);
+            });
+            grid.appendChild(column);
         }
-
-        dayMeals.forEach((meal) => {
-          const card = document.createElement('div');
-          card.className = `meal-card${meal.id === selectedMealId ? ' selected' : ''}`;
-          card.dataset.mealid = meal.id;
-          const typeMeta = mealTypeMap[meal.type] || { label: meal.type, badge: 'badge-yellow' };
-          card.innerHTML = `
-            <div class="meal-badge"><span class="${typeMeta.badge}"></span>${typeMeta.label}</div>
-            <div class="meal-title">${meal.title}</div>
-            <div class="meal-meta">${meal.calories} kcal • prévu ${meal.planned}</div>
-            <div class="meal-meta"><span class="status-dot ${meal.status}"></span>${statusLabels[meal.status] || 'Planifié'}</div>
-          `;
-          card.addEventListener('click', () => selectMeal(meal.id));
-          column.appendChild(card);
-        });
-
-        grid.appendChild(column);
-      }
-
-      if (selectedMealId === null) {
-        const firstVisible = mealData.find((meal) => currentFilter === 'all' || meal.type === currentFilter);
-        if (firstVisible) selectMeal(firstVisible.id, false);
-      }
     }
 
     function renderDetail(meal) {
@@ -690,27 +913,48 @@ function getObjectifLabel($value)
       if (focus && selectedCard) selectedCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
+    // Modifier la fonction renderChart() pour utiliser realRepasData
     function renderChart() {
-      const chart = document.getElementById('caloriesChart');
-      if (!chart) return;
-      const values = [];
-      for (let day = 1; day <= 7; day += 1) {
-        const sum = mealData
-          .filter((meal) => meal.day === day && meal.status === 'consomme')
-          .reduce((acc, meal) => acc + meal.calories, 0);
-        values.push({ label: weekNames[day - 1], value: sum });
-      }
-      chart.innerHTML = values
-        .map((entry) => {
-          const height = Math.max(20, Math.min(150, Math.round(entry.value / 4) || 20));
-          return `
-            <div>
-              <div class="chart-bar" style="height:${height}px">${entry.value || ''}</div>
-              <div class="chart-day-label">${entry.label}</div>
-            </div>
-          `;
-        })
-        .join('');
+        const chart = document.getElementById('caloriesChart');
+        if (!chart) return;
+        
+        const repasData = realRepasData;
+        const weekStart = new Date(weekStartBase);
+        weekStart.setDate(weekStartBase.getDate() + weekOffset * 7);
+        
+        const caloriesParJour = {};
+        for (let i = 0; i < 7; i++) {
+            const dayDate = new Date(weekStart);
+            dayDate.setDate(weekStart.getDate() + i);
+            const dateKey = dayDate.toISOString().split('T')[0];
+            caloriesParJour[dateKey] = 0;
+        }
+        
+        repasData.forEach(repas => {
+            if (repas.statut === 'consomme' && repas.calories_consommees) {
+                if (caloriesParJour[repas.date] !== undefined) {
+                    caloriesParJour[repas.date] += parseInt(repas.calories_consommees);
+                }
+            }
+        });
+        
+        const values = [];
+        let maxCalories = 0;
+        for (let i = 0; i < 7; i++) {
+            const dayDate = new Date(weekStart);
+            dayDate.setDate(weekStart.getDate() + i);
+            const dateKey = dayDate.toISOString().split('T')[0];
+            const calories = caloriesParJour[dateKey] || 0;
+            values.push({ label: weekNames[i], value: calories });
+            if (calories > maxCalories) maxCalories = calories;
+        }
+        
+        const maxHeight = 150;
+        chart.innerHTML = values.map(entry => {
+            let height = 20;
+            if (maxCalories > 0) height = Math.max(20, Math.min(maxHeight, (entry.value / maxCalories) * maxHeight));
+            return `<div style="flex:1; text-align:center;"><div style="height:${height}px; background:linear-gradient(180deg, #4caf50, #2e7d32); border-radius:8px 8px 0 0; margin-bottom:5px; display:flex; align-items:flex-end; justify-content:center; color:white; font-size:11px; padding-bottom:3px;">${entry.value || ''}</div><div style="font-size:11px; color:#555;">${entry.label}</div></div>`;
+        }).join('');
     }
 
     function updateWeekNavigation() {
@@ -744,31 +988,7 @@ function getObjectifLabel($value)
       updateWeekNavigation();
     });
 
-    function selectRow(tr, id) {
-      // Surligner la ligne sélectionnée
-      document.querySelectorAll('.data-table tbody tr').forEach(r => r.classList.remove('selected'));
-      tr.classList.add('selected');
 
-      // Trouver le plan dans les données
-      const plan = plansData.find(item => Number(item.id) === Number(id));
-      if (!plan) return;
-
-      // Remplir chaque champ directement
-      const form = document.getElementById('planForm');
-      form.querySelector('[name="id"]').value        = plan.id;
-      form.querySelector('[name="nom"]').value       = plan.nom;
-      form.querySelector('[name="objectif"]').value  = plan.objectif;
-      form.querySelector('[name="utilisateur_id"]').value = plan.utilisateur_id;
-      form.querySelector('[name="duree"]').value     = plan.duree;
-      form.querySelector('[name="preference"]').value = plan.preference;
-      form.querySelector('[name="allergies"]').value = plan.allergies;
-
-      // Mettre l'action en update
-      document.getElementById('formActionInput').value = 'update';
-
-      // Scroller vers le formulaire
-      form.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
   </script>
 
   <script src="assets/form-validation.js?v=<?= time() ?>"></script>
@@ -824,6 +1044,10 @@ function getObjectifLabel($value)
     document.getElementById('repasModal').addEventListener('click', function(e) {
       if (e.target === this) closeRepasModal();
     });
+
+    function confirmDeletePlan() {
+        return confirm('Voulez-vous vraiment supprimer ce plan ? Tous les repas associés seront également supprimés.');
+    }
 
     function confirmDeleteRepas() {
       if (!selectedRepasId) {
@@ -909,6 +1133,93 @@ function getObjectifLabel($value)
       }
       errBox.style.display = 'none';
       return true;
+    }
+
+    // Modal Critères
+    function openCriteresModal() {
+      if (!selectedMealId) {
+        alert("Veuillez d'abord sélectionner un repas.");
+        return;
+      }
+      
+      const repasData = realRepasData.find(r => parseInt(r.id) === selectedMealId);
+      if (!repasData) return;
+
+      document.getElementById('crit_repas_id').value = repasData.id;
+      
+      // Si on a les colonnes, on les met, sinon on laisse vide ou on met les valeurs générées si présentes
+      // Dans le cadre du fallback, on peut afficher 5, 20, C, 7 si vide
+      document.getElementById('crit_prix').value = repasData.prix || 5.0;
+      document.getElementById('crit_temps').value = repasData.temps_preparation || 20;
+      document.getElementById('crit_eco').value = repasData.eco_score || 'C';
+      document.getElementById('crit_plaisir').value = repasData.note_plaisir || 7;
+
+      const msgBox = document.getElementById('criteresFormMsg');
+      msgBox.style.display = 'none';
+
+      document.getElementById('criteresModal').style.display = 'flex';
+    }
+
+    function closeCriteresModal() {
+      document.getElementById('criteresModal').style.display = 'none';
+    }
+
+    async function submitCriteres(e) {
+      e.preventDefault();
+      const btn = document.getElementById('critSubmitBtn');
+      const msgBox = document.getElementById('criteresFormMsg');
+      
+      btn.textContent = 'Mise à jour...';
+      btn.disabled = true;
+
+      const data = {
+        action: 'update_multicriteria',
+        repas_id: document.getElementById('crit_repas_id').value,
+        prix: document.getElementById('crit_prix').value,
+        temps_preparation: document.getElementById('crit_temps').value,
+        eco_score: document.getElementById('crit_eco').value,
+        note_plaisir: document.getElementById('crit_plaisir').value
+      };
+
+      try {
+        const response = await fetch('../CONTROLLER/MultiObjectiveController.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        
+        msgBox.style.display = 'block';
+        if (result.success) {
+          msgBox.style.backgroundColor = '#e8f5e9';
+          msgBox.style.color = '#2e7d32';
+          msgBox.textContent = result.message;
+          // Optionnel: Mettre à jour l'objet localement pour éviter de recharger
+          const r = realRepasData.find(r => parseInt(r.id) === parseInt(data.repas_id));
+          if(r) {
+              r.prix = data.prix;
+              r.temps_preparation = data.temps_preparation;
+              r.eco_score = data.eco_score;
+              r.note_plaisir = data.note_plaisir;
+          }
+          setTimeout(() => {
+            closeCriteresModal();
+          }, 1500);
+        } else {
+          msgBox.style.backgroundColor = '#fbe9e7';
+          msgBox.style.color = '#c62828';
+          msgBox.textContent = result.message;
+        }
+      } catch (error) {
+        console.error('Erreur:', error);
+        msgBox.style.display = 'block';
+        msgBox.style.backgroundColor = '#fbe9e7';
+        msgBox.style.color = '#c62828';
+        msgBox.textContent = 'Erreur lors de la requête.';
+      } finally {
+        btn.textContent = 'Mettre à jour';
+        btn.disabled = false;
+      }
     }
   </script>
 </body>

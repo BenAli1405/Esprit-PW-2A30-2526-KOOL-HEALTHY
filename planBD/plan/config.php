@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 class config
 {
@@ -18,5 +18,10 @@ class config
             'password' => '',
             'database' => 'kool_healthy',
         ];
+    }
+
+    public static function getOpenRouterApiKey()
+    {
+        return getenv('OPENROUTER_API_KEY') ?: '';
     }
 }

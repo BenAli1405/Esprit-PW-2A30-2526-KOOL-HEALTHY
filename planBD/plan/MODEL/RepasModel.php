@@ -13,7 +13,19 @@ class RepasModel
 
     public function all()
     {
-        $stmt = $this->pdo->query('SELECT * FROM repas ORDER BY id DESC');
+        $stmt = $this->pdo->query(
+            'SELECT r.*, p.nom as plan_nom
+             FROM repas r
+             LEFT JOIN plan p ON r.plan_id = p.id
+             ORDER BY r.id DESC'
+        );
+        return $stmt->fetchAll();
+    }
+
+    public function getByPlanId(int $planId)
+    {
+        $stmt = $this->pdo->prepare('SELECT * FROM repas WHERE plan_id = ? ORDER BY date, heure_prevue');
+        $stmt->execute([$planId]);
         return $stmt->fetchAll();
     }
 
