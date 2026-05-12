@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Kool Healthy | Back Office - Administration</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="<?php echo isset($baseUrl) ? $baseUrl : ''; ?>VIEW/css/backoffice.css">
+</head>
+<body>
+  <div class="app-wrapper">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="logo-area">
+        <h2><i class="fas fa-seedling"></i><span>Kool<br>Healthy</span></h2>
+        <p>administration · back office</p>
+      </div>
+      <div class="nav-menu">
+        <div class="nav-item active" data-tab="dashboard">
+          <i class="fas fa-chart-pie"></i><span>Dashboard</span>
+        </div>
+        <div class="nav-item" data-tab="recipes">
+          <i class="fas fa-utensils"></i><span>Recettes</span>
+        </div>
+        <div class="nav-item" data-tab="ingredients">
+          <i class="fas fa-apple-alt"></i><span>Ingrédients</span>
+        </div>
+        <div class="nav-item" data-tab="reviews">
+          <i class="fas fa-star"></i><span>Avis</span>
+        </div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-badge">
+          <div class="user-avatar"><i class="fas fa-user-shield"></i></div>
+          <div class="user-info">
+            <p>Admin Kool</p>
+            <small>admin@koolhealthy.com</small>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <div class="top-bar">
+        <div class="page-title">
+          <h1>Back Office</h1>
+          <p>Gestion complète des recettes, ingrédients et avis</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn-primary" id="globalAddBtn"><i class="fas fa-plus-circle"></i> Nouvelle recette</button>
+        </div>
+      </div>
+
+      <!-- DASHBOARD TAB -->
+      <div id="dashboardContent" class="dashboard-container">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-title">Total Recettes</div>
+            <div class="stat-value" id="statRecettes">0</div>
+            <div class="stat-trend"><i class="fas fa-utensils"></i> créées</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Total Ingrédients</div>
+            <div class="stat-value" id="statIngredients">0</div>
+            <div class="stat-trend"><i class="fas fa-apple-alt"></i> référencés</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Avis totaux</div>
+            <div class="stat-value" id="statReviews">0</div>
+            <div class="stat-trend"><i class="fas fa-star"></i> commentaires</div>
+          </div>
+        </div>
+
+        <div class="two-columns">
+          <div class="card-panel">
+            <div class="panel-header">
+              <h3><i class="fas fa-ranking-star"></i> Top Recettes</h3>
+              <div class="badge-eco">par note</div>
+            </div>
+            <div id="topRecipesList" class="top-list"></div>
+          </div>
+          <div class="card-panel">
+            <div class="panel-header">
+              <h3><i class="fas fa-chart-bar"></i> Top Ingrédients</h3>
+              <div class="badge-tech">les plus utilisés</div>
+            </div>
+            <div id="topIngredientsList" class="top-list"></div>
+          </div>
+        </div>
+
+        <div class="card-panel">
+          <div class="panel-header">
+            <h3><i class="fas fa-chart-bar"></i> Activité récente</h3>
+            <div class="badge-tech">derniers avis</div>
+          </div>
+          <div id="recentActivityList" class="activity-list"></div>
+        </div>
+      </div>
+
+      <!-- RECETTES TAB -->
+      <div id="recipesContent" style="display:none;" class="dashboard-container">
+        <div class="card-panel">
+          <div class="panel-header">
+            <h3><i class="fas fa-database"></i> Gestion des recettes</h3>
+            <button class="btn-primary" id="addRecipeBtn"><i class="fas fa-plus"></i> Ajouter une recette</button>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table" id="recipesTable">
+              <thead><tr><th>Titre</th><th>Difficulté</th><th>Temps</th><th>Eco</th><th>Avis</th><th>Actions</th></tr></thead>
+              <tbody id="recipesTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- INGREDIENTS TAB -->
+      <div id="ingredientsContent" style="display:none;" class="dashboard-container">
+        <div class="card-panel">
+          <div class="panel-header">
+            <h3><i class="fas fa-apple-alt"></i> Gestion des ingrédients</h3>
+            <button class="btn-primary" id="addIngredientBtn"><i class="fas fa-plus"></i> Ajouter un ingrédient</button>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table" id="ingredientsTable">
+              <thead><tr><th>Nom</th><th>Calories</th><th>Eco</th><th>Utilisations</th><th>Actions</th></tr></thead>
+              <tbody id="ingredientsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- REVIEWS TAB -->
+      <div id="reviewsContent" style="display:none;" class="dashboard-container">
+        <div class="card-panel">
+          <div class="panel-header">
+            <h3><i class="fas fa-star"></i> Gestion des avis</h3>
+            <div class="badge-tech">modération</div>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table" id="reviewsTable">
+              <thead><tr><th>Utilisateur</th><th>Recette</th><th>Note</th><th>Commentaire</th><th>Actions</th></tr></thead>
+              <tbody id="reviewsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAL RECETTE (AJOUT/MODIFICATION) -->
+  <div id="recipeModal" class="modal">
+    <div class="modal-content modal-large">
+      <div class="modal-header">
+        <h3 id="recipeModalTitle"><i class="fas fa-carrot"></i> Ajouter une recette</h3>
+        <span class="close-modal" id="closeRecipeModal">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="recipeForm">
+          <input type="hidden" id="recipeId">
+          <div class="form-group">
+            <label>Titre *</label>
+            <input type="text" id="recipeTitle" required placeholder="Ex: Buddha Bowl protéiné">
+          </div>
+          <div class="form-group">
+            <label>Instructions</label>
+            <textarea id="recipeInstructions" rows="3" placeholder="Détails de la préparation..."></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Temps (min)</label>
+              <input type="number" id="recipeTime" value="30">
+            </div>
+            <div class="form-group">
+              <label>Difficulté</label>
+              <select id="recipeDifficulty">
+                <option>Facile</option>
+                <option>Moyen</option>
+                <option>Difficile</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Eco-Score</label>
+              <select id="recipeEcoScore">
+                <option>A+</option>
+                <option>A</option>
+                <option>B</option>
+                <option>C</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Ingrédients</label>
+            <div id="ingredientsListContainer"></div>
+            <button type="button" id="addIngredientRowBtn" class="btn-small"><i class="fas fa-plus"></i> Ajouter un ingrédient</button>
+          </div>
+          <div class="modal-actions">
+            <button type="submit" class="btn-primary">Sauvegarder</button>
+            <button type="button" class="btn-outline" id="cancelRecipeBtn">Annuler</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL INGRÉDIENT -->
+  <div id="ingredientModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="ingredientModalTitle"><i class="fas fa-apple-alt"></i> Ajouter un ingrédient</h3>
+        <span class="close-modal" id="closeIngredientModal">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="ingredientForm">
+          <input type="hidden" id="ingredientId">
+          <div class="form-group">
+            <label>Nom *</label>
+            <input type="text" id="ingredientName" required placeholder="Ex: Quinoa">
+          </div>
+          <div class="form-group">
+            <label>Calories</label>
+            <input type="text" id="ingredientCalories" placeholder="Ex: 120kcal/100g">
+          </div>
+          <div class="form-group">
+            <label>Eco-Score</label>
+            <select id="ingredientEcoScore">
+              <option>A+</option>
+              <option>A</option>
+              <option>B</option>
+              <option>C</option>
+            </select>
+          </div>
+          <div class="modal-actions">
+            <button type="submit" class="btn-primary">Sauvegarder</button>
+            <button type="button" class="btn-outline" id="cancelIngredientBtn">Annuler</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="toast">
+    <i class="fas fa-check-circle"></i>
+    <span id="toastMessage">Action réussie</span>
+  </div>
+
+  <script src="<?php echo isset($baseUrl) ? $baseUrl : ''; ?>VIEW/js/backoffice.js"></script>
+</body>
+</html>
