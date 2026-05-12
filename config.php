@@ -1,25 +1,29 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
 <?php
 // ========== KOOL HEALTHY - CONFIGURATION ==========
-// Shared configuration for legacy and newer branches.
+// Environment-aware shared configuration for the project.
 
+// Database constants (can be overridden via environment variables)
 if (!defined('DB_HOST')) {
-    define('DB_HOST', 'localhost');
+    define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
+}
+
+if (!defined('DB_PORT')) {
+    define('DB_PORT', getenv('DB_PORT') ?: '3306');
 }
 
 if (!defined('DB_USER')) {
-    define('DB_USER', 'root');
+    define('DB_USER', getenv('DB_USER') ?: 'root');
 }
 
 if (!defined('DB_PASS')) {
-    define('DB_PASS', '');
+    define('DB_PASS', getenv('DB_PASS') ?: '');
 }
 
 if (!defined('DB_NAME')) {
-    define('DB_NAME', 'kool_healthy');
+    define('DB_NAME', getenv('DB_NAME') ?: 'kool_healthy');
 }
 
+// Application constants
 if (!defined('APP_NAME')) {
     define('APP_NAME', 'Kool Healthy');
 }
@@ -29,7 +33,7 @@ if (!defined('APP_VERSION')) {
 }
 
 if (!defined('BASE_URL')) {
-    define('BASE_URL', 'http://localhost/integweb/');
+    define('BASE_URL', getenv('BASE_URL') ?: 'http://localhost/integweb/');
 }
 
 if (!defined('ROOT_PATH')) {
@@ -51,41 +55,47 @@ if (!defined('VIEW_PATH')) {
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-=======
-<?php
->>>>>>> origin/module1-profil
 
+// ========== Compatibility class used by some controllers ==========
 class config
 {
     private static $pdo = null;
-<<<<<<< HEAD
     private static $host = DB_HOST;
-    private static $port = '3306';
+    private static $port = DB_PORT;
     private static $user = DB_USER;
     private static $password = DB_PASS;
     private static $database = DB_NAME;
-=======
-    private static $host = '127.0.0.1';
-    private static $port = '3307';
-    private static $user = 'root';
-    private static $password = '';
-    private static $database = 'projetweb';
 
-    // Keep secrets out of the repository; read them from the environment when available.
+    // Google / mail settings (can be set via env vars)
     private static $googleClientId = '';
     private static $googleClientSecret = '';
-    private static $googleRedirectUri = 'http://localhost:8080/Recettes/CONTROLLER/AuthController.php?action=google_callback';
-    private static $mailFrom = 'omarzehift52@gmail.com';
->>>>>>> origin/module1-profil
+    private static $googleRedirectUri = '';
+    private static $mailFrom = '';
+
+    private static function initSecrets()
+    {
+        // initialize secret fields lazily from environment or defaults
+        if (self::$googleClientId === '') {
+            self::$googleClientId = getenv('GOOGLE_CLIENT_ID') ?: '';
+        }
+        if (self::$googleClientSecret === '') {
+            self::$googleClientSecret = getenv('GOOGLE_CLIENT_SECRET') ?: '';
+        }
+        if (self::$googleRedirectUri === '') {
+            self::$googleRedirectUri = getenv('GOOGLE_REDIRECT_URI') ?: 'http://localhost:8080/Recettes/CONTROLLER/AuthController.php?action=google_callback';
+        }
+        if (self::$mailFrom === '') {
+            self::$mailFrom = getenv('MAIL_FROM') ?: 'omarzehift52@gmail.com';
+        }
+    }
 
     public static function getConnexion()
     {
         if (!isset(self::$pdo)) {
             try {
-<<<<<<< HEAD
+                // ensure database exists (best-effort)
                 self::initialiserBaseDeDonnees();
-=======
->>>>>>> origin/module1-profil
+
                 self::$pdo = new PDO(
                     'mysql:host=' . self::$host . ';port=' . self::$port . ';dbname=' . self::$database . ';charset=utf8mb4',
                     self::$user,
@@ -93,11 +103,7 @@ class config
                     [
                         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-<<<<<<< HEAD
-                        PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8mb4'
-=======
                         PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
->>>>>>> origin/module1-profil
                     ]
                 );
             } catch (Exception $e) {
@@ -108,144 +114,48 @@ class config
         return self::$pdo;
     }
 
-<<<<<<< HEAD
     private static function initialiserBaseDeDonnees()
     {
-        $pdo = new PDO(
-            'mysql:host=' . self::$host . ';port=' . self::$port,
-            self::$user,
-            self::$password,
-            [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-            ]
-        );
+        try {
+            $pdo = new PDO(
+                'mysql:host=' . self::$host . ';port=' . self::$port,
+                self::$user,
+                self::$password,
+                [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+            );
 
-        $pdo->exec(
-            'CREATE DATABASE IF NOT EXISTS `' . self::$database . '` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci'
-        );
-
-        $pdo->exec('USE `' . self::$database . '`');
-
-        // Table défis
-        $pdo->exec("CREATE TABLE IF NOT EXISTS `defis` (
-            `id` INT AUTO_INCREMENT PRIMARY KEY,
-            `titre` VARCHAR(255) NOT NULL,
-            `type` VARCHAR(50) NOT NULL DEFAULT 'nutrition',
-            `points` INT NOT NULL DEFAULT 0,
-            `date_debut` DATE,
-            `date_fin` DATE,
-            `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
-            INDEX `idx_type` (`type`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-
-        // Table utilisateurs
-        $pdo->exec("CREATE TABLE IF NOT EXISTS `utilisateurs` (
-            `id` INT AUTO_INCREMENT PRIMARY KEY,
-            `nom` VARCHAR(150) NOT NULL,
-            `email` VARCHAR(255) NOT NULL,
-            `mot_de_passe` VARCHAR(255) DEFAULT NULL,
-            `role` VARCHAR(50) NOT NULL DEFAULT 'utilisateur',
-            `poids` DECIMAL(5,2) DEFAULT NULL,
-            `taille` DECIMAL(5,2) DEFAULT NULL,
-            `imc` DECIMAL(5,2) DEFAULT NULL,
-            `objectif` VARCHAR(255) DEFAULT NULL,
-            `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE KEY `unique_email` (`email`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-
-        // Table profil_nutritif
-        $pdo->exec("CREATE TABLE IF NOT EXISTS `profil_nutritif` (
-            `id` INT AUTO_INCREMENT PRIMARY KEY,
-            `utilisateur` INT NOT NULL,
-            `age` INT DEFAULT NULL,
-            `allergies` TEXT DEFAULT NULL,
-            `besoins_caloriques` INT DEFAULT NULL,
-            FOREIGN KEY (`utilisateur`) REFERENCES `utilisateurs`(`id`) ON DELETE CASCADE
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-
-        // Table participations
-        $pdo->exec("CREATE TABLE IF NOT EXISTS `participations` (
-            `id` INT AUTO_INCREMENT PRIMARY KEY,
-            `utilisateur_id` INT NOT NULL,
-            `defi_id` INT NOT NULL,
-            `progression` INT NOT NULL DEFAULT 0,
-            `termine` TINYINT(1) NOT NULL DEFAULT 0,
-            `points_gagnes` INT NOT NULL DEFAULT 0,
-            `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE KEY `unique_participation` (`utilisateur_id`, `defi_id`),
-            FOREIGN KEY (`defi_id`) REFERENCES `defis`(`id`) ON DELETE CASCADE,
-            INDEX `idx_utilisateur` (`utilisateur_id`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-
-        // Données exemple - défis
-        $verifDefi = $pdo->query("SELECT COUNT(*) FROM defis");
-        if ((int) $verifDefi->fetchColumn() === 0) {
-            $pdo->exec("INSERT INTO `defis` (`titre`, `type`, `points`, `date_debut`, `date_fin`) VALUES
-                ('Manger 5 fruits/légumes par jour', 'nutrition', 50, '2025-03-01', '2025-03-31'),
-                ('Réduire son empreinte carbone', 'ecologie', 100, '2025-03-01', '2025-04-15'),
-                ('Tester 3 recettes végétales', 'recette', 75, '2025-03-10', '2025-04-10'),
-                ('Partager un repas durable', 'social', 30, '2025-03-15', '2025-03-30')
-            ");
-        }
-
-        // Données exemple - utilisateur par défaut
-        $verifUtilisateur = $pdo->query("SELECT COUNT(*) FROM utilisateurs");
-        if ((int) $verifUtilisateur->fetchColumn() === 0) {
-            $pdo->exec("INSERT INTO `utilisateurs` (`nom`, `email`, `role`, `mot_de_passe`, `created_at`) VALUES
-                ('Visiteur', 'visiteur@local', 'utilisateur', '', NOW())");
+            // create database if it does not exist
+            $pdo->exec('CREATE DATABASE IF NOT EXISTS `' . self::$database . '` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
+            $pdo->exec('USE `' . self::$database . '`');
+        } catch (Exception $e) {
+            // don't kill the process here; higher-level code may handle DB creation differently
+            error_log('initialiserBaseDeDonnees error: ' . $e->getMessage());
         }
     }
-}
-?>
-=======
-<?php
-// ========== KOOL HEALTHY - CONFIGURATION ==========
-// This file contains the database and application configuration
 
-// Database Configuration (adjust if using a real database)
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_NAME', 'web');
-
-// Application Configuration
-define('APP_NAME', 'Kool Healthy');
-define('APP_VERSION', '1.0.0');
-define('BASE_URL', 'http://localhost/all/');
-
-// Define paths
-define('ROOT_PATH', dirname(__FILE__) . '/');
-define('MODEL_PATH', ROOT_PATH . 'MODEL/');
-define('CONTROLLER_PATH', ROOT_PATH . 'CONTROLLER/');
-define('VIEW_PATH', ROOT_PATH . 'VIEW/');
-
-// Start session
-session_start();
-?>
->>>>>>> origin/module--6
-=======
     public static function getGoogleClientId()
     {
-        return trim((string) (getenv('GOOGLE_CLIENT_ID') ?: self::$googleClientId));
+        self::initSecrets();
+        return trim((string) self::$googleClientId);
     }
 
     public static function getGoogleClientSecret()
     {
-        return trim((string) (getenv('GOOGLE_CLIENT_SECRET') ?: self::$googleClientSecret));
+        self::initSecrets();
+        return trim((string) self::$googleClientSecret);
     }
 
     public static function getGoogleRedirectUri()
     {
-        return trim((string) (getenv('GOOGLE_REDIRECT_URI') ?: self::$googleRedirectUri));
+        self::initSecrets();
+        return trim((string) self::$googleRedirectUri);
     }
 
     public static function getMailFrom()
     {
-        return trim((string) (getenv('MAIL_FROM') ?: self::$mailFrom));
+        self::initSecrets();
+        return trim((string) self::$mailFrom);
     }
 }
 
-
 ?>
->>>>>>> origin/module1-profil
