@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Kool Healthy — Module Gamification (MVC PHP)
 
 Architecture identique au projet **Recettes** : MODEL / VIEW / CONTROLLER / CSS / JS / assets.
@@ -278,4 +279,3 @@ Voir le fichier [`LICENSE`](LICENSE) pour plus d'informations.
   Made with ❤️ by the KOOL HEALTHY Team – Esprit School of Engineering
 </p>
 >>>>>>> e0b126074147cb0c39a0b92d98a0f2263aa6aea3
->>>>>>> Module3

@@ -28,6 +28,7 @@ class config
                 die('Erreur de connexion: ' . $e->getMessage());
             }
         }
+
         return self::$pdo;
     }
 
