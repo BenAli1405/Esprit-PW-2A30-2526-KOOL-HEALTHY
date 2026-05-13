@@ -211,7 +211,7 @@ if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'] ?? '')) {
             $defaultUserId = (int) $db->lastInsertId();
         }
         $controller->participer($defaultUserId, $defi_id);
-        header('Location: ../VIEW/gamification.php?success=participating');
+        header('Location: /integweb/VIEW/gamification.php?success=participating');
         exit();
     }
 
@@ -226,12 +226,12 @@ if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'] ?? '')) {
         
         try {
             $controller->ajouterParticipation($participation);
-            header('Location: ../VIEW/gamification.php?success=participation_added');
+            header('Location: /integweb/VIEW/gamification.php?success=participation_added');
         } catch (PDOException $e) {
             if ($e->getCode() == 23000) {
-                header('Location: ../VIEW/gamification.php?error=duplicate_participation');
+                header('Location: /integweb/VIEW/gamification.php?error=duplicate_participation');
             } else {
-                header('Location: ../VIEW/gamification.php?error=db_error');
+                header('Location: /integweb/VIEW/gamification.php?error=db_error');
             }
         }
         exit();
@@ -253,12 +253,12 @@ if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'] ?? '')) {
                 'termine' => $termine,
                 'points_gagnes' => $points_gagnes,
             ]);
-            header('Location: ../VIEW/gamification.php?success=participation_edited');
+            header('Location: /integweb/VIEW/gamification.php?success=participation_edited');
         } catch (PDOException $e) {
             if ($e->getCode() == 23000) {
-                header('Location: ../VIEW/gamification.php?error=duplicate_participation');
+                header('Location: /integweb/VIEW/gamification.php?error=duplicate_participation');
             } else {
-                header('Location: ../VIEW/gamification.php?error=db_error');
+                header('Location: /integweb/VIEW/gamification.php?error=db_error');
             }
         }
         exit();
@@ -266,11 +266,11 @@ if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'] ?? '')) {
 
     if ($action === 'delete' && isset($_GET['id'])) {
         $controller->supprimerParticipation((int) $_GET['id']);
-        header('Location: ../VIEW/gamification.php?success=participation_deleted');
+        header('Location: /integweb/VIEW/gamification.php?success=participation_deleted');
         exit();
     }
 
-    header('Location: ../VIEW/gamification.php');
+    header('Location: /integweb/VIEW/gamification.php');
     exit();
 }
 ?>

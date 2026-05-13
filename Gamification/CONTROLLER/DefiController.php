@@ -129,7 +129,7 @@ if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'] ?? '')) {
                 echo json_encode(['success' => false, 'error' => 'titre']);
                 exit();
             }
-            header('Location: ../VIEW/backoffice-gamification.php?error=titre');
+            header('Location: /integweb/VIEW/backoffice-gamification.php?error=titre');
             exit();
         }
         $status = $_POST['status'] ?? 'approuve';
@@ -157,7 +157,7 @@ if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'] ?? '')) {
             exit();
         }
 
-        header('Location: ../VIEW/backoffice-gamification.php?tab=defis&success=added');
+        header('Location: /integweb/VIEW/backoffice-gamification.php?tab=defis&success=added');
         exit();
     }
 
@@ -165,7 +165,7 @@ if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'] ?? '')) {
         $id = (int) ($_POST['id'] ?? 0);
         $titre = trim($_POST['titre'] ?? '');
         if (!$titre) {
-            header('Location: ../VIEW/backoffice-gamification.php?error=titre');
+            header('Location: /integweb/VIEW/backoffice-gamification.php?error=titre');
             exit();
         }
         $controller->modifierDefi($id, [
@@ -175,13 +175,13 @@ if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'] ?? '')) {
             'date_debut' => $_POST['date_debut'] ?? null,
             'date_fin'   => $_POST['date_fin']   ?? null,
         ]);
-        header('Location: ../VIEW/backoffice-gamification.php?tab=defis&success=edited');
+        header('Location: /integweb/VIEW/backoffice-gamification.php?tab=defis&success=edited');
         exit();
     }
 
     if ($action === 'delete' && isset($_GET['id'])) {
         $controller->supprimerDefi((int) $_GET['id']);
-        header('Location: ../VIEW/backoffice-gamification.php?tab=defis&success=deleted');
+        header('Location: /integweb/VIEW/backoffice-gamification.php?tab=defis&success=deleted');
         exit();
     }
 
@@ -196,7 +196,7 @@ if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'] ?? '')) {
                 $notif->ajouterNotification($defi['proposant_id'], "Votre défi '{$defi['titre']}' [ID:{$id}] a été approuvé ! 🎉");
             }
         }
-        header('Location: ../VIEW/backoffice-gamification.php?success=approved');
+        header('Location: /integweb/VIEW/backoffice-gamification.php?success=approved');
         exit();
     }
 
@@ -211,11 +211,11 @@ if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'] ?? '')) {
                 $notif->ajouterNotification($defi['proposant_id'], "Votre défi '{$defi['titre']}' [ID:{$id}] a été refusé par l'administration.");
             }
         }
-        header('Location: ../VIEW/backoffice-gamification.php?success=rejected');
+        header('Location: /integweb/VIEW/backoffice-gamification.php?success=rejected');
         exit();
     }
 
-    header('Location: ../VIEW/backoffice-gamification.php');
+    header('Location: /integweb/VIEW/backoffice-gamification.php');
     exit();
 }
 ?>

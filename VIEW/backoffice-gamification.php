@@ -1,8 +1,8 @@
 <?php
 session_start();
 require_once __DIR__ . '/../CONTROLLER/AuthController.php';
-require_once __DIR__ . '/../CONTROLLER/DefiController.php';
-require_once __DIR__ . '/../CONTROLLER/ParticipationController.php';
+require_once __DIR__ . '/../Gamification/CONTROLLER/DefiController.php';
+require_once __DIR__ . '/../Gamification/CONTROLLER/ParticipationController.php';
 
 $authController = new AuthController();
 $utilisateurConnecte = $authController->exigerAdmin('auth.php', 'home.php');
@@ -60,15 +60,18 @@ if ($success === 'added') {
     </div>
 
     <div class="nav-menu">
-      <a class="nav-item" href="backoffice.php"><i class="fas fa-chart-pie"></i><span>Dashboard</span></a>
-      <a class="nav-item" href="backoffice.php?tab=users"><i class="fas fa-users"></i><span>Utilisateurs</span></a>
-      <a class="nav-item" href="backoffice.php?tab=recipes"><i class="fas fa-utensils"></i><span>Recettes</span></a>
-      <a class="nav-item" href="backoffice.php?tab=ingredients"><i class="fas fa-apple-alt"></i><span>Ingrédients</span></a>
-      <a class="nav-item" href="backoffice.php?tab=reviews"><i class="fas fa-star"></i><span>Avis</span></a>
-      <a class="nav-item" href="../plan.php?page=plan-backoffice"><i class="fas fa-bowl-food"></i><span>Repas</span></a>
-      <a class="nav-item" href="../plan.php?page=plan-nutritionnel"><i class="fas fa-clipboard-list"></i><span>Plans</span></a>
-      <a class="nav-item active" href="backoffice-gamification.php"><i class="fas fa-trophy"></i><span>Backoffice Gamification</span></a>
-      <a class="nav-item" href="backoffice.php?tab=analytics"><i class="fas fa-chart-line"></i><span>Analytics IA</span></a>
+      <a class="nav-item" href="backoffice.php" style="text-decoration:none;color:inherit;"><i class="fas fa-chart-pie"></i><span>Dashboard</span></a>
+      <a class="nav-item" href="backoffice.php?tab=users" style="text-decoration:none;color:inherit;"><i class="fas fa-users"></i><span>Utilisateurs</span></a>
+      <a class="nav-item" href="backoffice.php?tab=recipes" style="text-decoration:none;color:inherit;"><i class="fas fa-utensils"></i><span>Recettes</span></a>
+      <a class="nav-item" href="backoffice.php?tab=ingredients" style="text-decoration:none;color:inherit;"><i class="fas fa-apple-alt"></i><span>Ingrédients</span></a>
+      <a class="nav-item" href="backoffice.php?tab=reviews" style="text-decoration:none;color:inherit;"><i class="fas fa-star"></i><span>Avis</span></a>
+      <a class="nav-item" href="../plan.php?page=plan-backoffice" style="text-decoration:none;color:inherit;"><i class="fas fa-bowl-food"></i><span>Repas</span></a>
+      <a class="nav-item" href="../plan.php?page=plan-nutritionnel" style="text-decoration:none;color:inherit;"><i class="fas fa-clipboard-list"></i><span>Plans</span></a>
+      <a class="nav-item active" href="backoffice-gamification.php" style="text-decoration:none;color:inherit;"><i class="fas fa-trophy"></i><span>Gamification</span></a>
+      <a class="nav-item" href="../sport/index.php?action=admin_entrainements" style="text-decoration:none;color:inherit;"><i class="fas fa-dumbbell"></i><span>Entraînements</span></a>
+      <a class="nav-item" href="../sport/index.php?action=admin_exercices" style="text-decoration:none;color:inherit;"><i class="fas fa-running"></i><span>Exercices</span></a>
+      <a class="nav-item" href="../sport/index.php?action=admin_reference_list" style="text-decoration:none;color:inherit;"><i class="fas fa-book"></i><span>Catalogue KNN</span></a>
+      <a class="nav-item" href="backoffice.php?tab=analytics" style="text-decoration:none;color:inherit;"><i class="fas fa-chart-line"></i><span>Analytics IA</span></a>
     </div>
 
     <div class="sidebar-footer">
@@ -130,8 +133,8 @@ if ($success === 'added') {
                   <td><span class="badge-eco"><?= htmlspecialchars($defi['points']) ?> pts</span></td>
                   <td>ID: <?= htmlspecialchars($defi['proposant_id'] ?? 'Admin') ?></td>
                   <td>
-                    <a href="../CONTROLLER/DefiController.php?action=approve&id=<?= $defi['id'] ?>" class="btn-small btn-success"><i class="fas fa-check"></i> Approuver</a>
-                    <a href="../CONTROLLER/DefiController.php?action=reject&id=<?= $defi['id'] ?>" class="btn-danger btn-small"><i class="fas fa-times"></i> Refuser</a>
+                    <a href="../Gamification/CONTROLLER/DefiController.php?action=approve&id=<?= $defi['id'] ?>" class="btn-small btn-success"><i class="fas fa-check"></i> Approuver</a>
+                    <a href="../Gamification/CONTROLLER/DefiController.php?action=reject&id=<?= $defi['id'] ?>" class="btn-danger btn-small"><i class="fas fa-times"></i> Refuser</a>
                   </td>
                 </tr>
               <?php endforeach; endif; ?>
@@ -175,7 +178,7 @@ if ($success === 'added') {
                   <td><?= htmlspecialchars($defi['date_fin']) ?></td>
                   <td>
                     <button type="button" class="btn-edit edit-defi-btn" data-id="<?= $defi['id'] ?>" data-titre="<?= htmlspecialchars($defi['titre'], ENT_QUOTES) ?>" data-type="<?= htmlspecialchars($defi['type'], ENT_QUOTES) ?>" data-points="<?= $defi['points'] ?>" data-date-debut="<?= $defi['date_debut'] ?>" data-date-fin="<?= $defi['date_fin'] ?>"><i class="fas fa-pen"></i> Modifier</button>
-                    <a href="../CONTROLLER/DefiController.php?action=delete&id=<?= $defi['id'] ?>" class="btn-danger btn-delete-confirm"><i class="fas fa-trash"></i></a>
+                    <a href="../Gamification/CONTROLLER/DefiController.php?action=delete&id=<?= $defi['id'] ?>" class="btn-danger btn-delete-confirm"><i class="fas fa-trash"></i></a>
                   </td>
                 </tr>
               <?php endforeach; ?>
@@ -487,7 +490,7 @@ if ($success === 'added') {
       <span class="close-modal" id="closeDefiModal">&times;</span>
     </div>
     <div class="modal-body">
-      <form id="addDefiForm" action="../CONTROLLER/DefiController.php?action=add" method="POST">
+      <form id="addDefiForm" action="../Gamification/CONTROLLER/DefiController.php?action=add" method="POST">
         <div class="form-stack">
           <input type="text" name="titre" placeholder="Titre du défi" class="modal-form-input">
           <select name="type" class="modal-form-select">
@@ -514,7 +517,7 @@ if ($success === 'added') {
       <span class="close-modal" id="closeEditDefiModal">&times;</span>
     </div>
     <div class="modal-body">
-      <form id="editDefiForm" action="../CONTROLLER/DefiController.php?action=edit" method="POST">
+      <form id="editDefiForm" action="../Gamification/CONTROLLER/DefiController.php?action=edit" method="POST">
         <input type="hidden" name="id">
         <div class="form-stack">
           <input type="text" name="titre" placeholder="Titre du défi" class="modal-form-input">

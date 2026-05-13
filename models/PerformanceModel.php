@@ -266,13 +266,6 @@ class PerformanceModel
     /**
      * Détecte si l'utilisateur stagne sur les dernières séances.
      *
-     * La méthode calcule la pente sur les $nbDernieres dernières séances
-     * (même algorithme que calculerRegression) et la compare à :
-     *   seuil absolu = $seuil × moyenne_globale_des_charges
-     *
-     * Si |pente_récente| < seuil OU si la pente est négative ET forte,
-     * on considère qu'il y a un plateau.
-     *
      * @param  array $historique         Complet (trié par date ASC)
      * @param  int   $nbDernieres        Nombre de séances récentes à analyser
      * @param  float $seuilRelatif       Fraction de la moyenne (ex: 0.05 = 5 %)
@@ -286,7 +279,6 @@ class PerformanceModel
     ): array {
         $n = count($historique);
 
-        // Résultat par défaut
         $result = [
             'plateau'       => false,
             'pente_recente' => 0.0,
@@ -295,16 +287,14 @@ class PerformanceModel
         ];
 
         if ($n < 2) {
-            return $result; // Pas assez de données
+            return $result;
         }
 
-        // Calculer la moyenne globale des charges pour le seuil
         $charges = array_column($historique, 'charge_totale');
         $moyenne = array_sum($charges) / count($charges);
         $seuil   = $seuilRelatif * max($moyenne, 1.0);
 
-        // Prendre les N dernières séances
-        $dernieres = array_slice($historique, -$nbDernieres);
+        $dernieres  = array_slice($historique, -$nbDernieres);
         $regRecente = $this->calculerRegression($dernieres);
 
         if ($regRecente === null) {
@@ -315,9 +305,7 @@ class PerformanceModel
         $result['pente_recente'] = $penteRecente;
         $result['seuil_absolu']  = round($seuil, 2);
         $result['nb_seances']    = count($dernieres);
-
-        // Plateau si la pente est très faible (positive ou négative)
-        $result['plateau'] = (abs($penteRecente) < $seuil);
+        $result['plateau']       = (abs($penteRecente) < $seuil);
 
         return $result;
     }
@@ -343,7 +331,6 @@ class PerformanceModel
         $pente    = $regression['pente'];
         $r2       = $regression['r2'];
 
-        // Qualité de la régression
         if ($r2 >= 0.8) {
             $conseils[] = "📈 Régularité excellente (R²=" . number_format($r2, 2) . ") : ta progression est très linéaire.";
         } elseif ($r2 >= 0.5) {
@@ -352,7 +339,6 @@ class PerformanceModel
             $conseils[] = "📉 Progression irrégulière (R²=" . number_format($r2, 2) . ") : essaie de rendre tes séances plus régulières.";
         }
 
-        // Tendance globale
         if ($pente > 1.0) {
             $conseils[] = "🚀 Excellente progression globale (+{$pente} kg·reps·séries / jour en moyenne).";
         } elseif ($pente > 0.1) {
@@ -363,7 +349,6 @@ class PerformanceModel
             $conseils[] = "🔻 Charge totale en baisse. Vérifie ta récupération et ta nutrition.";
         }
 
-        // Plateau récent
         if ($plateau['plateau']) {
             $conseils[] = "🧱 Plateau détecté sur les {$plateau['nb_seances']} dernières séances "
                         . "(pente = " . number_format($plateau['pente_recente'], 2) . " < seuil "
@@ -373,7 +358,6 @@ class PerformanceModel
             $conseils[] = "✅ Pas de plateau sur les dernières séances. Tu progresses bien !";
         }
 
-        // Prédiction à 30 jours
         if ($chargeJ30 !== null && $chargeJ30 > 0) {
             $conseils[] = "🔮 Dans 30 jours : charge totale estimée ≈ " . number_format($chargeJ30, 0) . " kg·reps·séries.";
         }

@@ -3,11 +3,13 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-require_once __DIR__ . '/../CONTROLLER/DefiController.php';
-require_once __DIR__ . '/../CONTROLLER/ParticipationController.php';
+require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../Gamification/CONTROLLER/DefiController.php';
+require_once __DIR__ . '/../Gamification/CONTROLLER/ParticipationController.php';
 
 $defiController = new DefiController();
 $participationController = new ParticipationController();
+$currentUserId = $_SESSION['utilisateur']['id'] ?? 1;
 $defis = $defiController->listeDefis();
 $classement = $participationController->classement();
 $participations = $participationController->listeParticipations();
@@ -42,6 +44,7 @@ if ($success === 'participation_added') {
     <title>Kool Healthy | Défis & Récompenses</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="/integweb/CSS/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -61,85 +64,6 @@ if ($success === 'participation_added') {
             --shadow-hover: 0 12px 28px rgba(0,0,0,0.08);
             --rouge-notif: #FF5252;
         }
-        .navbar { background: var(--blanc); padding: 1rem 5%; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; box-shadow: var(--ombre-legere); position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid var(--gris-moyen); }
-        .logo { display: flex; align-items: center; gap: 12px; }
-        .logo i { font-size: 2rem; color: var(--vert-kool); }
-        .logo h1 { font-size: 1.6rem; font-weight: 700; color: var(--vert-kool); }
-        .nav-icons { display: flex; align-items: center; gap: 1.5rem; margin-right: 1rem; }
-        .notif-wrapper { position: relative; cursor: pointer; }
-        .notif-badge { position: absolute; top: -5px; right: -8px; background: var(--rouge-notif); color: white; font-size: 0.65rem; padding: 2px 5px; border-radius: 50%; font-weight: 700; border: 2px solid white; }
-        .notif-dropdown { position: absolute; top: 100%; right: 0; width: 300px; background: white; border-radius: 16px; box-shadow: var(--shadow-hover); display: none; z-index: 2000; margin-top: 10px; border: 1px solid var(--gris-moyen); overflow: hidden; }
-        .notif-header { padding: 12px 15px; border-bottom: 1px solid var(--gris-moyen); font-weight: 700; font-size: 0.9rem; background: var(--gris-clair); }
-        .notif-list { max-height: 300px; overflow-y: auto; }
-        .notif-item { padding: 12px 15px; border-bottom: 1px solid var(--gris-clair); font-size: 0.85rem; transition: 0.2s; }
-        .notif-item:hover { background: var(--vert-kool-light); }
-        .notif-item.unread { border-left: 4px solid var(--vert-kool); background: #f0fff1; }
-        .notif-empty { padding: 20px; text-align: center; color: var(--gris-texte); font-size: 0.85rem; }
-        .nav-links { display: flex; gap: 2rem; align-items: center; flex-wrap: wrap; }
-        .nav-links a { text-decoration: none; color: #4A5B4E; font-weight: 500; transition: 0.2s; cursor: pointer; }
-        .nav-links a:hover { color: var(--bleu-tech); transform: translateY(-2px); }
-        .btn-connect { background: var(--vert-kool); color: white; border: none; padding: 0.6rem 1.5rem; border-radius: 40px; font-weight: 600; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-        .btn-connect:hover { background: var(--vert-kool-dark); transform: scale(0.98); }
-        .btn-outline { background: transparent; border: 1.5px solid var(--bleu-tech); color: var(--bleu-tech); padding: 0.6rem 1.5rem; border-radius: 40px; font-weight: 600; cursor: pointer; transition: 0.2s; }
-        .btn-outline:hover { background: var(--bleu-tech-light); border-color: var(--bleu-tech-dark); }
-
-        .topbar {
-            position: sticky;
-            top: 0;
-            z-index: 50;
-            background: white;
-            border-bottom: 1px solid var(--gris-moyen);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-            padding: 10px 5%;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 18px;
-        }
-        .brand {
-            display: flex;
-            align-items: center;
-            color: var(--vert-kool-dark);
-            text-decoration: none;
-            gap: 12px;
-        }
-        .brand-logo {
-            height: 48px;
-            width: auto;
-            display: block;
-        }
-        .top-nav {
-            display: flex;
-            align-items: center;
-            gap: 18px;
-            flex-wrap: wrap;
-            margin-left: auto;
-        }
-        .top-nav a {
-            text-decoration: none;
-            color: #4A5B4E;
-            font-weight: 500;
-            font-size: 0.95rem;
-            transition: 0.2s;
-        }
-        .top-nav a:hover { color: var(--bleu-tech-dark); }
-        .top-nav a.active { color: var(--vert-kool); font-weight: 700; }
-        .topbar-tools {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-        .auth-link {
-            text-decoration: none;
-            color: var(--bleu-tech-dark);
-            font-weight: 600;
-            font-size: 0.9rem;
-            padding: 8px 18px;
-            border: 1.5px solid var(--bleu-tech);
-            border-radius: 999px;
-            transition: 0.2s;
-        }
-        .auth-link:hover { background: var(--bleu-tech-light); }
 
         .hero { background: linear-gradient(135deg, var(--vert-kool-light) 0%, var(--bleu-tech-light) 100%); padding: 3rem 5%; text-align: center; border-radius: 0 0 40px 40px; margin-bottom: 1rem; }
         .hero h1 { font-size: 2.5rem; font-weight: 800; color: var(--vert-kool-dark); letter-spacing: -0.02em; }
@@ -505,10 +429,12 @@ if ($success === 'participation_added') {
     </div>
 
     <script>
+        const SESSION_USER_ID = <?= (int)$currentUserId ?>;
+
         // ---------- DATA MODEL ----------
-        let currentUser = { 
-            name: "Sophie M.", 
-            points: 980, 
+        let currentUser = {
+            name: "Sophie M.",
+            points: 980,
             badges: [{nom:"Éco-citoyen", icone:"fa-leaf"},{nom:"Chef végétal", icone:"fa-carrot"}], 
             defisCompletes: 4 
         };
@@ -1281,14 +1207,18 @@ if ($success === 'participation_added') {
                     appendMessage("Merci ! Votre défi est envoyé pour validation. Vous recevrez une notification quand il sera approuvé.", false);
                     
                     const formData = new FormData();
+                    const today0 = new Date().toISOString().split('T')[0];
+                    const fin0 = new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0];
                     formData.append('titre', newChallenge.titre);
                     formData.append('points', newChallenge.points);
                     formData.append('type', newChallenge.type);
                     formData.append('status', 'en_attente');
-                    formData.append('proposant_id', '1'); 
+                    formData.append('proposant_id', SESSION_USER_ID);
+                    formData.append('date_debut', today0);
+                    formData.append('date_fin', fin0);
                     formData.append('ajax', '1');
-                    
-                    fetch('../CONTROLLER/DefiController.php?action=add', { method: 'POST', body: formData });
+
+                    fetch('../Gamification/CONTROLLER/DefiController.php?action=add', { method: 'POST', body: formData });
                     
                     chatbotInput.value = '';
                     return;
@@ -1346,13 +1276,14 @@ if ($success === 'participation_added') {
                 formData.append('points', challengeData.points || 50);
                 formData.append('ajax', '1');
                 const today = new Date().toISOString().split('T')[0];
+                const dateFin = new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0];
                 formData.append('date_debut', today);
-                formData.append('date_fin', today); 
+                formData.append('date_fin', dateFin);
                 formData.append('status', 'en_attente');
-                formData.append('proposant_id', '1'); // ID utilisateur statique pour la démo
+                formData.append('proposant_id', SESSION_USER_ID);
 
                 try {
-                    const res = await fetch('../CONTROLLER/DefiController.php?action=add', { method: 'POST', body: formData });
+                    const res = await fetch('../Gamification/CONTROLLER/DefiController.php?action=add', { method: 'POST', body: formData });
                     const result = await res.json();
                     if(result.success) { 
                         alert('✅ Défi envoyé à l\'administration pour validation !'); 

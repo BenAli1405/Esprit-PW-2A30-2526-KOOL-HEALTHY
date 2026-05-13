@@ -5,7 +5,7 @@ if (!defined('DB_HOST')) {
     define('DB_HOST', getenv('DB_HOST') ?: '127.0.0.1');
 }
 if (!defined('DB_PORT')) {
-    define('DB_PORT', getenv('DB_PORT') ?: '3306');
+    define('DB_PORT', getenv('DB_PORT') ?: '3307');
 }
 if (!defined('DB_USER')) {
     define('DB_USER', getenv('DB_USER') ?: 'root');
@@ -23,7 +23,7 @@ if (!defined('APP_VERSION')) {
     define('APP_VERSION', '1.0.0');
 }
 if (!defined('BASE_URL')) {
-    define('BASE_URL', getenv('BASE_URL') ?: 'http://localhost/Gamification/');
+    define('BASE_URL', getenv('BASE_URL') ?: 'http://localhost/integweb/');
 }
 if (!defined('SMTP_HOST')) {
     define('SMTP_HOST', getenv('SMTP_HOST') ?: 'smtp.mailtrap.io');
@@ -44,7 +44,7 @@ if (!defined('MAIL_FROM_NAME')) {
     define('MAIL_FROM_NAME', getenv('MAIL_FROM_NAME') ?: 'Kool Healthy');
 }
 if (!defined('ROOT_PATH')) {
-    define('ROOT_PATH', dirname(__FILE__) . '/');
+    define('ROOT_PATH', dirname(__FILE__, 2) . '/');
 }
 if (!defined('MODEL_PATH')) {
     define('MODEL_PATH', ROOT_PATH . 'MODEL/');
@@ -60,19 +60,20 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+if (!class_exists('config')) :
 class config
 {
     private static $pdo = null;
     private static $host = '127.0.0.1';
-    private static $port = '3306';
+    private static $port = '3307';
     private static $user = 'root';
     private static $password = '';
     private static $database = 'projetweb';
 
     // Load OAuth credentials from environment variables (see initConfigFromEnv)
-    private static $googleClientId = '';
-    private static $googleClientSecret = '';
-    private static $googleRedirectUri = '';
+    private static $googleClientId = '';      // Défini dans .env ou variable d'environnement GOOGLE_CLIENT_ID
+    private static $googleClientSecret = ''; // Défini dans .env ou variable d'environnement GOOGLE_CLIENT_SECRET
+    private static $googleRedirectUri = 'http://localhost:8080/integweb/CONTROLLER/AuthController.php?action=google_callback';
     private static $mailFrom = 'omarzehift52@gmail.com';
     private static $smtpHost = '';
     private static $smtpPort = '';
@@ -220,7 +221,8 @@ class config
             return trim((string)$key);
         }
 
-        // Local fallback for environments without env vars.
+        // Local fallback : définir OPENROUTER_API_KEY dans les variables d'environnement
         return '';
     }
 }
+endif;

@@ -82,7 +82,7 @@ $seriesCible      = $seriesCible ?? '';
 <?php if (!empty($historique)): ?>
     <div class="card" style="margin-bottom:1.5rem;">
         <h3 style="margin-bottom:1rem;">
-            📊 Évolution de la charge — <em><?= htmlspecialchars($nomExercice) ?></em>
+            📊 Évolution de la charge — <Wem><?= htmlspecialchars($nomExercice) ?></Wem>
         </h3>
 
         <?php if (count($historique) < 2): ?>

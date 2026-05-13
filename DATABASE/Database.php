@@ -1,6 +1,6 @@
 <?php
 // ========== DATABASE CONNECTION CLASS ==========
-require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../config/config.php';
 
 class Database {
     private $host;

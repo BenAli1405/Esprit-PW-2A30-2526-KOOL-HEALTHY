@@ -10,9 +10,9 @@ if (session_status() === PHP_SESSION_NONE) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vos Repas - Kool Healthy</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/Gamification/CSS/styles.css">
-    <link rel="stylesheet" href="/Gamification/Assets/multi-objective.css">
-    <link rel="stylesheet" href="/Gamification/Assets/jumeau.css">
+    <link rel="stylesheet" href="/integweb/CSS/styles.css">
+    <link rel="stylesheet" href="/integweb/Assets/multi-objective.css">
+    <link rel="stylesheet" href="/integweb/Assets/jumeau.css">
     <style>
         :root {
             --vert-clair: #8BC34A;
@@ -446,12 +446,51 @@ if (session_status() === PHP_SESSION_NONE) {
     </section>
     <?php if ($currentPlan): ?>
         <script>
-            window.APP_SERVER_IP = <?= json_encode($_SERVER['SERVER_ADDR'] ?? '127.0.0.1') ?>;
+            <?php
+            // 1. Vérifier d'abord si un tunnel public est disponible
+            $tunnelUrl = null;
+
+            // Essayer l'API ngrok (port 4040)
+            $ngrokApi = @file_get_contents('http://127.0.0.1:4040/api/tunnels');
+            if ($ngrokApi) {
+                $ngrokData = json_decode($ngrokApi, true);
+                foreach ($ngrokData['tunnels'] ?? [] as $t) {
+                    if (($t['proto'] ?? '') === 'https') {
+                        $tunnelUrl = $t['public_url'];
+                        break;
+                    }
+                }
+            }
+
+            // Fallback : lire tunnel_url.txt (localhost.run ou autre)
+            if (!$tunnelUrl) {
+                $txtFile = dirname(__DIR__) . '/tunnel_url.txt';
+                if (file_exists($txtFile)) {
+                    $u = trim(file_get_contents($txtFile));
+                    if ($u) $tunnelUrl = $u;
+                }
+            }
+
+            // 2. IP locale (fallback si pas de tunnel)
+            $localIp = '127.0.0.1';
+            if (PHP_OS_FAMILY === 'Windows') {
+                $psCmd = 'powershell -NoProfile -Command "(Get-NetIPAddress -InterfaceIndex (Get-NetRoute -DestinationPrefix 0.0.0.0/0 | Sort-Object RouteMetric | Select-Object -First 1 -ExpandProperty InterfaceIndex) -AddressFamily IPv4 | Select-Object -First 1).IPAddress"';
+                $output = shell_exec($psCmd);
+                $localIp = trim($output ?: '127.0.0.1');
+            } else {
+                $output = shell_exec("ip route get 8.8.8.8 2>/dev/null | grep -oP 'src \\K[\\d.]+'");
+                $localIp = trim($output ?: '127.0.0.1');
+            }
+            if (empty($localIp)) $localIp = '127.0.0.1';
+            ?>
+            window.APP_TUNNEL_URL  = <?= json_encode($tunnelUrl) ?>;   // null si pas de tunnel
+            window.APP_SERVER_IP   = <?= json_encode($localIp) ?>;
+            window.APP_SERVER_PORT = '8080';
         </script>
-        <script src="/Gamification/Assets/multi-objective.js"></script>
-        <script src="/Gamification/Assets/jumeau.js"></script>
-        <script src="/Gamification/Assets/qrcode-generator.js"></script>
-        <script src="/Gamification/Assets/chatbot.js"></script>
+        <script src="/integweb/Assets/multi-objective.js"></script>
+        <script src="/integweb/Assets/jumeau.js"></script>
+        <script src="/integweb/Assets/qrcode-generator.js?v=<?= time() ?>"></script>
+        <script src="/integweb/Assets/chatbot.js"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function(){
                 try {

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 require_once __DIR__ . '/../models/ExerciceModel.php';
 require_once __DIR__ . '/../models/EntrainementModel.php';
@@ -29,7 +29,7 @@ class ExerciceController
         $entrainement = $this->entrainementModel->getById($idEntrainement);
 
         if (!$entrainement) {
-            header('Location: index.php?action=mes_entrainements');
+            header('Location: /integweb/sport/index.php?action=mes_entrainements');
             exit;
         }
 
@@ -48,7 +48,7 @@ class ExerciceController
         $entrainement = $this->entrainementModel->getById($idEntrainement);
 
         if (!$entrainement) {
-            header('Location: index.php?action=mes_entrainements');
+            header('Location: /integweb/sport/index.php?action=mes_entrainements');
             exit;
         }
 
@@ -58,7 +58,7 @@ class ExerciceController
             if ($this->validate($data)) {
                 $data['id_entrainement'] = $idEntrainement;
                 $this->model->create($data);
-                header('Location: index.php?action=voir_exercices&id=' . $idEntrainement);
+                header('Location: /integweb/sport/index.php?action=voir_exercices&id=' . $idEntrainement);
                 exit;
             }
         }
@@ -78,7 +78,7 @@ class ExerciceController
         $exercice = $this->model->getById($id);
 
         if (!$exercice) {
-            header('Location: index.php?action=mes_entrainements');
+            header('Location: /integweb/sport/index.php?action=mes_entrainements');
             exit;
         }
 
@@ -89,7 +89,7 @@ class ExerciceController
             $data = $this->postData();
             if ($this->validate($data)) {
                 $this->model->update($id, $data);
-                header('Location: index.php?action=voir_exercices&id=' . $exercice['id_entrainement']);
+                header('Location: /integweb/sport/index.php?action=voir_exercices&id=' . $exercice['id_entrainement']);
                 exit;
             }
         }
@@ -110,11 +110,11 @@ class ExerciceController
 
         if ($exercice) {
             $this->model->delete($id);
-            header('Location: index.php?action=voir_exercices&id=' . $exercice['id_entrainement']);
+            header('Location: /integweb/sport/index.php?action=voir_exercices&id=' . $exercice['id_entrainement']);
             exit;
         }
 
-        header('Location: index.php?action=mes_entrainements');
+        header('Location: /integweb/sport/index.php?action=mes_entrainements');
         exit;
     }
 
@@ -205,9 +205,10 @@ class ExerciceController
     {
         $this->errors = [];
 
-        // ── ID utilisateur (simplifié : on prend l'utilisateur 1 si pas de session) ──
-        // Adaptez selon votre système d'authentification.
-        $idUtilisateur = (int)($_SESSION['id_utilisateur'] ?? 1);
+        // ── ID utilisateur depuis la session ──────────────────────────────────
+        $idUtilisateur = (int)($_SESSION['utilisateur']['id']
+                          ?? $_SESSION['id_utilisateur']
+                          ?? 1);
 
         // ── Sous-actions POST ──────────────────────────────────────────────────
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -245,7 +246,7 @@ class ExerciceController
 
                 if (empty($this->errors)) {
                     $this->performanceModel->ajouterPerformance($data);
-                    header('Location: index.php?action=progression&id=' . $idExo);
+                    header('Location: /integweb/sport/index.php?action=progression&id=' . $idExo);
                     exit;
                 }
             }
@@ -257,7 +258,7 @@ class ExerciceController
                 if ($idPerf > 0) {
                     $this->performanceModel->supprimerPerformance($idPerf);
                 }
-                header('Location: index.php?action=progression&id=' . $idExo);
+                header('Location: /integweb/sport/index.php?action=progression&id=' . $idExo);
                 exit;
             }
         }

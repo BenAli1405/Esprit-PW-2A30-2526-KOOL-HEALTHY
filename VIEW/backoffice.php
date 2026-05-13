@@ -44,6 +44,9 @@ $tabFromQuery = $_GET['tab'] ?? 'dashboard';
                 <a class="nav-item" href="../plan.php?page=plan-backoffice" style="text-decoration:none;color:inherit;"><i class="fas fa-bowl-food"></i><span>Repas</span></a>
                 <a class="nav-item" href="../plan.php?page=plan-nutritionnel" style="text-decoration:none;color:inherit;"><i class="fas fa-clipboard-list"></i><span>Plans</span></a>
                 <a class="nav-item" href="../VIEW/backoffice-gamification.php" style="text-decoration:none;color:inherit;"><i class="fas fa-trophy"></i><span>Gamification</span></a>
+                <a class="nav-item" href="../sport/index.php?action=admin_entrainements" style="text-decoration:none;color:inherit;"><i class="fas fa-chart-pie"></i><span>Entraînements</span></a>
+                <a class="nav-item" href="../sport/index.php?action=admin_exercices" style="text-decoration:none;color:inherit;"><i class="fas fa-dumbbell"></i><span>Exercices</span></a>
+                <a class="nav-item" href="../sport/index.php?action=admin_reference_list" style="text-decoration:none;color:inherit;"><i class="fas fa-book"></i><span>Catalogue KNN</span></a>
                 <div class="nav-item" data-tab="analytics"><i class="fas fa-chart-line"></i><span>Analytics IA</span></div>
             </div>
 

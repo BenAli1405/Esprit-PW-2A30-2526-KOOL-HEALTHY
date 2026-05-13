@@ -16,29 +16,19 @@ function formatDateFR($date)
   <title><?= htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8') ?></title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <link rel="stylesheet" href="/kool_healthy3/public/css/style.css">
+  <?php if ($layout === 'back'): ?>
+    <link rel="stylesheet" href="/integweb/VIEW/css/backoffice.css?v=20260512">
+  <?php else: ?>
+    <link rel="stylesheet" href="/integweb/CSS/styles.css">
+    <link rel="stylesheet" href="/integweb/public/css/style.css">
+  <?php endif; ?>
   <?php if ($action === 'statistiques_entrainements'): ?>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <?php endif; ?>
 </head>
 <body class="<?= $layout ?>-layout">
 <?php if ($layout === 'front'): ?>
-  <nav class="navbar">
-    <div class="logo"><a href="index.php?action=mes_entrainements"><img src="/kool_healthy3/public/images/logo.png" alt="Kool Healthy"></a></div>
-    <div class="nav-links">
-      <a href="index.php?action=mes_entrainements"
-         <?= $action === 'mes_entrainements' ? 'style="color:var(--vert-kool);font-weight:700;"' : '' ?>>Mes séances</a>
-      <a href="index.php?action=recommander"
-         <?= $action === 'recommander_knn' ? 'style="color:var(--vert-kool);font-weight:700;"' : '' ?>>
-        <i class="fas fa-robot" style="margin-right:4px;"></i>Recommandation KNN
-      </a>
-      <a href="index.php?action=progression"
-         <?= $action === 'progression' ? 'style="color:var(--vert-kool);font-weight:700;"' : '' ?>>
-        <i class="fas fa-chart-line" style="margin-right:4px;"></i>Ma progression
-      </a>
-      <button class="btn-outline" onclick="window.location.href='index.php?action=admin_entrainements'">Admin</button>
-    </div>
-  </nav>
+  <?php include __DIR__ . '/../../VIEW/includes/topbar.php'; ?>
 
   <section id="accueil" class="hero">
     <div class="hero-content">
@@ -63,20 +53,29 @@ function formatDateFR($date)
   <div class="app-wrapper">
     <aside class="sidebar">
       <div class="logo-area">
-        <img src="/kool_healthy3/public/images/logo.png" alt="Kool Healthy">
+        <a class="logo-link" href="/integweb/VIEW/home.php" aria-label="Kool Healthy">
+          <img src="/integweb/Assets/logo-kool-healthy.png" alt="Kool Healthy" onerror="this.onerror=null;this.src='/integweb/public/images/logo.png';">
+        </a>
         <p>administration · nutrition IA</p>
       </div>
       <div class="nav-menu">
-        <a class="nav-item<?= $action === 'admin_entrainements' ? ' active' : '' ?>" href="index.php?action=admin_entrainements"><i class="fas fa-chart-pie"></i><span>Entraînements</span></a>
-        <a class="nav-item<?= in_array($action, ['admin_exercices','admin_creer_exercice','admin_modifier_exercice']) ? ' active' : '' ?>" href="index.php?action=admin_exercices"><i class="fas fa-dumbbell"></i><span>Exercices</span></a>
-        <a class="nav-item<?= in_array($action, ['admin_reference_list','admin_reference_create','admin_reference_edit']) ? ' active' : '' ?>" href="index.php?action=admin_reference_list"><i class="fas fa-book"></i><span>Catalogue KNN</span></a>
-        <a class="nav-item<?= $action === 'recommander_knn' ? ' active' : '' ?>" href="index.php?action=recommander"><i class="fas fa-robot"></i><span>Recommandation KNN</span></a>
-        <a class="nav-item<?= $action === 'progression' ? ' active' : '' ?>" href="index.php?action=progression"><i class="fas fa-chart-line"></i><span>Assistant progression</span></a>
+        <a class="nav-item" href="/integweb/VIEW/backoffice.php" style="text-decoration:none;color:inherit;"><i class="fas fa-chart-pie"></i><span>Dashboard</span></a>
+        <a class="nav-item" href="/integweb/VIEW/backoffice.php?tab=users" style="text-decoration:none;color:inherit;"><i class="fas fa-users"></i><span>Utilisateurs</span></a>
+        <a class="nav-item" href="/integweb/VIEW/backoffice.php?tab=recipes" style="text-decoration:none;color:inherit;"><i class="fas fa-utensils"></i><span>Recettes</span></a>
+        <a class="nav-item" href="/integweb/VIEW/backoffice.php?tab=ingredients" style="text-decoration:none;color:inherit;"><i class="fas fa-apple-alt"></i><span>Ingrédients</span></a>
+        <a class="nav-item" href="/integweb/VIEW/backoffice.php?tab=reviews" style="text-decoration:none;color:inherit;"><i class="fas fa-star"></i><span>Avis</span></a>
+        <a class="nav-item" href="/integweb/plan.php?page=plan-backoffice" style="text-decoration:none;color:inherit;"><i class="fas fa-bowl-food"></i><span>Repas</span></a>
+        <a class="nav-item" href="/integweb/plan.php?page=plan-nutritionnel" style="text-decoration:none;color:inherit;"><i class="fas fa-clipboard-list"></i><span>Plans</span></a>
+        <a class="nav-item" href="/integweb/VIEW/backoffice-gamification.php" style="text-decoration:none;color:inherit;"><i class="fas fa-trophy"></i><span>Gamification</span></a>
+        <a class="nav-item<?= in_array($action, ['admin_entrainements','admin_creer_entrainement','admin_modifier_entrainement']) ? ' active' : '' ?>" href="/integweb/sport/index.php?action=admin_entrainements" style="text-decoration:none;color:inherit;"><i class="fas fa-chart-bar"></i><span>Entraînements</span></a>
+        <a class="nav-item<?= in_array($action, ['admin_exercices','admin_creer_exercice','admin_modifier_exercice']) ? ' active' : '' ?>" href="/integweb/sport/index.php?action=admin_exercices" style="text-decoration:none;color:inherit;"><i class="fas fa-dumbbell"></i><span>Exercices</span></a>
+        <a class="nav-item<?= in_array($action, ['admin_reference_list','admin_reference_create','admin_reference_edit']) ? ' active' : '' ?>" href="/integweb/sport/index.php?action=admin_reference_list" style="text-decoration:none;color:inherit;"><i class="fas fa-book"></i><span>Catalogue KNN</span></a>
+        <a class="nav-item" href="/integweb/VIEW/backoffice.php?tab=analytics" style="text-decoration:none;color:inherit;"><i class="fas fa-chart-line"></i><span>Analytics IA</span></a>
       </div>
       <div class="sidebar-footer">
         <div class="user-badge">
           <div class="user-avatar"><i class="fas fa-user-md"></i></div>
-          <div class="user-info"><p>Admin Kool</p><small>admin@koolhealthy.com</small></div>
+          <div class="user-info"><p>Admin Kool</p><small>administration</small></div>
         </div>
       </div>
     </aside>
@@ -84,11 +83,11 @@ function formatDateFR($date)
     <main class="main-content">
       <div class="top-bar">
         <div class="page-title">
-          <h1>Module Plan Nutritionnel – Gestion back-office</h1>
+          <h1><?= $pageTitle ?? 'Kool Healthy | Back Office' ?></h1>
           <p>Contrôlez les séances, exercices et règles de recommandation IA.</p>
         </div>
         <div class="header-actions">
-          <a class="btn-outline" href="index.php?action=mes_entrainements">Voir côté utilisateur</a>
+          <a class="btn-outline" href="/integweb/CONTROLLER/AuthController.php?action=logout">Se déconnecter</a>
         </div>
       </div>
 

@@ -538,9 +538,16 @@ body {
   transition: 0.2s;
 }
 
-..btn-primary:hover {
+.btn-primary:hover {
   background: var(--vert-kool-dark);
   transform: translateY(-2px);
+  color: white;
+  text-decoration: none;
+}
+
+a.btn-primary {
+  color: white;
+  text-decoration: none;
 }
 
 .btn-outline {

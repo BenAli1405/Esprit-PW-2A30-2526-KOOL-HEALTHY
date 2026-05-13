@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 require_once __DIR__ . '/../models/EntrainementModel.php';
 
@@ -68,7 +68,7 @@ class EntrainementController
             if ($this->validate($data)) {
                 $data['id_utilisateur'] = $this->getCurrentUserId();
                 $this->model->create($data);
-                header('Location: index.php?action=mes_entrainements');
+                header('Location: /integweb/sport/index.php?action=mes_entrainements');
                 exit;
             }
         }
@@ -88,7 +88,7 @@ class EntrainementController
         $entrainement = $this->model->getById($id);
 
         if (!$entrainement) {
-            header('Location: index.php?action=mes_entrainements');
+            header('Location: /integweb/sport/index.php?action=mes_entrainements');
             exit;
         }
 
@@ -99,7 +99,7 @@ class EntrainementController
             $data['id_utilisateur'] = $entrainement['id_utilisateur'];
             if ($this->validate($data)) {
                 $this->model->update($id, $data);
-                header('Location: index.php?action=mes_entrainements');
+                header('Location: /integweb/sport/index.php?action=mes_entrainements');
                 exit;
             }
         }
@@ -119,7 +119,7 @@ class EntrainementController
         if ($id > 0) {
             $this->model->delete($id);
         }
-        header('Location: index.php?action=mes_entrainements');
+        header('Location: /integweb/sport/index.php?action=mes_entrainements');
         exit;
     }
 
@@ -161,9 +161,8 @@ class EntrainementController
 
     private function getCurrentUserId(): int
     {
-        if (!isset($_SESSION['user_id'])) {
-            $_SESSION['user_id'] = 1;
-        }
-        return (int)$_SESSION['user_id'];
+        return (int)($_SESSION['utilisateur']['id']
+                  ?? $_SESSION['user_id']
+                  ?? 1);
     }
 }
