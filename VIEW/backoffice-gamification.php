@@ -1,6 +1,12 @@
 <?php
-require_once __DIR__ . '/../CONTROLLER/DefiController.php';
-require_once __DIR__ . '/../CONTROLLER/ParticipationController.php';
+session_start();
+require_once __DIR__ . '/../CONTROLLER/AuthController.php';
+require_once __DIR__ . '/../Gamification/CONTROLLER/DefiController.php';
+require_once __DIR__ . '/../Gamification/CONTROLLER/ParticipationController.php';
+
+$authController = new AuthController();
+$utilisateurConnecte = $authController->exigerAdmin('auth.php', 'home.php');
+
 $defiController = new DefiController();
 $participationController = new ParticipationController();
 $defis = $defiController->listeDefis();
@@ -8,6 +14,7 @@ $stats = $defiController->statsDefis();
 $participations = $participationController->listeParticipations();
 $utilisateurs = $participationController->listeUtilisateurs();
 $defisForParticipation = $participationController->listeDefis();
+$statsPoints = $participationController->statsParticipationsPoints();
 $success = $_GET['success'] ?? '';
 $error = $_GET['error'] ?? '';
 $message = '';
@@ -23,6 +30,10 @@ if ($success === 'added') {
     $message = 'Participation modifiée avec succès.';
 } elseif ($success === 'participation_deleted') {
     $message = 'Participation supprimée avec succès.';
+} elseif ($success === 'approved') {
+    $message = 'Le défi a été approuvé et publié.';
+} elseif ($success === 'rejected') {
+    $message = 'Le défi a été refusé.';
 } elseif ($error === 'titre') {
     $message = 'Le titre du défi est obligatoire.';
 }
@@ -35,281 +46,41 @@ if ($success === 'added') {
   <title>Kool Healthy | Back Office - CRUD Complet avec Modales</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Inter', sans-serif; background: #F5F5F5; color: #1E2A22; }
-    :root {
-      --vert-kool: #4CAF50;
-      --vert-kool-dark: #2E7D32;
-      --vert-kool-light: #E8F5E9;
-      --bleu-tech: #29B6F6;
-      --bleu-tech-dark: #0288D1;
-      --bleu-tech-light: #E1F5FE;
-      --blanc: #FFFFFF;
-      --gris-clair: #F5F5F5;
-      --gris-moyen: #E9ECEF;
-      --gris-texte: #5F6B66;
-      --ombre-legere: 0 12px 28px rgba(0, 0, 0, 0.05);
-    }
-    .app-wrapper { display: flex; min-height: 100vh; }
-    .sidebar {
-      width: 280px;
-      background: var(--blanc);
-      border-right: 1px solid var(--gris-moyen);
-      display: flex;
-      flex-direction: column;
-      position: sticky;
-      top: 0;
-      height: 100vh;
-      overflow-y: auto;
-    }
-    .logo-area { padding: 32px 24px; border-bottom: 1px solid var(--gris-moyen); margin-bottom: 24px; }
-    .logo-area h2 { font-weight: 800; font-size: 1.7rem; display: flex; align-items: center; gap: 10px; color: var(--vert-kool); }
-    .logo-area h2 i { color: var(--bleu-tech); font-size: 2rem; }
-    .logo-area p { font-size: 0.7rem; color: var(--gris-texte); margin-top: 8px; }
-    .nav-menu { flex: 1; padding: 0 16px; }
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 12px 18px;
-      margin: 6px 0;
-      border-radius: 16px;
-      font-weight: 500;
-      transition: all 0.2s;
-      color: #4A5B4E;
-      cursor: pointer;
-    }
-    .nav-item i { width: 24px; font-size: 1.2rem; color: var(--bleu-tech); }
-    .nav-item.active { background: var(--vert-kool-light); color: var(--vert-kool-dark); }
-    .nav-item.active i { color: var(--vert-kool); }
-    .nav-item:hover:not(.active) { background: var(--gris-clair); }
-    .sidebar-footer { padding: 20px 20px 30px; border-top: 1px solid var(--gris-moyen); margin-top: 20px; }
-    .user-badge { display: flex; align-items: center; gap: 12px; }
-    .user-avatar { width: 44px; height: 44px; background: linear-gradient(135deg, var(--vert-kool), var(--bleu-tech)); border-radius: 32px; display: flex; align-items: center; justify-content: center; color: white; }
-    .main-content { flex: 1; background: #F8F9FA; overflow-x: auto; }
-    .top-bar {
-      background: var(--blanc);
-      padding: 20px 32px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 16px;
-      border-bottom: 1px solid var(--gris-moyen);
-    }
-    .page-title h1 { font-size: 1.8rem; font-weight: 700; background: linear-gradient(135deg, var(--vert-kool), var(--bleu-tech)); -webkit-background-clip: text; background-clip: text; color: transparent; }
-    .page-title p { color: var(--gris-texte); font-size: 0.85rem; margin-top: 6px; }
-    .btn-primary {
-      background: var(--vert-kool);
-      border: none;
-      padding: 10px 22px;
-      border-radius: 40px;
-      font-weight: 600;
-      color: white;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      transition: 0.2s;
-      font-size: 0.85rem;
-    }
-    .btn-primary:hover { background: var(--vert-kool-dark); transform: translateY(-1px); }
-    .btn-outline {
-      background: transparent;
-      border: 1px solid var(--bleu-tech);
-      color: var(--bleu-tech-dark);
-      padding: 8px 18px;
-      border-radius: 40px;
-      font-weight: 600;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: 0.2s;
-    }
-    .btn-outline:hover { background: var(--bleu-tech-light); }
-    .btn-danger {
-      background: #ef5350;
-      border: none;
-      padding: 6px 14px;
-      border-radius: 40px;
-      font-weight: 600;
-      color: white;
-      cursor: pointer;
-      font-size: 0.7rem;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .btn-edit {
-      background: var(--bleu-tech);
-      border: none;
-      padding: 6px 14px;
-      border-radius: 40px;
-      font-weight: 600;
-      color: white;
-      cursor: pointer;
-      font-size: 0.7rem;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      margin-right: 8px;
-    }
-    .btn-show-more {
-      background: transparent;
-      border: 1px solid var(--vert-kool);
-      color: var(--vert-kool-dark);
-      padding: 8px 20px;
-      border-radius: 40px;
-      font-weight: 500;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      transition: 0.2s;
-      margin-top: 16px;
-      font-size: 0.8rem;
-    }
-    .btn-show-more:hover { background: var(--vert-kool-light); border-color: var(--vert-kool); }
-    .unified-container { padding: 28px 32px; max-width: 1600px; margin: 0 auto; }
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 24px;
-      margin-bottom: 32px;
-    }
-    .stat-card {
-      background: var(--blanc);
-      border-radius: 28px;
-      padding: 22px 24px;
-      box-shadow: var(--ombre-legere);
-      border: 1px solid rgba(0,0,0,0.02);
-    }
-    .stat-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--gris-texte); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
-    .stat-value { font-size: 2.4rem; font-weight: 800; color: var(--vert-kool); }
-    .section-card {
-      background: var(--blanc);
-      border-radius: 28px;
-      padding: 24px 28px;
-      box-shadow: var(--ombre-legere);
-      margin-bottom: 32px;
-      border: 1px solid var(--gris-moyen);
-    }
-    .section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 16px;
-      margin-bottom: 24px;
-      border-bottom: 2px solid var(--gris-moyen);
-      padding-bottom: 16px;
-    }
-    .section-header h2 { font-size: 1.5rem; font-weight: 700; display: flex; align-items: center; gap: 12px; color: #2C3E2F; }
-    .badge-tech { background: var(--bleu-tech-light); color: var(--bleu-tech-dark); padding: 4px 14px; border-radius: 40px; font-size: 0.7rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
-    .badge-eco { background: var(--vert-kool-light); color: var(--vert-kool-dark); padding: 4px 14px; border-radius: 40px; font-size: 0.7rem; font-weight: 600; }
-    .data-table { width: 100%; border-collapse: collapse; }
-    .data-table th { text-align: left; padding: 14px 8px 12px 0; font-weight: 600; font-size: 0.75rem; color: #6C7A73; border-bottom: 1px solid var(--gris-moyen); }
-    .data-table td { padding: 14px 8px 14px 0; border-bottom: 1px solid #F0F2F0; font-size: 0.85rem; vertical-align: middle; }
-    .progress-bar-bg { background: var(--gris-moyen); border-radius: 20px; height: 8px; overflow: hidden; width: 120px; }
-    .progress-fill { background: var(--vert-kool); height: 100%; border-radius: 20px; }
-    .flex-progress { display: flex; align-items: center; gap: 12px; }
-    .rank-badge { background: linear-gradient(135deg, #FFC107, #FF8F00); color: white; padding: 4px 14px; border-radius: 40px; font-size: 0.75rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
-    .status-active { background: var(--vert-kool-light); color: var(--vert-kool-dark); padding: 4px 12px; border-radius: 40px; font-size: 0.7rem; font-weight: 600; }
-    .badges-grid { display: flex; flex-wrap: wrap; gap: 24px; margin-top: 16px; }
-    .badge-card {
-      background: #FFFFFF;
-      border-radius: 24px;
-      width: 200px;
-      text-align: center;
-      padding: 20px 16px;
-      transition: all 0.2s;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-      border: 1px solid var(--gris-moyen);
-    }
-    .badge-card i { font-size: 2.8rem; background: linear-gradient(145deg, var(--vert-kool), var(--bleu-tech)); -webkit-background-clip: text; background-clip: text; color: transparent; }
-    .table-footer { text-align: center; margin-top: 16px; }
-    
-    /* MODALES */
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.6);
-      justify-content: center;
-      align-items: center;
-      z-index: 2000;
-      backdrop-filter: blur(3px);
-    }
-    .modal-content {
-      background: white;
-      border-radius: 32px;
-      width: 90%;
-      max-width: 1100px;
-      max-height: 85vh;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
-      animation: modalFadeIn 0.2s ease;
-    }
-    @keyframes modalFadeIn {
-      from { opacity: 0; transform: scale(0.95); }
-      to { opacity: 1; transform: scale(1); }
-    }
-    .modal-header {
-      padding: 20px 28px;
-      border-bottom: 2px solid var(--gris-moyen);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: var(--blanc);
-      border-radius: 32px 32px 0 0;
-    }
-    .modal-header h3 { font-size: 1.5rem; font-weight: 700; display: flex; align-items: center; gap: 12px; color: var(--vert-kool); }
-    .close-modal {
-      font-size: 1.8rem;
-      cursor: pointer;
-      color: var(--gris-texte);
-      transition: 0.2s;
-      line-height: 1;
-    }
-    .close-modal:hover { color: #ef5350; transform: scale(1.1); }
-    .modal-body {
-      padding: 24px 28px;
-      overflow-y: auto;
-      flex: 1;
-    }
-    .full-table { width: 100%; border-collapse: collapse; }
-    .full-table th { text-align: left; padding: 12px 8px; background: #F8F9FA; position: sticky; top: 0; }
-    .full-table td { padding: 12px 8px; border-bottom: 1px solid var(--gris-moyen); }
-    .badges-modal-grid { display: flex; flex-wrap: wrap; gap: 20px; justify-content: flex-start; }
-    
-    @media (max-width: 900px) {
-      .sidebar { width: 85px; }
-      .sidebar .logo-area h2 span, .sidebar .nav-item span, .sidebar .user-info { display: none; }
-      .nav-item { justify-content: center; }
-      .unified-container { padding: 20px; }
-    }
-  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="css/backoffice.css?v=20260512">
 </head>
 <body>
 <div class="app-wrapper">
   <aside class="sidebar">
     <div class="logo-area">
-<img src="../Assets/kool.png" alt="" style="width: 190px; height: 190px; border-radius: 8px;">
-<p>back office ·</p>
+      <a class="logo-link" href="home.php" aria-label="Kool Healthy">
+        <img src="../assets/logo-kool-healthy.png" alt="Kool Healthy" onerror="this.onerror=null;this.src='../assets/logo-kh.svg';">
+      </a>
+      <p>administration · nutrition IA</p>
     </div>
+
     <div class="nav-menu">
-      <div class="nav-item active" data-tab="unified"><i class="fas fa-chart-simple"></i><span>Gamification</span></div>
+      <a class="nav-item" href="backoffice.php" style="text-decoration:none;color:inherit;"><i class="fas fa-chart-pie"></i><span>Dashboard</span></a>
+      <a class="nav-item" href="backoffice.php?tab=users" style="text-decoration:none;color:inherit;"><i class="fas fa-users"></i><span>Utilisateurs</span></a>
+      <a class="nav-item" href="backoffice.php?tab=recipes" style="text-decoration:none;color:inherit;"><i class="fas fa-utensils"></i><span>Recettes</span></a>
+      <a class="nav-item" href="backoffice.php?tab=ingredients" style="text-decoration:none;color:inherit;"><i class="fas fa-apple-alt"></i><span>Ingrédients</span></a>
+      <a class="nav-item" href="backoffice.php?tab=reviews" style="text-decoration:none;color:inherit;"><i class="fas fa-star"></i><span>Avis</span></a>
+      <a class="nav-item" href="../plan.php?page=plan-backoffice" style="text-decoration:none;color:inherit;"><i class="fas fa-bowl-food"></i><span>Repas</span></a>
+      <a class="nav-item" href="../plan.php?page=plan-nutritionnel" style="text-decoration:none;color:inherit;"><i class="fas fa-clipboard-list"></i><span>Plans</span></a>
+      <a class="nav-item active" href="backoffice-gamification.php" style="text-decoration:none;color:inherit;"><i class="fas fa-trophy"></i><span>Gamification</span></a>
+      <a class="nav-item" href="../sport/index.php?action=admin_entrainements" style="text-decoration:none;color:inherit;"><i class="fas fa-dumbbell"></i><span>Entraînements</span></a>
+      <a class="nav-item" href="../sport/index.php?action=admin_exercices" style="text-decoration:none;color:inherit;"><i class="fas fa-running"></i><span>Exercices</span></a>
+      <a class="nav-item" href="../sport/index.php?action=admin_reference_list" style="text-decoration:none;color:inherit;"><i class="fas fa-book"></i><span>Catalogue KNN</span></a>
+      <a class="nav-item" href="backoffice.php?tab=analytics" style="text-decoration:none;color:inherit;"><i class="fas fa-chart-line"></i><span>Analytics IA</span></a>
     </div>
+
     <div class="sidebar-footer">
       <div class="user-badge">
         <div class="user-avatar"><i class="fas fa-user-md"></i></div>
-        <div class="user-info"><p>Dr. Emma Green</p><small>admin@koolhealthy.com</small></div>
+        <div class="user-info">
+          <p><?php echo htmlspecialchars((string) ($utilisateurConnecte['nom'] ?? 'Admin')); ?></p>
+          <small>backoffice global</small>
+        </div>
       </div>
     </div>
   </aside>
@@ -317,15 +88,16 @@ if ($success === 'added') {
   <main class="main-content">
     <div class="top-bar">
       <div class="page-title">
-        <h1><i class="fas fa-gamepad"></i> Gamification</h1>
-        <p>Défis · Classement · Participations</p>
+        <h1>Gamification</h1>
+        <p>Défis · Participations</p>
       </div>
       <div class="header-actions">
         <button class="btn-primary" id="openGlobalDefiBtn"><i class="fas fa-plus-circle"></i> Nouveau défi</button>
+        <a class="btn-outline" href="../CONTROLLER/AuthController.php?action=logout">Se déconnecter</a>
       </div>
     </div>
     <?php if ($message): ?>
-      <div style="margin: 0 32px 24px; padding: 16px 20px; border-radius: 18px; background: #E8F5E9; border: 1px solid #C8E6C9; color: #256029;">
+      <div class="alert alert-success">
         <?= htmlspecialchars($message) ?>
       </div>
     <?php endif; ?>
@@ -338,18 +110,66 @@ if ($success === 'added') {
         <div class="stat-card"><div class="stat-title"><i class="fas fa-star"></i> Points distribués</div><div class="stat-value" id="statsPoints"><?= htmlspecialchars((string)$stats['points_distribues']) ?></div></div>
       </div>
 
+
+      <!-- SECTION DÉFIS EN ATTENTE -->
+      <div class="section-card section-card--warning" id="pendingDefisSection">
+        <div class="section-header">
+          <h2><i class="fas fa-hourglass-half icon-warning"></i> Défis en attente de validation</h2>
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead><tr><th>ID</th><th>Titre</th><th>Type</th><th>Points</th><th>Proposant</th><th>Actions</th></tr></thead>
+            <tbody>
+              <?php 
+              $pendingDefis = array_filter($defis, function($d) { return $d['status'] === 'en_attente'; });
+              if (empty($pendingDefis)): ?>
+                <tr><td colspan="6" class="empty-table-row">Aucun défi en attente.</td></tr>
+              <?php else: 
+                foreach ($pendingDefis as $defi): ?>
+                <tr id="pending-row-<?= $defi['id'] ?>">
+                  <td><?= htmlspecialchars($defi['id']) ?></td>
+                  <td><strong><?= htmlspecialchars($defi['titre']) ?></strong></td>
+                  <td><span class="badge-tech"><?= htmlspecialchars($defi['type']) ?></span></td>
+                  <td><span class="badge-eco"><?= htmlspecialchars($defi['points']) ?> pts</span></td>
+                  <td>ID: <?= htmlspecialchars($defi['proposant_id'] ?? 'Admin') ?></td>
+                  <td>
+                    <a href="../Gamification/CONTROLLER/DefiController.php?action=approve&id=<?= $defi['id'] ?>" class="btn-small btn-success"><i class="fas fa-check"></i> Approuver</a>
+                    <a href="../Gamification/CONTROLLER/DefiController.php?action=reject&id=<?= $defi['id'] ?>" class="btn-danger btn-small"><i class="fas fa-times"></i> Refuser</a>
+                  </td>
+                </tr>
+              <?php endforeach; endif; ?>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- SECTION DÉFIS -->
       <div class="section-card">
         <div class="section-header">
-          <h2><i class="fas fa-tasks" style="color: var(--vert-kool);"></i> Gestion des défis</h2>
-          <button class="btn-outline" id="quickAddDefi"><i class="fas fa-plus"></i> Ajouter un défi</button>
+          <h2><i class="fas fa-tasks icon-highlight"></i> Gestion des défis</h2>
+
+        <!-- Barre de recherche pour les défis du backoffice -->
+        <div class="search-container">
+          <span class="search-label"><i class="fas fa-search"></i> Filtrer par:</span>
+          <select id="searchAttributeBackofficeDefis" class="search-select">
+            <option value="id">ID</option>
+            <option value="titre">Titre du défi</option>
+            <option value="type">Type de défi</option>
+            <option value="points">Points</option>
+          </select>
+          <input type="text" id="searchInputBackofficeDefis" class="search-input" placeholder="Entrez votre terme de recherche...">
+          <button id="clearSearchBackofficeDefisBtn" class="btn-outline btn-small"><i class="fas fa-times"></i> Réinitialiser</button>
+          <span class="search-results-info" id="searchResultsInfoBackofficeDefis"></span>
         </div>
-        <div style="overflow-x: auto;">
-          <table class="data-table" style="width:100%">
-            <thead><tr><th>ID</th><th>Titre</th><th>Type</th><th>Points</th><th>Date début</th><th>Date fin</th><th>Actions</th></tr></thead>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead><tr><th>ID</th><th>Titre</th><th>Type</th>
+              <th>Points <i class="fas fa-sort sortable" onclick="sortBackofficeDefis('points')"></i></th>
+              <th>Date début</th><th>Date fin</th><th>Actions</th></tr></thead>
             <tbody id="defisListUnified">
               <?php foreach ($defis as $defi): ?>
-                <tr>
+                <tr class="defi-row-backoffice" data-id="<?= htmlspecialchars($defi['id']) ?>" data-titre="<?= htmlspecialchars(strtolower($defi['titre'])) ?>" data-type="<?= htmlspecialchars(strtolower($defi['type'])) ?>" data-points="<?= htmlspecialchars($defi['points']) ?>">
                   <td><?= htmlspecialchars($defi['id']) ?></td>
                   <td><strong><?= htmlspecialchars($defi['titre']) ?></strong></td>
                   <td><span class="badge-tech"><?= htmlspecialchars($defi['type']) ?></span></td>
@@ -358,7 +178,7 @@ if ($success === 'added') {
                   <td><?= htmlspecialchars($defi['date_fin']) ?></td>
                   <td>
                     <button type="button" class="btn-edit edit-defi-btn" data-id="<?= $defi['id'] ?>" data-titre="<?= htmlspecialchars($defi['titre'], ENT_QUOTES) ?>" data-type="<?= htmlspecialchars($defi['type'], ENT_QUOTES) ?>" data-points="<?= $defi['points'] ?>" data-date-debut="<?= $defi['date_debut'] ?>" data-date-fin="<?= $defi['date_fin'] ?>"><i class="fas fa-pen"></i> Modifier</button>
-                    <a href="../CONTROLLER/DefiController.php?action=delete&id=<?= $defi['id'] ?>" class="btn-danger btn-delete-confirm"><i class="fas fa-trash"></i></a>
+                    <a href="../Gamification/CONTROLLER/DefiController.php?action=delete&id=<?= $defi['id'] ?>" class="btn-danger btn-delete-confirm"><i class="fas fa-trash"></i></a>
                   </td>
                 </tr>
               <?php endforeach; ?>
@@ -372,14 +192,13 @@ if ($success === 'added') {
       <div class="section-card">
         <div class="section-header">
           <div>
-            <h2><i class="fas fa-clipboard-list" style="color: var(--vert-kool);"></i> Participations</h2>
-            <p style="font-size:0.9rem; color: var(--gris-texte); margin-top: 6px;">Suivi des performances utilisateur par défi.</p>
+            <h2><i class="fas fa-clipboard-list icon-highlight"></i> Participations</h2>
+            <p class="section-note">Suivi des performances utilisateur par défi. (Lecture seule)</p>
           </div>
-          <button class="btn-outline" id="openAddParticipationBtn"><i class="fas fa-plus"></i> Ajouter une participation</button>
         </div>
-        <div style="overflow-x: auto;">
-          <table class="data-table" style="width:100%">
-            <thead><tr><th>ID</th><th>Utilisateur</th><th>Défi</th><th>Progression</th><th>Statut</th><th>Points gagnés</th><th>Créé le</th><th>Actions</th></tr></thead>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead><tr><th>ID</th><th>Utilisateur</th><th>Défi</th><th>Progression</th><th>Statut</th><th>Points gagnés</th><th>Créé le</th></tr></thead>
             <tbody>
               <?php foreach ($participations as $participation): ?>
                 <tr>
@@ -390,10 +209,6 @@ if ($success === 'added') {
                   <td><?= $participation['termine'] ? '<span class="status-active">Terminé</span>' : '<span class="badge-tech">En cours</span>' ?></td>
                   <td><?= htmlspecialchars($participation['points_gagnes']) ?> pts</td>
                   <td><?= htmlspecialchars($participation['created_at']) ?></td>
-                  <td>
-                    <button type="button" class="btn-edit edit-participation-btn" data-id="<?= $participation['id'] ?>" data-utilisateur-id="<?= $participation['utilisateur_id'] ?>" data-defi-id="<?= $participation['defi_id'] ?>" data-progression="<?= $participation['progression'] ?>" data-points="<?= $participation['points_gagnes'] ?>" data-termine="<?= $participation['termine'] ?>"><i class="fas fa-pen"></i> Modifier</button>
-                    <a href="../CONTROLLER/ParticipationController.php?action=delete&id=<?= $participation['id'] ?>" class="btn-danger btn-delete-confirm"><i class="fas fa-trash"></i></a>
-                  </td>
                 </tr>
               <?php endforeach; ?>
             </tbody>
@@ -402,38 +217,327 @@ if ($success === 'added') {
         <div class="table-footer"></div>
       </div>
 
-      <!-- CLASSEMENT -->
-      <div style="display: flex; flex-wrap: wrap; gap: 32px; margin-bottom: 32px;">
-        <div style="flex: 1; min-width: 400px;">
-          <div class="section-card" style="height: 100%;">
-            <div class="section-header">
-              <h2><i class="fas fa-chart-line" style="color: var(--bleu-tech);"></i> Classement général</h2>
-              <div class="badge-tech"><i class="fas fa-fire"></i> Top performants</div>
-            </div>
-            <div style="overflow-x: auto;">
-              <table class="data-table" style="width:100%">
-                <thead><tr><th>Rang</th><th>Utilisateur</th><th>Points totaux</th><th>Défis complétés</th></tr></thead>
-                <tbody id="classementListUnified"></tbody>
-              </table>
-            </div>
-            <div id="classementFooter" class="table-footer"></div>
-          </div>
-        </div>
-      </div>
-
     </div>
   </main>
+
+  <script>
+    // ===== LOGIQUE DE FILTRAGE POUR LES DÉFIS DU BACKOFFICE =====
+    let allBackofficeDefis = [];
+    let filteredBackofficeDefis = [];
+    
+    // Charger les données des défis du backoffice du DOM
+    function loadBackofficeDefisFromTable() {
+      const rows = document.querySelectorAll('#defisListUnified .defi-row-backoffice');
+      allBackofficeDefis = Array.from(rows).map(row => ({
+        id: row.dataset.id,
+        titre: row.dataset.titre,
+        type: row.dataset.type,
+        points: row.dataset.points,
+        element: row
+      }));
+      filteredBackofficeDefis = [...allBackofficeDefis];
+    }
+
+    // Fonction de filtrage des défis du backoffice
+    function filterBackofficeDefis() {
+      const searchTerm = document.getElementById('searchInputBackofficeDefis').value.toLowerCase().trim();
+      const searchAttribute = document.getElementById('searchAttributeBackofficeDefis').value;
+      
+      if (!searchTerm) {
+        filteredBackofficeDefis = [...allBackofficeDefis];
+        document.getElementById('searchResultsInfoBackofficeDefis').textContent = '';
+      } else {
+        filteredBackofficeDefis = allBackofficeDefis.filter(defi => {
+          let fieldValue = '';
+          
+          if (searchAttribute === 'id') {
+            fieldValue = defi.id;
+          } else if (searchAttribute === 'titre') {
+            fieldValue = defi.titre;
+          } else if (searchAttribute === 'type') {
+            fieldValue = defi.type;
+          } else if (searchAttribute === 'points') {
+            fieldValue = defi.points;
+          }
+          
+          return fieldValue.includes(searchTerm);
+        });
+
+        const resultCount = filteredBackofficeDefis.length;
+        document.getElementById('searchResultsInfoBackofficeDefis').textContent = resultCount === 0 
+          ? 'Aucun résultat trouvé' 
+          : resultCount === 1 
+            ? '1 défi trouvé' 
+            : resultCount + ' défis trouvés';
+      }
+
+      renderFilteredBackofficeDefis();
+    }
+
+    // Fonction de rendu des défis filtrés du backoffice
+    function renderFilteredBackofficeDefis() {
+      // Masquer/afficher tous les éléments
+      allBackofficeDefis.forEach(d => d.element.style.display = 'none');
+      filteredBackofficeDefis.forEach(d => d.element.style.display = 'table-row');
+    }
+
+    // Fonction pour réinitialiser la recherche des défis du backoffice
+    function clearSearchBackofficeDefis() {
+      document.getElementById('searchInputBackofficeDefis').value = '';
+      document.getElementById('searchAttributeBackofficeDefis').value = 'titre';
+      document.getElementById('searchResultsInfoBackofficeDefis').textContent = '';
+      filteredBackofficeDefis = [...allBackofficeDefis];
+      renderFilteredBackofficeDefis();
+    }
+
+    // Fonction de tri des défis du backoffice
+    let sortDirectionBackofficeDefis = {};
+    function sortBackofficeDefis(attribute) {
+      sortDirectionBackofficeDefis[attribute] = !sortDirectionBackofficeDefis[attribute];
+      const direction = sortDirectionBackofficeDefis[attribute] ? 1 : -1;
+      
+      const tbody = document.getElementById('defisListUnified');
+      const rows = Array.from(tbody.querySelectorAll('.defi-row-backoffice'));
+      
+      rows.sort((a, b) => {
+        let valA = parseInt(a.dataset.points, 10) || 0;
+        let valB = parseInt(b.dataset.points, 10) || 0;
+        
+        if (valA < valB) return -1 * direction;
+        if (valA > valB) return 1 * direction;
+        return 0;
+      });
+      
+      rows.forEach(row => tbody.appendChild(row));
+    }
+
+    // Initialisation
+    window.addEventListener('DOMContentLoaded', function() {
+      loadBackofficeDefisFromTable();
+
+      // Event listeners pour la recherche des défis du backoffice
+      const searchInputBackoffice = document.getElementById('searchInputBackofficeDefis');
+      const searchAttributeBackoffice = document.getElementById('searchAttributeBackofficeDefis');
+      const clearSearchBackofficeBtn = document.getElementById('clearSearchBackofficeDefisBtn');
+
+      if (searchInputBackoffice) {
+        searchInputBackoffice.addEventListener('input', filterBackofficeDefis);
+        searchAttributeBackoffice.addEventListener('change', filterBackofficeDefis);
+        clearSearchBackofficeBtn.addEventListener('click', clearSearchBackofficeDefis);
+      }
+
+      // ===== MODALE STATISTIQUES CHART.JS =====
+      const statsModalBack = document.getElementById('statsPointsModalBack');
+      let barChartBack = null;
+      let doughnutChartBack = null;
+
+      const statsDataBack = {
+        total:     <?= $statsPoints['total_points'] ?>,
+        moyenne:   <?= $statsPoints['moyenne_points'] ?>,
+        max:       <?= $statsPoints['max_points'] ?>,
+        min:       <?= $statsPoints['min_points'] ?>,
+        terminees: <?= $statsPoints['total_terminees'] ?>,
+        enCours:   <?= $statsPoints['total_participations'] - $statsPoints['total_terminees'] ?>
+      };
+
+      async function loadAdminNotifications() {
+        try {
+          const res = await fetch('../CONTROLLER/NotificationController.php?action=liste');
+          const data = await res.json();
+          if (data && data.length > 0) {
+            notifList.innerHTML = data.map(n => {
+              const match = n.message.match(/\[ID:(\d+)\]/);
+              const targetId = match ? `pending-row-${match[1]}` : 'pendingDefisSection';
+              return `
+                <a href="#${targetId}" class="notif-item ${n.lu == 0 ? 'unread' : ''}" onclick="markAsRead(${n.id}, '${targetId}')">
+                  <span class="notif-message-strong">${n.message}</span>
+                  <span class="notif-time"><i class="far fa-clock"></i> ${n.created_at}</span>
+                </a>
+              `;
+            }).join('');
+            const unread = data.filter(n => n.lu == 0).length;
+            if (unread > 0) {
+              notifCount.textContent = unread;
+              notifCount.style.display = 'block';
+            } else {
+              notifCount.style.display = 'none';
+            }
+          } else {
+            notifList.innerHTML = '<div class="notif-empty">Aucune notification</div>';
+            notifCount.style.display = 'none';
+          }
+        } catch (e) { console.error("Erreur notifications", e); }
+      }
+
+      window.markAsRead = async function(id, targetId) {
+        await fetch(`../CONTROLLER/NotificationController.php?action=marquer_lue&id=${id}`);
+        loadAdminNotifications();
+        const row = document.getElementById(targetId);
+        if (row && targetId !== 'pendingDefisSection') {
+          row.style.background = '#FFF9C4';
+          setTimeout(() => { row.style.background = ''; }, 3000);
+        }
+      };
+
+      function openStatsModalBack() {
+        statsModalBack.style.display = 'flex';
+        setTimeout(() => {
+          const ctxBar = document.getElementById('statsBarChartBack').getContext('2d');
+          if (barChartBack) barChartBack.destroy();
+          barChartBack = new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+              labels: ['Total pts', 'Moyenne', 'Maximum', 'Minimum'],
+              datasets: [{
+                label: 'Points gagnés',
+                data: [statsDataBack.total, statsDataBack.moyenne, statsDataBack.max, statsDataBack.min],
+                backgroundColor: ['#4CAF50CC','#29B6F6CC','#FFC107CC','#E91E63CC'],
+                borderColor:     ['#388E3C','#0288D1','#F57F17','#AD1457'],
+                borderWidth: 2, borderRadius: 10,
+              }]
+            },
+            options: {
+              responsive: true,
+              plugins: { legend: { display: false } },
+              scales: {
+                y: { beginAtZero: true, grid: { color: '#f0f0f0' }, ticks: { font: { family: 'Inter' } } },
+                x: { grid: { display: false }, ticks: { font: { family: 'Inter', weight: '600' } } }
+              }
+            }
+          });
+          const ctxD = document.getElementById('statsDoughnutChartBack').getContext('2d');
+          if (doughnutChartBack) doughnutChartBack.destroy();
+          doughnutChartBack = new Chart(ctxD, {
+            type: 'doughnut',
+            data: {
+              labels: ['Terminées', 'En cours'],
+              datasets: [{ data: [statsDataBack.terminees, statsDataBack.enCours], backgroundColor: ['#4CAF50CC','#29B6F6CC'], borderColor: ['#388E3C','#0288D1'], borderWidth: 2, hoverOffset: 8 }]
+            },
+            options: { responsive: true, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { font: { family: 'Inter', weight: '600' }, padding: 16, usePointStyle: true } } } }
+          });
+        }, 80);
+      }
+
+      function closeStatsModalBack() { statsModalBack.style.display = 'none'; }
+
+      document.getElementById('openStatsModalBackBtn').addEventListener('click', openStatsModalBack);
+      document.getElementById('closeStatsModalBackBtn').addEventListener('click', closeStatsModalBack);
+      statsModalBack.addEventListener('click', (e) => { if (e.target === statsModalBack) closeStatsModalBack(); });
+      
+      loadAdminNotifications();
+      setInterval(loadAdminNotifications, 10000);
+    });
+  </script>
 </div>
 
 <!-- MODALES POUR AFFICHER TOUT -->
 <div id="modalDefis" class="modal"><div class="modal-content"><div class="modal-header"><h3><i class="fas fa-tasks"></i> Tous les défis</h3><span class="close-modal" data-modal="defis">&times;</span></div><div class="modal-body"><table class="full-table" id="modalDefisTable"><thead><tr><th>ID</th><th>Titre</th><th>Type</th><th>Points</th><th>Date début</th><th>Date fin</th><th>Actions</th></tr></thead><tbody></tbody></table></div></div></div>
-<div id="modalClassement" class="modal"><div class="modal-content"><div class="modal-header"><h3><i class="fas fa-chart-line"></i> Classement complet</h3><span class="close-modal" data-modal="classement">&times;</span></div><div class="modal-body"><table class="full-table" id="modalClassementTable"><thead><tr><th>Rang</th><th>Utilisateur</th><th>Points totaux</th><th>Défis complétés</th></tr></thead><tbody></tbody></table></div></div></div>
 
-<div id="addDefiModal" class="modal"><div class="modal-content"><div class="modal-header"><h3><i class="fas fa-plus-circle"></i> Nouveau défi</h3><span class="close-modal" id="closeDefiModal">&times;</span></div><div class="modal-body"><form id="addDefiForm" action="../CONTROLLER/DefiController.php?action=add" method="POST"><div style="display:flex; flex-direction:column; gap:14px;"><input type="text" name="titre" placeholder="Titre du défi" style="width:100%; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"><select name="type" style="width:100%; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"><option value="nutrition">Nutrition</option><option value="ecologie">Écologie</option><option value="recette">Recette</option><option value="social">Social</option></select><input type="number" name="points" placeholder="Points" min="0" style="width:100%; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"><div style="display:flex; gap:12px;"><input type="date" name="date_debut" style="flex:1; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"><input type="date" name="date_fin" style="flex:1; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"></div><button class="btn-primary" type="submit" style="width:100%;">Créer</button></div></form></div></div></div>
-<div id="editDefiModal" class="modal"><div class="modal-content"><div class="modal-header"><h3><i class="fas fa-pen"></i> Modifier le défi</h3><span class="close-modal" id="closeEditDefiModal">&times;</span></div><div class="modal-body"><form id="editDefiForm" action="../CONTROLLER/DefiController.php?action=edit" method="POST"><input type="hidden" name="id"><div style="display:flex; flex-direction:column; gap:14px;"><input type="text" name="titre" placeholder="Titre du défi" style="width:100%; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"><select name="type" style="width:100%; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"><option value="nutrition">Nutrition</option><option value="ecologie">Écologie</option><option value="recette">Recette</option><option value="social">Social</option></select><input type="number" name="points" placeholder="Points" min="0" style="width:100%; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"><div style="display:flex; gap:12px;"><input type="date" name="date_debut" style="flex:1; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"><input type="date" name="date_fin" style="flex:1; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"></div><button class="btn-primary" type="submit" style="width:100%;">Mettre à jour</button></div></form></div></div></div>
-<div id="addParticipationModal" class="modal"><div class="modal-content"><div class="modal-header"><h3><i class="fas fa-plus-circle"></i> Nouvelle participation</h3><span class="close-modal" id="closeAddParticipationModal">&times;</span></div><div class="modal-body"><form id="addParticipationForm" action="../CONTROLLER/ParticipationController.php?action=add" method="POST"><div style="display:flex; flex-direction:column; gap:14px;"><select name="utilisateur_id" style="width:100%; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"><option value="">Sélectionner un utilisateur</option><?php foreach ($utilisateurs as $user): ?><option value="<?= $user['id'] ?>"><?= htmlspecialchars($user['nom']) ?></option><?php endforeach; ?></select><select name="defi_id" style="width:100%; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"><option value="">Sélectionner un défi</option><?php foreach ($defisForParticipation as $defiSelect): ?><option value="<?= $defiSelect['id'] ?>"><?= htmlspecialchars($defiSelect['titre']) ?></option><?php endforeach; ?></select><input type="number" name="progression" placeholder="Progression (%)" min="0" max="100" style="width:100%; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"><label style="display:flex; align-items:center; gap:10px;"><input type="checkbox" name="termine" value="1"> Terminé</label><input type="number" name="points_gagnes" placeholder="Points gagnés" min="0" style="width:100%; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"><button class="btn-primary" type="submit" style="width:100%;">Créer</button></div></form></div></div></div>
-<div id="editParticipationModal" class="modal"><div class="modal-content"><div class="modal-header"><h3><i class="fas fa-pen"></i> Modifier participation</h3><span class="close-modal" id="closeEditParticipationModal">&times;</span></div><div class="modal-body"><form id="editParticipationForm" action="../CONTROLLER/ParticipationController.php?action=edit" method="POST"><input type="hidden" name="id"><div style="display:flex; flex-direction:column; gap:14px;"><select name="utilisateur_id" style="width:100%; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"><option value="">Sélectionner un utilisateur</option><?php foreach ($utilisateurs as $user): ?><option value="<?= $user['id'] ?>"><?= htmlspecialchars($user['nom']) ?></option><?php endforeach; ?></select><select name="defi_id" style="width:100%; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"><option value="">Sélectionner un défi</option><?php foreach ($defisForParticipation as $defiSelect): ?><option value="<?= $defiSelect['id'] ?>"><?= htmlspecialchars($defiSelect['titre']) ?></option><?php endforeach; ?></select><input type="number" name="progression" placeholder="Progression (%)" min="0" max="100" style="width:100%; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"><label style="display:flex; align-items:center; gap:10px;"><input type="checkbox" name="termine" value="1"> Terminé</label><input type="number" name="points_gagnes" placeholder="Points gagnés" min="0" style="width:100%; padding:12px; border-radius:16px; border:1px solid var(--gris-moyen);"><button class="btn-primary" type="submit" style="width:100%;">Mettre à jour</button></div></form></div></div></div>
+<!-- ===== MODALE STATISTIQUES BACKOFFICE ===== -->
+<div id="statsPointsModalBack" class="modal modal-stats">
+  <div class="modal-content modal-large">
+    <div class="modal-header modal-stats-header">
+      <h3><i class="fas fa-chart-bar"></i> Statistiques — Points gagnés</h3>
+      <span id="closeStatsModalBackBtn" class="close-modal">&times;</span>
+    </div>
+    <div class="modal-body modal-stats-body">
+      <div class="stats-grid stats-metrics-grid">
+        <div class="stats-metric-card total">
+          <div class="metric-label"><i class="fas fa-star"></i> Total</div>
+          <div class="metric-value"><?= number_format($statsPoints['total_points']) ?></div>
+          <div class="metric-caption">pts distribués</div>
+        </div>
+        <div class="stats-metric-card average">
+          <div class="metric-label"><i class="fas fa-calculator"></i> Moyenne</div>
+          <div class="metric-value"><?= $statsPoints['moyenne_points'] ?></div>
+          <div class="metric-caption">pts / participation</div>
+        </div>
+        <div class="stats-metric-card max">
+          <div class="metric-label"><i class="fas fa-arrow-up"></i> Maximum</div>
+          <div class="metric-value"><?= $statsPoints['max_points'] ?></div>
+          <div class="metric-caption">pts en 1 participation</div>
+        </div>
+        <div class="stats-metric-card min">
+          <div class="metric-label"><i class="fas fa-arrow-down"></i> Minimum</div>
+          <div class="metric-value"><?= $statsPoints['min_points'] ?></div>
+          <div class="metric-caption">pts en 1 participation</div>
+        </div>
+        <div class="stats-metric-card top">
+          <div class="metric-label"><i class="fas fa-crown"></i> Top joueur</div>
+          <div class="metric-value metric-value--small"><?= htmlspecialchars($statsPoints['top_user']) ?></div>
+          <div class="metric-caption"><?= $statsPoints['top_user_pts'] ?> pts cumulés</div>
+        </div>
+      </div>
+      <div class="stats-chart-grid">
+        <div class="stats-chart-card">
+          <h4><i class="fas fa-chart-bar"></i> Comparaison des indicateurs (pts)</h4>
+          <canvas id="statsBarChartBack" height="200"></canvas>
+        </div>
+        <div class="stats-chart-card">
+          <h4><i class="fas fa-circle-half-stroke"></i> Taux de complétion</h4>
+          <canvas id="statsDoughnutChartBack"></canvas>
+          <p class="stats-caption"><?= $statsPoints['total_terminees'] ?> terminées / <?= $statsPoints['total_participations'] - $statsPoints['total_terminees'] ?> en cours</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
+<div id="addDefiModal" class="modal">
+  <div class="modal-content modal-large">
+    <div class="modal-header">
+      <h3><i class="fas fa-plus-circle"></i> Nouveau défi</h3>
+      <span class="close-modal" id="closeDefiModal">&times;</span>
+    </div>
+    <div class="modal-body">
+      <form id="addDefiForm" action="../Gamification/CONTROLLER/DefiController.php?action=add" method="POST">
+        <div class="form-stack">
+          <input type="text" name="titre" placeholder="Titre du défi" class="modal-form-input">
+          <select name="type" class="modal-form-select">
+            <option value="nutrition">Nutrition</option>
+            <option value="ecologie">Écologie</option>
+            <option value="recette">Recette</option>
+            <option value="social">Social</option>
+          </select>
+          <input type="number" name="points" placeholder="Points" min="0" class="modal-form-input">
+          <div class="modal-form-row">
+            <input type="date" name="date_debut" class="modal-form-input">
+            <input type="date" name="date_fin" class="modal-form-input">
+          </div>
+          <button class="btn-primary" type="submit">Créer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div id="editDefiModal" class="modal">
+  <div class="modal-content modal-large">
+    <div class="modal-header">
+      <h3><i class="fas fa-pen"></i> Modifier le défi</h3>
+      <span class="close-modal" id="closeEditDefiModal">&times;</span>
+    </div>
+    <div class="modal-body">
+      <form id="editDefiForm" action="../Gamification/CONTROLLER/DefiController.php?action=edit" method="POST">
+        <input type="hidden" name="id">
+        <div class="form-stack">
+          <input type="text" name="titre" placeholder="Titre du défi" class="modal-form-input">
+          <select name="type" class="modal-form-select">
+            <option value="nutrition">Nutrition</option>
+            <option value="ecologie">Écologie</option>
+            <option value="recette">Recette</option>
+            <option value="social">Social</option>
+          </select>
+          <input type="number" name="points" placeholder="Points" min="0" class="modal-form-input">
+          <div class="modal-form-row">
+            <input type="date" name="date_debut" class="modal-form-input">
+            <input type="date" name="date_fin" class="modal-form-input">
+          </div>
+          <button class="btn-primary" type="submit">Mettre à jour</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 <!-- MODALES CRUD – logique dans gamification.js -->
 <script src="../JS/gamification.js"></script>
 </body>
