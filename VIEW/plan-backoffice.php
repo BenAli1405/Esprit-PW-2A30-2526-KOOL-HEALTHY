@@ -112,6 +112,7 @@ function getObjectifLabel($value)
         <a class="nav-item" href="VIEW/backoffice.php?tab=reviews" style="text-decoration:none;color:inherit;"><i class="fas fa-star"></i><span>Avis</span></a>
         <div class="nav-item active" data-tab="repas"><i class="fas fa-bowl-food"></i><span>Repas</span></div>
         <div class="nav-item" data-tab="plan"><i class="fas fa-clipboard-list"></i><span>Plans</span></div>
+        <a class="nav-item" href="/Gamification/VIEW/backoffice-gamification.php" style="text-decoration:none;color:inherit;"><i class="fas fa-trophy"></i><span>Gamification</span></a>
         <a class="nav-item" href="VIEW/backoffice.php?tab=analytics" style="text-decoration:none;color:inherit;"><i class="fas fa-chart-line"></i><span>Analytics IA</span></a>
       </div>
 

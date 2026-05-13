@@ -10,9 +10,9 @@ if (session_status() === PHP_SESSION_NONE) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vos Repas - Kool Healthy</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/integweb/CSS/styles.css">
-    <link rel="stylesheet" href="/integweb/Assets/multi-objective.css">
-    <link rel="stylesheet" href="/integweb/Assets/jumeau.css">
+    <link rel="stylesheet" href="/Gamification/CSS/styles.css">
+    <link rel="stylesheet" href="/Gamification/Assets/multi-objective.css">
+    <link rel="stylesheet" href="/Gamification/Assets/jumeau.css">
     <style>
         :root {
             --vert-clair: #8BC34A;
@@ -448,10 +448,10 @@ if (session_status() === PHP_SESSION_NONE) {
         <script>
             window.APP_SERVER_IP = <?= json_encode($_SERVER['SERVER_ADDR'] ?? '127.0.0.1') ?>;
         </script>
-        <script src="/integweb/Assets/multi-objective.js"></script>
-        <script src="/integweb/Assets/jumeau.js"></script>
-        <script src="/integweb/Assets/qrcode-generator.js"></script>
-        <script src="/integweb/Assets/chatbot.js"></script>
+        <script src="/Gamification/Assets/multi-objective.js"></script>
+        <script src="/Gamification/Assets/jumeau.js"></script>
+        <script src="/Gamification/Assets/qrcode-generator.js"></script>
+        <script src="/Gamification/Assets/chatbot.js"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function(){
                 try {

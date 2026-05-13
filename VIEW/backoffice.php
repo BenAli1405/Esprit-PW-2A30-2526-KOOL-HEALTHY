@@ -43,6 +43,7 @@ $tabFromQuery = $_GET['tab'] ?? 'dashboard';
                 <div class="nav-item" data-tab="reviews"><i class="fas fa-star"></i><span>Avis</span></div>
                 <a class="nav-item" href="../plan.php?page=plan-backoffice" style="text-decoration:none;color:inherit;"><i class="fas fa-bowl-food"></i><span>Repas</span></a>
                 <a class="nav-item" href="../plan.php?page=plan-nutritionnel" style="text-decoration:none;color:inherit;"><i class="fas fa-clipboard-list"></i><span>Plans</span></a>
+                <a class="nav-item" href="../VIEW/backoffice-gamification.php" style="text-decoration:none;color:inherit;"><i class="fas fa-trophy"></i><span>Gamification</span></a>
                 <div class="nav-item" data-tab="analytics"><i class="fas fa-chart-line"></i><span>Analytics IA</span></div>
             </div>
 

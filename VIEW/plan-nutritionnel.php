@@ -10,7 +10,7 @@ if (session_status() === PHP_SESSION_NONE) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Plan Nutritionnel - Kool Healthy</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/integweb/CSS/styles.css">
+    <link rel="stylesheet" href="/Gamification/CSS/styles.css">
     <style>
         :root {
             --vert-clair: #8BC34A;

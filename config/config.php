@@ -1,4 +1,64 @@
 <?php
+// ========== KOOL HEALTHY - CONFIGURATION ==========
+
+if (!defined('DB_HOST')) {
+    define('DB_HOST', getenv('DB_HOST') ?: '127.0.0.1');
+}
+if (!defined('DB_PORT')) {
+    define('DB_PORT', getenv('DB_PORT') ?: '3306');
+}
+if (!defined('DB_USER')) {
+    define('DB_USER', getenv('DB_USER') ?: 'root');
+}
+if (!defined('DB_PASS')) {
+    define('DB_PASS', getenv('DB_PASS') ?: '');
+}
+if (!defined('DB_NAME')) {
+    define('DB_NAME', getenv('DB_NAME') ?: 'projetweb');
+}
+if (!defined('APP_NAME')) {
+    define('APP_NAME', 'Kool Healthy');
+}
+if (!defined('APP_VERSION')) {
+    define('APP_VERSION', '1.0.0');
+}
+if (!defined('BASE_URL')) {
+    define('BASE_URL', getenv('BASE_URL') ?: 'http://localhost/Gamification/');
+}
+if (!defined('SMTP_HOST')) {
+    define('SMTP_HOST', getenv('SMTP_HOST') ?: 'smtp.mailtrap.io');
+}
+if (!defined('SMTP_PORT')) {
+    define('SMTP_PORT', getenv('SMTP_PORT') ?: '587');
+}
+if (!defined('SMTP_USER')) {
+    define('SMTP_USER', getenv('SMTP_USER') ?: '');
+}
+if (!defined('SMTP_PASS')) {
+    define('SMTP_PASS', getenv('SMTP_PASS') ?: '');
+}
+if (!defined('SMTP_SECURE')) {
+    define('SMTP_SECURE', getenv('SMTP_SECURE') ?: 'tls');
+}
+if (!defined('MAIL_FROM_NAME')) {
+    define('MAIL_FROM_NAME', getenv('MAIL_FROM_NAME') ?: 'Kool Healthy');
+}
+if (!defined('ROOT_PATH')) {
+    define('ROOT_PATH', dirname(__FILE__) . '/');
+}
+if (!defined('MODEL_PATH')) {
+    define('MODEL_PATH', ROOT_PATH . 'MODEL/');
+}
+if (!defined('CONTROLLER_PATH')) {
+    define('CONTROLLER_PATH', ROOT_PATH . 'CONTROLLER/');
+}
+if (!defined('VIEW_PATH')) {
+    define('VIEW_PATH', ROOT_PATH . 'VIEW/');
+}
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 class config
 {
@@ -7,7 +67,72 @@ class config
     private static $port = '3306';
     private static $user = 'root';
     private static $password = '';
-    private static $database = 'kool_healthy';
+    private static $database = 'projetweb';
+
+    // Load OAuth credentials from environment variables (see initConfigFromEnv)
+    private static $googleClientId = '';
+    private static $googleClientSecret = '';
+    private static $googleRedirectUri = '';
+    private static $mailFrom = 'omarzehift52@gmail.com';
+    private static $smtpHost = '';
+    private static $smtpPort = '';
+    private static $smtpUser = '';
+    private static $smtpPass = '';
+    private static $smtpSecure = '';
+    private static $mailFromName = '';
+
+    public static function getSettings()
+    {
+        return [
+            'appName'     => APP_NAME,
+            'defaultPage' => 'backoffice',
+        ];
+    }
+
+    public static function getDbConfig()
+    {
+        return [
+            'host'     => self::$host,
+            'port'     => self::$port,
+            'username' => self::$user,
+            'password' => self::$password,
+            'database' => self::$database,
+        ];
+    }
+
+    private static function initSecrets()
+    {
+        if (self::$googleClientId === '') {
+            self::$googleClientId = getenv('GOOGLE_CLIENT_ID') ?: '';
+        }
+        if (self::$googleClientSecret === '') {
+            self::$googleClientSecret = getenv('GOOGLE_CLIENT_SECRET') ?: '';
+        }
+        if (self::$googleRedirectUri === '') {
+            self::$googleRedirectUri = getenv('GOOGLE_REDIRECT_URI') ?: BASE_URL . 'CONTROLLER/AuthController.php?action=google_callback';
+        }
+        if (self::$mailFrom === '') {
+            self::$mailFrom = getenv('MAIL_FROM') ?: '';
+        }
+        if (self::$smtpHost === '') {
+            self::$smtpHost = getenv('SMTP_HOST') ?: SMTP_HOST;
+        }
+        if (self::$smtpPort === '') {
+            self::$smtpPort = getenv('SMTP_PORT') ?: SMTP_PORT;
+        }
+        if (self::$smtpUser === '') {
+            self::$smtpUser = getenv('SMTP_USER') ?: SMTP_USER;
+        }
+        if (self::$smtpPass === '') {
+            self::$smtpPass = getenv('SMTP_PASS') ?: SMTP_PASS;
+        }
+        if (self::$smtpSecure === '') {
+            self::$smtpSecure = getenv('SMTP_SECURE') ?: SMTP_SECURE;
+        }
+        if (self::$mailFromName === '') {
+            self::$mailFromName = getenv('MAIL_FROM_NAME') ?: MAIL_FROM_NAME;
+        }
+    }
 
     public static function getConnexion()
     {
@@ -19,13 +144,13 @@ class config
                     self::$user,
                     self::$password,
                     [
-                        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
                         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                        PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8mb4'
+                        PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
                     ]
                 );
             } catch (Exception $e) {
-                die('Erreur de connexion: ' . $e->getMessage());
+                die('Erreur de connexion à la base de données : ' . $e->getMessage());
             }
         }
         return self::$pdo;
@@ -33,89 +158,69 @@ class config
 
     private static function initialiserBaseDeDonnees()
     {
-        $pdo = new PDO(
-            'mysql:host=' . self::$host . ';port=' . self::$port,
-            self::$user,
-            self::$password,
-            [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-            ]
-        );
-
-        $pdo->exec(
-            'CREATE DATABASE IF NOT EXISTS `' . self::$database . '` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci'
-        );
-
-        $pdo->exec('USE `' . self::$database . '`');
-
-        // Table défis
-        $pdo->exec("CREATE TABLE IF NOT EXISTS `defis` (
-            `id` INT AUTO_INCREMENT PRIMARY KEY,
-            `titre` VARCHAR(255) NOT NULL,
-            `type` VARCHAR(50) NOT NULL DEFAULT 'nutrition',
-            `points` INT NOT NULL DEFAULT 0,
-            `date_debut` DATE,
-            `date_fin` DATE,
-            `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
-            INDEX `idx_type` (`type`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-
-        // Table utilisateurs
-        $pdo->exec("CREATE TABLE IF NOT EXISTS `utilisateurs` (
-            `id` INT AUTO_INCREMENT PRIMARY KEY,
-            `nom` VARCHAR(150) NOT NULL,
-            `email` VARCHAR(255) NOT NULL,
-            `mot_de_passe` VARCHAR(255) DEFAULT NULL,
-            `role` VARCHAR(50) NOT NULL DEFAULT 'utilisateur',
-            `poids` DECIMAL(5,2) DEFAULT NULL,
-            `taille` DECIMAL(5,2) DEFAULT NULL,
-            `imc` DECIMAL(5,2) DEFAULT NULL,
-            `objectif` VARCHAR(255) DEFAULT NULL,
-            `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE KEY `unique_email` (`email`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-
-        // Table profil_nutritif
-        $pdo->exec("CREATE TABLE IF NOT EXISTS `profil_nutritif` (
-            `id` INT AUTO_INCREMENT PRIMARY KEY,
-            `utilisateur` INT NOT NULL,
-            `age` INT DEFAULT NULL,
-            `allergies` TEXT DEFAULT NULL,
-            `besoins_caloriques` INT DEFAULT NULL,
-            FOREIGN KEY (`utilisateur`) REFERENCES `utilisateurs`(`id`) ON DELETE CASCADE
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-
-        // Table participations
-        $pdo->exec("CREATE TABLE IF NOT EXISTS `participations` (
-            `id` INT AUTO_INCREMENT PRIMARY KEY,
-            `utilisateur_id` INT NOT NULL,
-            `defi_id` INT NOT NULL,
-            `progression` INT NOT NULL DEFAULT 0,
-            `termine` TINYINT(1) NOT NULL DEFAULT 0,
-            `points_gagnes` INT NOT NULL DEFAULT 0,
-            `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (`defi_id`) REFERENCES `defis`(`id`) ON DELETE CASCADE,
-            INDEX `idx_utilisateur` (`utilisateur_id`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-
-        // Données exemple - défis
-        $verifDefi = $pdo->query("SELECT COUNT(*) FROM defis");
-        if ((int) $verifDefi->fetchColumn() === 0) {
-            $pdo->exec("INSERT INTO `defis` (`titre`, `type`, `points`, `date_debut`, `date_fin`) VALUES
-                ('Manger 5 fruits/légumes par jour', 'nutrition', 50, '2025-03-01', '2025-03-31'),
-                ('Réduire son empreinte carbone', 'ecologie', 100, '2025-03-01', '2025-04-15'),
-                ('Tester 3 recettes végétales', 'recette', 75, '2025-03-10', '2025-04-10'),
-                ('Partager un repas durable', 'social', 30, '2025-03-15', '2025-03-30')
-            ");
-        }
-
-        // Données exemple - utilisateur par défaut
-        $verifUtilisateur = $pdo->query("SELECT COUNT(*) FROM utilisateurs");
-        if ((int) $verifUtilisateur->fetchColumn() === 0) {
-            $pdo->exec("INSERT INTO `utilisateurs` (`nom`, `email`, `role`, `mot_de_passe`, `created_at`) VALUES
-                ('Visiteur', 'visiteur@local', 'utilisateur', '', NOW())");
+        try {
+            $pdo = new PDO(
+                'mysql:host=' . self::$host . ';port=' . self::$port,
+                self::$user,
+                self::$password,
+                [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+            );
+            $pdo->exec('CREATE DATABASE IF NOT EXISTS `' . self::$database . '` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
+            $pdo->exec('USE `' . self::$database . '`');
+            
+            // Ajouter la colonne points_bonus si elle manque
+            $pdo->exec('ALTER TABLE `utilisateurs` ADD COLUMN IF NOT EXISTS `points_bonus` INT NOT NULL DEFAULT 0');
+        } catch (Exception $e) {
+            error_log('initialiserBaseDeDonnees error: ' . $e->getMessage());
         }
     }
+
+    public static function getGoogleClientId()
+    {
+        self::initSecrets();
+        return trim((string) self::$googleClientId);
+    }
+
+    public static function getGoogleClientSecret()
+    {
+        self::initSecrets();
+        return trim((string) self::$googleClientSecret);
+    }
+
+    public static function getGoogleRedirectUri()
+    {
+        self::initSecrets();
+        return trim((string) self::$googleRedirectUri);
+    }
+
+    public static function getMailFrom()
+    {
+        self::initSecrets();
+        return trim((string) self::$mailFrom);
+    }
+
+    public static function getSmtpConfig()
+    {
+        self::initSecrets();
+        return [
+            'host'      => (string) self::$smtpHost,
+            'port'      => (int)    self::$smtpPort,
+            'username'  => (string) self::$smtpUser,
+            'password'  => (string) self::$smtpPass,
+            'secure'    => (string) self::$smtpSecure,
+            'from'      => (string) self::$mailFrom,
+            'from_name' => (string) self::$mailFromName,
+        ];
+    }
+
+    public static function getOpenRouterApiKey()
+    {
+        $key = getenv('OPENROUTER_API_KEY');
+        if ($key !== false && trim((string)$key) !== '') {
+            return trim((string)$key);
+        }
+
+        // Local fallback for environments without env vars.
+        return '';
+    }
 }
-?>
