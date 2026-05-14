@@ -30,6 +30,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         <a href="/integweb/plan.php?page=plan-adapte" <?= (strpos($currentPage, 'plan-adapte') !== false ? 'class="active"' : '') ?>>Vos repas</a>
         <a href="/integweb/VIEW/gamification.php" <?= $currentPage === 'gamification.php' ? 'class="active"' : '' ?>>🏆 Défis & Récompenses</a>
         <a href="/integweb/sport/index.php?action=mes_entrainements" <?= (strpos($currentPage, 'sport') !== false ? 'class="active"' : '') ?>>💪 Entraînement & Exercice</a>
+        <a href="/integweb/VIEW/marketplace/client.php" <?= (strpos($_SERVER['REQUEST_URI'], '/marketplace/') !== false ? 'class="active"' : '') ?>>🛒 Marketplace</a>
     </nav>
 
     <div class="topbar-tools">
