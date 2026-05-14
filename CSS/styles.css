@@ -96,6 +96,39 @@ body {
     font-weight: 700;
 }
 
+/* Boutons Marketplace dans le topbar */
+.btn-topbar-marketplace {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 13px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none !important;
+    transition: background 0.2s, color 0.2s, transform 0.15s;
+    background: var(--vert-kool, #2e7d32);
+    color: #fff !important;
+    border: 2px solid transparent;
+}
+.btn-topbar-marketplace:hover,
+.btn-topbar-marketplace.active {
+    background: #1b5e20;
+    color: #fff !important;
+    transform: translateY(-1px);
+    font-weight: 700;
+}
+.btn-topbar-vendeur {
+    background: transparent;
+    color: var(--vert-kool, #2e7d32) !important;
+    border: 2px solid var(--vert-kool, #2e7d32);
+}
+.btn-topbar-vendeur:hover,
+.btn-topbar-vendeur.active {
+    background: var(--vert-kool, #2e7d32);
+    color: #fff !important;
+}
+
 .disabled-control {
     opacity: 0.45;
     cursor: not-allowed;

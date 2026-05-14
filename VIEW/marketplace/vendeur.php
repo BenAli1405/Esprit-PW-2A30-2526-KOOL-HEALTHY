@@ -27,11 +27,12 @@ $navActive   = 'vendeur';
   <title>Kool Healthy | Espace vendeur</title>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/integweb/CSS/styles.css">
   <link rel="stylesheet" href="<?php echo htmlspecialchars($assetsBase . 'style.css', ENT_QUOTES, 'UTF-8'); ?>">
 </head>
 <body class="page-vendeur">
 
-<?php require __DIR__ . '/partials/nav_front.php'; ?>
+<?php require $integwebRoot . '/VIEW/includes/topbar.php'; ?>
 <?php require __DIR__ . '/partials/weather_strip.php'; ?>
 
   <div class="container page-single-column">
